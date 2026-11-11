@@ -1,0 +1,3543 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>カスタムガレージ＆おでかけドライブ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* 5歳児の1人遊び対策：スクロール・拡大・選択・長押しメニューを完全無効化 */
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      background-color: #1e293b;
+      overscroll-behavior: none;
+    }
+
+    /* 道路のアニメーション */
+    @keyframes roadScroll {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 80px; }
+    }
+    .road-lines {
+      background-image: linear-gradient(to bottom, #ffffff 50%, transparent 50%);
+      background-size: 8px 80px;
+      animation: roadScroll 0.8s linear infinite;
+    }
+    .road-lines.paused {
+      animation-play-state: paused;
+    }
+
+    /* ヒントのキラキラ・揺れアニメーション */
+    @keyframes hintPulse {
+      0%, 100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
+      25% { transform: scale(1.06) rotate(-2deg); box-shadow: 0 0 0 12px rgba(250, 204, 21, 0); }
+      75% { transform: scale(1.06) rotate(2deg); box-shadow: 0 0 0 12px rgba(250, 204, 21, 0); }
+    }
+    .hint-active {
+      animation: hintPulse 1.1s infinite;
+      border-color: #facc15 !important;
+      background-color: #fef9c3 !important;
+    }
+
+    /* 車が走るアイドリング揺れ */
+    @keyframes carBounce {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+    .car-idle {
+      animation: carBounce 0.45s ease-in-out infinite;
+    }
+
+    /* ポップアップ登場アニメーション */
+    @keyframes popIn {
+      0% { transform: scale(0.7); opacity: 0; }
+      70% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .pop-in {
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* 立体ボタン */
+    .btn-3d {
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+    .btn-3d:active {
+      transform: translateY(5px);
+    }
+
+    /* STEP② 爆発アニメーション */
+    @keyframes boomBurst {
+      0% { transform: scale(0.2) rotate(-12deg); opacity: 1; }
+      45% { transform: scale(1.35) rotate(8deg); opacity: 1; }
+      80% { transform: scale(1.15) rotate(-4deg); opacity: 0.95; }
+      100% { transform: scale(1.4) rotate(0deg); opacity: 0; }
+    }
+    @keyframes screenShake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-8px, 6px); }
+      40% { transform: translate(8px, -6px); }
+      60% { transform: translate(-6px, -4px); }
+      80% { transform: translate(6px, 4px); }
+    }
+    .boom-active {
+      animation: boomBurst 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .shake-active {
+      animation: screenShake 0.45s ease-in-out;
+    }
+
+    /* STEP③ 落とし穴アニメーション */
+    .pitfall-hole {
+      position: absolute;
+      left: 50%;
+      top: 54%;
+      width: 110px;
+      height: 110px;
+      border-radius: 9999px;
+      background: radial-gradient(circle, #020617 55%, #1e293b 78%, #facc15 82%, #0f172a 100%);
+      box-shadow: inset 0 10px 20px rgba(0,0,0,0.95), 0 0 0 4px #475569;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .pitfall-hole.open {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="flex justify-center items-center bg-slate-900" oncontextmenu="return false;">
+
+  <!-- スマホ・Geminiアプリ内プレビュー（WebView）用の常駐音声プレーヤー -->
+  <audio id="tts-cloud-audio" preload="auto" playsinline webkit-playsinline referrerpolicy="no-referrer" class="hidden"></audio>
+
+  <!-- アプリ全体のコンテナ（タブレット・スマホ両対応のレスポンシブ設計） -->
+  <div id="app" class="relative w-full max-w-3xl h-full bg-sky-100 flex flex-col justify-between overflow-hidden shadow-2xl">
+
+    <!-- 紙吹雪エフェクト用キャンバス -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 w-full h-full hidden"></canvas>
+
+    <!-- 上部共通ナビゲーションバー -->
+    <header class="w-full bg-white/95 backdrop-blur border-b-4 border-sky-300 px-3 py-2 flex items-center justify-between z-30 shrink-0">
+      <div class="flex items-center gap-2">
+        <button id="btn-home" onclick="Game.goTitle()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-3 py-2 rounded-2xl border-b-4 border-sky-700 flex items-center gap-1 text-sm sm:text-base shadow">
+          <span class="text-xl">🏠</span>
+          <span>ホーム</span>
+        </button>
+        <!-- スター所持数 -->
+        <div class="bg-amber-100 border-2 border-amber-400 px-3 py-1.5 rounded-2xl flex items-center gap-1.5 shadow-inner">
+          <span class="text-xl sm:text-2xl">⭐</span>
+          <span id="star-count" class="text-lg sm:text-xl font-black text-amber-700">0</span>
+        </div>
+      </div>
+
+      <!-- ステップ進行インジケーター（プレイ中のみ表示） -->
+      <div id="step-indicator" class="hidden sm:flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full border-2 border-slate-300">
+        <span id="ind-1" class="px-2 py-0.5 rounded-full text-xs font-black bg-sky-500 text-white">①とけい</span>
+        <span class="text-slate-400 font-bold">▶</span>
+        <span id="ind-2" class="px-2 py-0.5 rounded-full text-xs font-black text-slate-400">②ことば</span>
+        <span class="text-slate-400 font-bold">▶</span>
+        <span id="ind-3" class="px-2 py-0.5 rounded-full text-xs font-black text-slate-400">③すうじ</span>
+      </div>
+
+      <!-- 難易度切り替えスイッチ -->
+      <div class="flex items-center bg-slate-200 p-1 rounded-2xl border-2 border-slate-300">
+        <button id="mode-easy" onclick="Game.setDifficulty('easy')" class="px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow">
+          🌱かんたん
+        </button>
+        <button id="mode-hard" onclick="Game.setDifficulty('hard')" class="px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600">
+          🔥しっかり
+        </button>
+      </div>
+    </header>
+
+    <!-- メイン画面エリア -->
+    <main class="relative flex-1 w-full h-full overflow-hidden flex flex-col">
+
+      <!-- ==========================================
+           1. タイトル＆マイガレージ選択ホーム画面
+           ========================================== -->
+      <section id="screen-title" class="flex-1 flex flex-col items-center justify-between p-3 sm:p-5 bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-100 relative overflow-hidden">
+        <!-- 背景の雲と太陽 -->
+        <div class="absolute top-3 left-5 text-4xl sm:text-5xl opacity-80 pointer-events-none">☁️</div>
+        <div class="absolute top-6 right-6 text-4xl sm:text-5xl opacity-90 pointer-events-none">☀️</div>
+
+        <!-- タイトルロゴ -->
+        <div class="text-center z-10 mt-1">
+          <div class="inline-block bg-amber-400 text-slate-900 font-black text-xs sm:text-sm px-3 py-0.5 rounded-full border-2 border-amber-600 shadow mb-1">
+            5さいからの とけい・カタカナ・すうじ
+          </div>
+          <h1 class="text-2xl sm:text-4xl font-black text-sky-900 drop-shadow-sm tracking-tight leading-tight">
+            カスタムガレージ＆<br class="sm:hidden">おでかけドライブ
+          </h1>
+        </div>
+
+        <!-- 現在選択中のマイカー展示ステージ -->
+        <div class="relative w-full max-w-md bg-white/90 rounded-3xl border-4 border-sky-400 shadow-xl p-3 sm:p-4 flex flex-col items-center z-10 my-1">
+          <div class="flex items-center justify-between w-full mb-1">
+            <span class="text-xs font-black text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300">
+              いま のっている くるま
+            </span>
+            <span id="title-car-badge" class="hidden text-xs font-black text-amber-900 bg-gradient-to-r from-amber-300 to-yellow-400 px-2.5 py-0.5 rounded-full border border-amber-500 shadow-sm">
+              👑 しっかりデラックス
+            </span>
+          </div>
+
+          <div id="title-car-svg" onclick="Game.honkSelectedCar()" class="w-40 h-22 sm:w-48 sm:h-26 car-idle cursor-pointer my-1 flex items-center justify-center">
+            <!-- 選択中の車のSVG -->
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="title-car-name" class="text-xl sm:text-2xl font-black text-slate-800">パトカー</span>
+            <button onclick="Game.honkSelectedCar()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 font-black px-2.5 py-1 rounded-full text-xs border-b-2 border-amber-600 active:translate-y-0.5">
+              🔊 おとをならす
+            </button>
+          </div>
+
+          <!-- 5回連続クリアスタンプ進捗バー -->
+          <div class="w-full mt-2.5 pt-2 border-t-2 border-dashed border-slate-200 flex flex-col items-center">
+            <div class="flex items-center justify-between w-full text-xs font-black text-slate-600 px-1 mb-1">
+              <span id="title-streak-label">🌱 かんたん れんぞくクリア</span>
+              <span id="title-streak-remain" class="text-rose-600">あと 5かい で 新車ゲット！</span>
+            </div>
+            <div id="title-streak-stars" class="flex items-center justify-center gap-2 sm:gap-3">
+              <!-- JSで5つのスタンプ枠を描画 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- アクションボタン群 -->
+        <div class="w-full max-w-md flex flex-col gap-2.5 z-10 mb-1">
+          <button onclick="Game.startMission()" class="btn-3d w-full bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white font-black text-xl sm:text-2xl py-3.5 sm:py-4 rounded-3xl border-b-8 border-rose-800 shadow-xl flex items-center justify-center gap-3">
+            <span class="text-2xl sm:text-3xl">🚦</span>
+            <span>しゅっぱつ しんこう！</span>
+          </button>
+
+          <div class="grid grid-cols-5 gap-2">
+            <button onclick="Game.openGarage()" class="btn-3d col-span-2 bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-900 font-black text-sm sm:text-base py-2.5 px-2 rounded-2xl border-b-4 border-amber-700 shadow-lg flex items-center justify-center gap-1">
+              <span class="text-lg">🛠️</span>
+              <span>ガレージ</span>
+              <span id="garage-count-badge" class="bg-white px-1.5 py-0.5 rounded-full text-[11px] font-black text-amber-800 border border-amber-400">1/24</span>
+            </button>
+            <button onclick="Game.openKanaChart()" class="btn-3d col-span-2 bg-gradient-to-b from-sky-400 to-sky-500 hover:from-sky-300 hover:to-sky-400 text-white font-black text-sm sm:text-base py-2.5 px-2 rounded-2xl border-b-4 border-sky-700 shadow-lg flex items-center justify-center gap-1">
+              <span class="text-lg">📖</span>
+              <span>50おんひょう</span>
+            </button>
+            <button onclick="Game.openParentSettings()" class="btn-3d col-span-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black text-xs py-2.5 rounded-2xl border-b-4 border-slate-400 shadow flex flex-col items-center justify-center leading-tight">
+              <span class="text-base">⚙️</span>
+              <span class="text-[10px]">せってい</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           2. マイガレージ（全24車種：かんたん12台＋しっかりデラックス12台）
+           ========================================== -->
+      <section id="screen-garage" class="hidden flex-1 flex flex-col p-3 sm:p-5 bg-slate-800 text-white overflow-hidden">
+        <div class="flex items-center justify-between mb-2 shrink-0">
+          <div>
+            <h2 class="text-lg sm:text-2xl font-black text-amber-400 flex items-center gap-2">
+              <span>🛠️</span><span>マイガレージ（ぜんぶで 24だい）</span>
+            </h2>
+            <p class="text-xs text-slate-300 font-bold">5かい れんぞくクリア で あたらしい くるま が ふえるよ！</p>
+          </div>
+          <button onclick="Game.goTitle()" class="btn-3d bg-sky-500 text-white font-black px-4 py-2 rounded-2xl border-b-4 border-sky-700 text-sm">
+            もどる
+          </button>
+        </div>
+
+        <!-- ガレージタブ切り替え（かんたん / しっかりデラックス） -->
+        <div class="grid grid-cols-2 gap-2 mb-2.5 shrink-0">
+          <button id="garage-tab-easy" onclick="Game.switchGarageTab('easy')" class="btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-emerald-500 text-white border-emerald-700 shadow">
+            <span>🌱 かんたん の くるま</span>
+            <span id="garage-easy-count" class="bg-black/25 px-2 py-0.5 rounded-full text-xs">1/12</span>
+          </button>
+          <button id="garage-tab-hard" onclick="Game.switchGarageTab('hard')" class="btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-slate-700 text-slate-300 border-slate-900">
+            <span>👑 しっかり デラックス</span>
+            <span id="garage-hard-count" class="bg-black/25 px-2 py-0.5 rounded-full text-xs">0/12</span>
+          </button>
+        </div>
+
+        <!-- 車種グリッド一覧 -->
+        <div id="garage-grid" class="flex-1 grid grid-cols-3 sm:grid-cols-4 gap-2.5 overflow-y-auto p-1">
+          <!-- JSで動的生成 -->
+        </div>
+      </section>
+
+      <!-- ==========================================
+           3. ステップ①：出発タイマー（デジタル時計 ➔ アナログ時計）
+           ========================================== -->
+      <section id="screen-step1" class="hidden flex-1 flex flex-col justify-between p-3 sm:p-5 bg-gradient-to-b from-indigo-50 to-sky-100">
+        <!-- 問題ヘッダー＆デジタル時計 -->
+        <div class="bg-white rounded-3xl border-4 border-sky-300 p-3 sm:p-4 shadow-md flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <button onclick="Game.speakStep1Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-12 h-12 rounded-2xl border-b-4 border-amber-600 flex items-center justify-center text-2xl shrink-0 shadow">
+              🔊
+            </button>
+            <div>
+              <div class="text-xs font-black text-sky-600">ステップ① しゅっぱつタイマー</div>
+              <div id="step1-question-text" class="text-base sm:text-xl font-black text-slate-800">
+                「 3じ 」に しゅっぱつ！ おなじ とけい は どれかな？
+              </div>
+            </div>
+          </div>
+
+          <!-- デジタル時計表示（赤＝時、青＝分で色分けリンク） -->
+          <div class="bg-slate-900 px-5 py-2 rounded-2xl border-4 border-slate-400 shadow-inner flex items-center gap-1 shrink-0">
+            <span class="text-xs font-bold text-slate-400 mr-1">デジタル</span>
+            <span id="digital-hour" class="text-3xl sm:text-4xl font-black text-rose-400 tracking-wider">3</span>
+            <span class="text-2xl sm:text-3xl font-black text-white pb-1">:</span>
+            <span id="digital-min" class="text-3xl sm:text-4xl font-black text-sky-400 tracking-wider">00</span>
+          </div>
+        </div>
+
+        <!-- ヒントガイド -->
+        <div class="text-center my-1">
+          <span class="inline-block bg-white/90 px-4 py-1 rounded-full text-xs sm:text-sm font-black text-slate-700 border-2 border-slate-300 shadow-sm">
+            💡 <span class="text-rose-600">あかい みじかい はり</span> と <span class="text-sky-600">あおい ながい はり</span> を みてね！
+          </span>
+        </div>
+
+        <!-- アナログ時計の選択肢（2択または3択） -->
+        <div id="clock-choices" class="flex-1 flex items-center justify-center gap-3 sm:gap-6 my-1">
+          <!-- JSでアナログ時計ボタンを生成 -->
+        </div>
+
+        <!-- 下部：待機中のマイカー -->
+        <div class="bg-slate-700 rounded-2xl p-2 px-4 flex items-center justify-between text-white border-b-4 border-slate-900">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🚦</span>
+            <span id="step1-feedback" class="text-sm sm:text-base font-black text-amber-300">ただしい とけい を タップ して しゅっぱつ しよう！</span>
+          </div>
+          <div id="step1-car-preview" class="w-16 h-9"></div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           4. ステップ②：カタカナ・ドライブ（3車線ことば集め）
+           ========================================== -->
+      <section id="screen-step2" class="hidden flex-1 flex flex-col justify-between bg-emerald-600 relative overflow-hidden">
+        <!-- 上部：ターゲット単語ボード（イラスト＋ひらがな足場＋カタカナスロット） -->
+        <div class="bg-white/95 backdrop-blur border-b-4 border-emerald-800 p-2.5 sm:p-3.5 z-20 shadow-lg flex flex-col gap-2">
+          <div class="flex items-center justify-between gap-1.5">
+            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <button onclick="Game.speakStep2Prompt()" class="btn-3d bg-amber-400 text-slate-900 w-10 h-10 rounded-xl border-b-4 border-amber-600 flex items-center justify-center text-xl shadow shrink-0">
+                🔊
+              </button>
+              <span class="text-xs sm:text-sm font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300 truncate">
+                ステップ② カタカナ・ドライブ
+              </span>
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span id="step2-guide-badge" class="hidden md:inline-block text-xs font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+                ひらがな と おなじ カタカナ を えらぼう！
+              </span>
+              <!-- いつでも開ける50音表ボタン -->
+              <button onclick="Game.openKanaChart()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-3 py-1.5 rounded-xl border-b-4 border-sky-700 text-xs sm:text-sm flex items-center gap-1 shadow">
+                <span>📖</span>
+                <span>50おんひょう</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ターゲットイラスト＆文字スロット -->
+          <div class="flex items-center justify-center gap-3 sm:gap-5 bg-sky-50 rounded-2xl p-2 border-2 border-sky-200">
+            <div id="step2-target-icon" class="w-20 h-12 sm:w-24 sm:h-14 bg-white rounded-xl border-2 border-sky-300 flex items-center justify-center p-1 shadow-sm shrink-0">
+              <!-- ターゲットの絵 -->
+            </div>
+            <div id="step2-word-slots" class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center">
+              <!-- JSで [ひらがな + カタカナ枠] を生成 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 中央〜下部：3車線道路エリア -->
+        <div class="relative flex-1 w-full max-w-lg mx-auto bg-slate-700 border-x-8 border-amber-400 flex flex-col justify-between overflow-hidden shadow-2xl">
+          <!-- 車線の白破線（3車線＝2本の境界線） -->
+          <div class="absolute inset-y-0 left-1/3 w-2 -ml-1 road-lines pointer-events-none opacity-80"></div>
+          <div class="absolute inset-y-0 left-2/3 w-2 -ml-1 road-lines pointer-events-none opacity-80"></div>
+
+          <!-- 3車線のカタカナ標識ボタン（各車線の中央に整列） -->
+          <div id="step2-lanes" class="relative z-10 grid grid-cols-3 gap-2 sm:gap-4 p-3 sm:p-5 pt-5 sm:pt-7 items-start justify-items-center">
+            <!-- JSで3つの車線の標識ボタンを生成 -->
+          </div>
+
+          <!-- 下部：3車線を移動・走行するマイカー（各車線の真ん中にピタッと配置） -->
+          <div class="relative w-full h-28 sm:h-32 z-10 pointer-events-none mb-2">
+            <div id="player-car-wrapper"
+                 style="left: 50%; bottom: 8px; opacity: 1; transform: translateX(-50%) rotate(0deg); transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.65s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, transform 0.3s ease;"
+                 class="absolute bottom-2 w-24 sm:w-28 flex flex-col items-center justify-center">
+              <div id="player-car-svg" class="w-16 h-20 sm:w-20 sm:h-24 car-idle filter drop-shadow-xl transition-transform duration-300"></div>
+              <!-- 爆発エフェクトオーバーレイ -->
+              <div id="step2-explosion" class="hidden absolute -inset-8 flex flex-col items-center justify-center pointer-events-none z-30">
+                <svg viewBox="0 0 160 160" class="w-36 h-36 sm:w-44 sm:h-44 drop-shadow-2xl">
+                  <!-- 外側の煙と火花 -->
+                  <circle cx="38" cy="42" r="22" fill="#475569" opacity="0.85"/>
+                  <circle cx="122" cy="40" r="24" fill="#334155" opacity="0.85"/>
+                  <circle cx="32" cy="112" r="20" fill="#475569" opacity="0.85"/>
+                  <circle cx="126" cy="116" r="22" fill="#334155" opacity="0.85"/>
+                  <!-- 爆発のギザギザ炎（赤・オレンジ・黄色） -->
+                  <polygon points="80,6 98,38 134,20 118,56 154,74 120,94 138,132 98,118 80,154 62,118 22,132 40,94 6,74 42,56 26,20 62,38" fill="#ef4444" stroke="#7f1d1d" stroke-width="4" stroke-linejoin="round"/>
+                  <polygon points="80,22 94,48 122,34 110,62 138,76 110,92 122,120 94,108 80,136 66,108 38,120 50,92 22,76 50,62 38,34 66,48" fill="#f97316"/>
+                  <polygon points="80,38 90,58 112,48 102,68 122,78 102,88 112,108 90,98 80,118 70,98 48,108 58,88 38,78 58,68 48,48 70,58" fill="#facc15"/>
+                  <circle cx="80" cy="78" r="18" fill="#fef08a"/>
+                  <text x="80" y="86" text-anchor="middle" font-size="24" font-weight="900" fill="#7f1d1d" stroke="#ffffff" stroke-width="3" paint-order="stroke">ドカーン!</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           5. ステップ③：ゴール駐車（2桁・3桁の数字）
+           ========================================== -->
+      <section id="screen-step3" class="hidden flex-1 flex flex-col justify-between p-3 sm:p-5 bg-gradient-to-b from-amber-50 to-orange-100">
+        <!-- 問題ヘッダー -->
+        <div class="bg-white rounded-3xl border-4 border-amber-400 p-3 sm:p-4 shadow-md flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <button onclick="Game.speakStep3Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-12 h-12 rounded-2xl border-b-4 border-amber-600 flex items-center justify-center text-2xl shrink-0 shadow">
+              🔊
+            </button>
+            <div>
+              <div class="text-xs font-black text-amber-700">ステップ③ ゴールちゅうしゃじょう</div>
+              <div class="text-base sm:text-xl font-black text-slate-800">
+                <span id="step3-kana-number" class="text-rose-600 text-xl sm:text-2xl underline decoration-wavy decoration-amber-400">「 にじゅうご 」ばん</span> に くるま を とめよう！
+              </div>
+            </div>
+          </div>
+          <button onclick="Game.speakStep3Prompt()" class="hidden sm:flex bg-amber-100 hover:bg-amber-200 text-amber-900 font-black px-3 py-2 rounded-xl text-xs border-2 border-amber-300 items-center gap-1 shrink-0">
+            <span>👂</span><span>もういちど きく</span>
+          </button>
+        </div>
+
+        <!-- 駐車場エリア（上部：駐車スペース3枠 ＋ 下部：車が走る通路レーン） -->
+        <div id="parking-arena" class="relative flex-1 bg-slate-700 rounded-3xl border-4 border-slate-500 p-3 sm:p-4 my-2 flex flex-col justify-between overflow-hidden shadow-inner">
+          <!-- 駐車スペース3択 -->
+          <div id="parking-lots" class="grid grid-cols-3 gap-2.5 sm:gap-4 items-stretch z-10">
+            <!-- JSで駐車場ボタンを生成 -->
+          </div>
+
+          <!-- 通路の白破線 -->
+          <div class="w-full border-b-2 border-dashed border-slate-400/70 my-auto pointer-events-none"></div>
+
+          <!-- 下部：発進して駐車枠へ移動するマイカー（トップビュー） -->
+          <div id="parking-drive-lane" class="relative w-full h-24 sm:h-28 z-20 pointer-events-none">
+            <div id="step3-moving-car"
+                 style="left: 50%; transform: translate(-50%, 0px) rotate(0deg); transition: left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);"
+                 class="absolute bottom-1 w-20 h-24 sm:w-24 sm:h-28 flex items-center justify-center">
+              <div id="step3-car-top-svg" class="w-16 h-20 sm:w-20 sm:h-24 car-idle filter drop-shadow-xl"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 下部：ガイドメッセージバー -->
+        <div class="bg-slate-800 rounded-2xl p-2.5 px-4 flex items-center justify-between text-white border-b-4 border-slate-950 shadow-lg shrink-0">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🅿️</span>
+            <span id="step3-feedback" class="text-sm sm:text-base font-black text-amber-300">ばんごう を よく みて タップ してね！</span>
+          </div>
+          <div id="step3-car-svg" class="w-16 h-9"></div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           6. ゴール＆ご褒美（5回連続クリア判定・新車解放）画面
+           ========================================== -->
+      <section id="screen-reward" class="hidden flex-1 flex flex-col items-center justify-between p-4 sm:p-6 bg-gradient-to-b from-yellow-200 via-amber-100 to-sky-200 text-center overflow-hidden">
+        <div class="mt-1">
+          <div class="inline-block bg-rose-500 text-white font-black text-xs sm:text-sm px-4 py-1 rounded-full shadow mb-1">
+            🎉 ゴール！ おつかれさま！ 🎉
+          </div>
+          <h2 id="reward-title" class="text-2xl sm:text-4xl font-black text-slate-800 drop-shadow-sm">
+            ドライブ だいせいこう！
+          </h2>
+        </div>
+
+        <!-- 報酬・連続クリアスタンプ表示カード -->
+        <div id="reward-card" class="w-full max-w-md bg-white rounded-3xl border-4 border-amber-400 shadow-2xl p-4 sm:p-5 flex flex-col items-center pop-in my-auto">
+          <!-- JSで動的生成 -->
+        </div>
+
+        <!-- 次へボタン -->
+        <div class="w-full max-w-md flex gap-3 mb-1">
+          <button onclick="Game.openGarage()" class="btn-3d flex-1 bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-base sm:text-lg py-3.5 rounded-2xl border-b-4 border-amber-600 shadow-lg">
+            🛠️ ガレージをみる
+          </button>
+          <button onclick="Game.startMission()" class="btn-3d flex-1 bg-rose-500 hover:bg-rose-400 text-white font-black text-base sm:text-lg py-3.5 rounded-2xl border-b-4 border-rose-700 shadow-lg">
+            🚦 <span id="reward-next-btn-text">つぎの ドライブへ！</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           7. 解答ミス時のメッセージモーダル（ホーム画面へ戻る）
+           ========================================== -->
+      <div id="modal-mistake" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl border-8 border-amber-400 shadow-2xl p-5 sm:p-6 flex flex-col items-center text-center pop-in">
+          <div class="text-5xl mb-2">🚗💦</div>
+          <h3 class="text-xl sm:text-2xl font-black text-rose-600 mb-2">
+            あれれ？ まちがえちゃった！
+          </h3>
+          <div id="mistake-correct-box" class="w-full bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 mb-3 text-slate-800 font-black text-sm sm:text-base">
+            <!-- JSで正解のヒントを表示 -->
+          </div>
+          <p id="mistake-streak-note" class="text-xs sm:text-sm font-bold text-slate-500 mb-4">
+            ホームに もどって、もういちど ちょうせん しよう！
+          </p>
+          <button onclick="Game.closeMistakeModalAndGoHome()" class="btn-3d w-full bg-sky-500 hover:bg-sky-400 text-white font-black text-lg sm:text-xl py-3.5 rounded-2xl border-b-6 border-sky-700 shadow-lg flex items-center justify-center gap-2">
+            <span>🏠</span>
+            <span>ホームにもどる</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           8. おうちのひと設定モーダル（スタンプ維持救済＆スマホ音声切替）
+           ========================================== -->
+      <div id="modal-parent-settings" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl border-4 border-slate-400 shadow-2xl p-5 flex flex-col gap-3.5 text-slate-800 pop-in">
+          <div class="flex items-center justify-between border-b pb-2">
+            <h3 class="text-lg font-black flex items-center gap-2">
+              <span>⚙️</span><span>おうちのひと設定</span>
+            </h3>
+            <button onclick="Game.closeParentSettings()" class="text-slate-400 hover:text-slate-700 font-black text-xl px-2">✕</button>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex flex-col gap-2">
+            <div class="text-sm font-black text-slate-700">
+              まちがえたときの「れんぞくスタンプ」設定
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">
+              標準では「ミスなく5回連続クリア」で新車が解放されますが、お子様が途中で間違えて泣いてしまう場合などは「スタンプをのこす」に切り替えられます。
+            </p>
+            <div class="grid grid-cols-2 gap-2 mt-1">
+              <button id="setting-reset-on" onclick="Game.setPenaltyMode(true)" class="py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2">
+                0にもどす（標準）
+              </button>
+              <button id="setting-reset-off" onclick="Game.setPenaltyMode(false)" class="py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2">
+                スタンプをのこす（やさしい）
+              </button>
+            </div>
+          </div>
+
+          <!-- スマホ・Geminiアプリ内プレビュー用 音声読み上げ設定 -->
+          <div class="bg-sky-50 p-3 rounded-2xl border border-sky-200 flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-black text-sky-900">
+                🔊 スマホ・読み上げ音声モード
+              </div>
+              <button onclick="Game.testVoiceOutput()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-xs px-3 py-1.5 rounded-xl border-b-2 border-amber-600 shadow">
+                🔊 こえのテスト
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-600 leading-relaxed">
+              スマホのGeminiアプリ等で声が出ない場合は「スマホアプリ用」を選んでください。
+            </p>
+            <div class="grid grid-cols-3 gap-1.5 mt-0.5">
+              <button id="voice-mode-auto" onclick="Game.setVoiceMode('auto')" class="py-2 px-2 rounded-xl font-black text-xs border-2">
+                🔄 じどう（推奨）
+              </button>
+              <button id="voice-mode-cloud" onclick="Game.setVoiceMode('cloud')" class="py-2 px-2 rounded-xl font-black text-xs border-2">
+                📱 スマホアプリ用
+              </button>
+              <button id="voice-mode-native" onclick="Game.setVoiceMode('native')" class="py-2 px-2 rounded-xl font-black text-xs border-2">
+                💻 端末標準のみ
+              </button>
+            </div>
+          </div>
+
+          <button onclick="Game.closeParentSettings()" class="btn-3d w-full bg-sky-500 text-white font-black py-3 rounded-2xl border-b-4 border-sky-700 text-base">
+            とじる
+          </button>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           9. ひらがな・カタカナ 50音表モーダル
+           ========================================== -->
+      <div id="modal-kana-chart" class="hidden fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+        <div class="w-full max-w-3xl h-[92dvh] max-h-[680px] bg-sky-50 rounded-3xl border-4 sm:border-8 border-sky-400 shadow-2xl p-2.5 sm:p-4 flex flex-col justify-between text-slate-800 pop-in overflow-hidden">
+          <!-- ヘッダー -->
+          <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-sky-200 shrink-0">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <span class="text-xl sm:text-2xl">📖</span>
+              <div>
+                <h3 class="text-base sm:text-xl font-black text-sky-900 leading-tight">
+                  ひらがな・カタカナ 50おんひょう
+                </h3>
+                <p class="text-[10px] sm:text-xs font-bold text-slate-500">
+                  もじを タップすると こえで よむよ！
+                </p>
+              </div>
+            </div>
+            <button onclick="Game.closeKanaChart()" class="btn-3d bg-rose-500 hover:bg-rose-400 text-white font-black px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl border-b-4 border-rose-700 text-xs sm:text-base shadow shrink-0">
+              ✕ とじる
+            </button>
+          </div>
+
+          <!-- タブ切り替え（あ〜ん / が・ぱ・ゃ・ー） -->
+          <div class="grid grid-cols-2 gap-2 my-2 shrink-0">
+            <button id="kana-tab-basic" onclick="Game.switchKanaChartTab('basic')" class="btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-sky-500 text-white border-sky-700 shadow">
+              <span>🔤 あ 〜 ん（50おん）</span>
+            </button>
+            <button id="kana-tab-extra" onclick="Game.switchKanaChartTab('extra')" class="btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300">
+              <span>✨ が・ぱ・ゃ・ー（てんてん・まる）</span>
+            </button>
+          </div>
+
+          <!-- 50音表の本体エリア -->
+          <div id="kana-chart-body" class="flex-1 w-full bg-white rounded-2xl border-2 border-sky-200 p-1.5 sm:p-2.5 overflow-hidden flex flex-col justify-center">
+            <!-- JSで動的生成 -->
+          </div>
+
+          <!-- 下部閉じるボタン -->
+          <div class="pt-2 shrink-0">
+            <button onclick="Game.closeKanaChart()" class="btn-3d w-full bg-emerald-500 hover:bg-emerald-400 text-white font-black text-base sm:text-lg py-2.5 sm:py-3 rounded-2xl border-b-4 border-emerald-700 shadow-lg flex items-center justify-center gap-2">
+              <span>🚗</span>
+              <span>とじる（ドライブに もどる）</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    /* ============================================================================
+     * 1. カスタムSVGイラストデータ（全24車種：かんたん12台＋しっかりデラックス12台）
+     *    横から見た絵 getCarSideSVG ＆ 上から見た絵 getCarTopSVG
+     * ============================================================================ */
+
+    // 横から見た絵（ホーム画面、マイガレージ、STEP①、STEP②ターゲット表示、STEP③、クリア画面用）
+    function getCarSideSVG(carId) {
+      const sideSVGs = {
+        /* ------------------- 🌱 かんたんモード報酬（ノーマル 12台） ------------------- */
+        patrol: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <rect x="78" y="10" width="24" height="10" rx="4" fill="#ef4444" stroke="#1e293b" stroke-width="3"/>
+          <path d="M90 4 L90 8 M70 8 L75 12 M110 8 L105 12" stroke="#facc15" stroke-width="3" stroke-linecap="round"/>
+          <path d="M40 48 L58 20 L122 20 L142 48 Z" fill="#ffffff" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M62 25 L86 25 L86 45 L48 45 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <path d="M94 25 L118 25 L132 45 L94 45 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="16" y="46" width="148" height="32" rx="12" fill="#ffffff" stroke="#1e293b" stroke-width="4"/>
+          <path d="M18 62 L162 62 L162 68 C162 74 157 78 151 78 L29 78 C23 78 18 74 18 68 Z" fill="#1e293b"/>
+          <rect x="14" y="50" width="10" height="10" rx="3" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <rect x="156" y="50" width="8" height="10" rx="3" fill="#ef4444" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="90" cy="62" r="7" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="48" cy="78" r="7" fill="#cbd5e1"/>
+          <circle cx="132" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="132" cy="78" r="7" fill="#cbd5e1"/>
+        </svg>`,
+
+        fire: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <rect x="52" y="10" width="112" height="12" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="3"/>
+          <line x1="68" y1="10" x2="68" y2="22" stroke="#475569" stroke-width="3"/>
+          <line x1="88" y1="10" x2="88" y2="22" stroke="#475569" stroke-width="3"/>
+          <line x1="108" y1="10" x2="108" y2="22" stroke="#475569" stroke-width="3"/>
+          <line x1="128" y1="10" x2="128" y2="22" stroke="#475569" stroke-width="3"/>
+          <line x1="148" y1="10" x2="148" y2="22" stroke="#475569" stroke-width="3"/>
+          <rect x="30" y="14" width="16" height="9" rx="3" fill="#ef4444" stroke="#1e293b" stroke-width="2"/>
+          <path d="M18 42 L26 22 L64 22 L64 46 L164 46 L164 78 L18 78 Z" fill="#dc2626" stroke="#7f1d1d" stroke-width="4" stroke-linejoin="round"/>
+          <rect x="64" y="24" width="98" height="26" rx="4" fill="#ef4444" stroke="#7f1d1d" stroke-width="4"/>
+          <path d="M24 44 L30 27 L56 27 L56 44 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <circle cx="96" cy="54" r="9" fill="#cbd5e1" stroke="#334155" stroke-width="3"/>
+          <rect x="116" y="46" width="32" height="16" rx="2" fill="#94a3b8" stroke="#334155" stroke-width="2"/>
+          <rect x="14" y="54" width="8" height="10" rx="2" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <rect x="20" y="66" width="142" height="5" fill="#ffffff"/>
+          <circle cx="46" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="46" cy="78" r="7" fill="#ef4444"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="134" cy="78" r="7" fill="#ef4444"/>
+        </svg>`,
+
+        ambulance: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <rect x="38" y="10" width="20" height="9" rx="4" fill="#ef4444" stroke="#1e293b" stroke-width="2"/>
+          <path d="M18 48 L32 20 L156 20 C161 20 164 24 164 29 L164 78 L18 78 Z" fill="#ffffff" stroke="#334155" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 46 L36 26 L66 26 L66 46 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="18" y="54" width="146" height="8" fill="#ef4444"/>
+          <rect x="106" y="27" width="8" height="22" rx="2" fill="#ef4444"/>
+          <rect x="99" y="34" width="22" height="8" rx="2" fill="#ef4444"/>
+          <rect x="14" y="52" width="8" height="10" rx="2" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="46" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="46" cy="78" r="7" fill="#e2e8f0"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="134" cy="78" r="7" fill="#e2e8f0"/>
+        </svg>`,
+
+        dump: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <path d="M66 18 L168 18 L158 58 L66 58 Z" fill="#facc15" stroke="#854d0e" stroke-width="4" stroke-linejoin="round"/>
+          <line x1="90" y1="22" x2="86" y2="54" stroke="#ca8a04" stroke-width="4"/>
+          <line x1="118" y1="22" x2="114" y2="54" stroke="#ca8a04" stroke-width="4"/>
+          <line x1="146" y1="22" x2="142" y2="54" stroke="#ca8a04" stroke-width="4"/>
+          <path d="M18 46 L28 24 L62 24 L62 58 L160 58 L160 76 L18 76 Z" fill="#f59e0b" stroke="#78350f" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 45 L32 29 L56 29 L56 45 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="14" y="52" width="8" height="10" rx="2" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="44" cy="78" r="17" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="44" cy="78" r="7" fill="#facc15"/>
+          <circle cx="132" cy="78" r="17" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="132" cy="78" r="7" fill="#facc15"/>
+        </svg>`,
+
+        shovel: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <path d="M62 42 L34 14 L18 32" fill="none" stroke="#f59e0b" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M62 42 L34 14 L18 32" fill="none" stroke="#78350f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 28 L28 28 L30 48 L12 44 Z" fill="#334155" stroke="#0f172a" stroke-width="3" stroke-linejoin="round"/>
+          <rect x="56" y="24" width="86" height="42" rx="10" fill="#facc15" stroke="#854d0e" stroke-width="4"/>
+          <rect x="64" y="30" width="34" height="24" rx="4" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="108" y="36" width="24" height="16" rx="3" fill="#ca8a04"/>
+          <rect x="44" y="66" width="108" height="24" rx="12" fill="#334155" stroke="#0f172a" stroke-width="4"/>
+          <circle cx="62" cy="78" r="7" fill="#94a3b8"/>
+          <circle cx="98" cy="78" r="7" fill="#94a3b8"/>
+          <circle cx="134" cy="78" r="7" fill="#94a3b8"/>
+        </svg>`,
+
+        mixer: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <ellipse cx="116" cy="40" rx="46" ry="24" transform="rotate(-8 116 40)" fill="#22c55e" stroke="#14532d" stroke-width="4"/>
+          <path d="M96 20 L110 60 M122 18 L136 58" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+          <path d="M18 46 L28 24 L62 24 L62 60 L162 60 L162 76 L18 76 Z" fill="#16a34a" stroke="#14532d" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 45 L32 29 L56 29 L56 45 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="14" y="52" width="8" height="10" rx="2" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="44" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="44" cy="78" r="7" fill="#bbf7d0"/>
+          <circle cx="132" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="132" cy="78" r="7" fill="#bbf7d0"/>
+        </svg>`,
+
+        bus: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <rect x="16" y="18" width="150" height="60" rx="14" fill="#38bdf8" stroke="#0369a1" stroke-width="4"/>
+          <rect x="16" y="54" width="150" height="10" fill="#facc15"/>
+          <rect x="24" y="26" width="24" height="22" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+          <rect x="54" y="26" width="30" height="20" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+          <rect x="90" y="26" width="30" height="20" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+          <rect x="126" y="26" width="30" height="20" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+          <rect x="12" y="56" width="8" height="10" rx="2" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="48" cy="78" r="7" fill="#bae6fd"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="134" cy="78" r="7" fill="#bae6fd"/>
+        </svg>`,
+
+        tank: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <rect x="66" y="18" width="98" height="42" rx="20" fill="#fb923c" stroke="#9a3412" stroke-width="4"/>
+          <rect x="92" y="12" width="16" height="6" rx="2" fill="#9a3412"/>
+          <rect x="128" y="12" width="16" height="6" rx="2" fill="#9a3412"/>
+          <line x1="72" y1="39" x2="158" y2="39" stroke="#ffffff" stroke-width="5"/>
+          <path d="M18 46 L28 24 L60 24 L60 60 L162 60 L162 76 L18 76 Z" fill="#ea580c" stroke="#7c2d12" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 45 L32 29 L54 29 L54 45 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="14" y="52" width="8" height="10" rx="2" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="42" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="42" cy="78" r="7" fill="#fed7aa"/>
+          <circle cx="112" cy="78" r="15" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="112" cy="78" r="6" fill="#fed7aa"/>
+          <circle cx="144" cy="78" r="15" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="144" cy="78" r="6" fill="#fed7aa"/>
+        </svg>`,
+
+        sports_red: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <path d="M46 48 L72 24 L126 24 L148 48 Z" fill="#ef4444" stroke="#7f1d1d" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M56 46 L76 28 L120 28 L136 46 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <path d="M12 58 C16 46 32 46 46 46 L154 46 C164 46 170 52 170 62 L170 76 L12 76 Z" fill="#ef4444" stroke="#7f1d1d" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M18 60 L166 60" stroke="#ffffff" stroke-width="4"/>
+          <polygon points="14,54 28,50 26,58" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="48" cy="78" r="8" fill="#facc15"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="134" cy="78" r="8" fill="#facc15"/>
+        </svg>`,
+
+        racing: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <path d="M148 24 L170 20 L170 28 L156 48 L146 48 Z" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="3"/>
+          <path d="M62 48 L84 28 L122 28 L136 48 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <path d="M10 64 L38 46 L158 46 L166 76 L10 76 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="96" cy="60" r="11" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <text x="96" y="65" text-anchor="middle" font-size="14" font-weight="900" fill="#0f172a">1</text>
+          <circle cx="46" cy="78" r="17" fill="#0f172a" stroke="#eab308" stroke-width="3"/>
+          <circle cx="46" cy="78" r="7" fill="#cbd5e1"/>
+          <circle cx="134" cy="78" r="17" fill="#0f172a" stroke="#eab308" stroke-width="3"/>
+          <circle cx="134" cy="78" r="7" fill="#cbd5e1"/>
+        </svg>`,
+
+        rally: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <circle cx="66" cy="18" r="4" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <path d="M142 22 L158 18 L154 32 Z" fill="#facc15" stroke="#1e293b" stroke-width="3"/>
+          <path d="M44 46 L64 20 L132 20 L146 46 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M52 44 L68 25 L126 25 L138 44 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="16" y="44" width="148" height="32" rx="10" fill="#2563eb" stroke="#1e3a8a" stroke-width="4"/>
+          <path d="M30 68 L80 48 L110 48 L60 68 Z" fill="#facc15"/>
+          <rect x="12" y="50" width="9" height="11" rx="3" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="48" cy="78" r="8" fill="#facc15"/>
+          <circle cx="132" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+          <circle cx="132" cy="78" r="8" fill="#facc15"/>
+        </svg>`,
+
+        supercar: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <path d="M150 32 L170 28 L166 46 L154 46 Z" fill="#0f172a" stroke="#854d0e" stroke-width="2"/>
+          <path d="M10 64 L54 40 L84 24 L134 24 L168 48 L168 76 L10 76 Z" fill="#facc15" stroke="#854d0e" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M58 42 L84 28 L128 28 L142 44 Z" fill="#0f172a" stroke="#ca8a04" stroke-width="3"/>
+          <polygon points="96,52 126,48 120,66 90,66" fill="#0f172a"/>
+          <polygon points="14,58 30,52 26,62" fill="#ffffff" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="46" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="3"/>
+          <circle cx="46" cy="78" r="7" fill="#334155"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="3"/>
+          <circle cx="134" cy="78" r="7" fill="#334155"/>
+        </svg>`,
+
+        /* ------------------- 🔥 しっかりモード報酬（デラックス 12台） ------------------- */
+        dx_patrol: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- キラキラ＆ダブルパトランプ -->
+          <polygon points="22,18 25,10 28,18 36,21 28,24 25,32 22,24 14,21" fill="#fde047"/>
+          <rect x="68" y="8" width="44" height="11" rx="5" fill="#ef4444" stroke="#facc15" stroke-width="2.5"/>
+          <circle cx="90" cy="13.5" r="4" fill="#fde047"/>
+          <!-- 黒×ゴールド豪華ボディ -->
+          <path d="M40 48 L58 20 L122 20 L142 48 Z" fill="#0f172a" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M62 25 L86 25 L86 45 L48 45 Z" fill="#38bdf8" stroke="#facc15" stroke-width="2.5"/>
+          <path d="M94 25 L118 25 L132 45 L94 45 Z" fill="#38bdf8" stroke="#facc15" stroke-width="2.5"/>
+          <rect x="16" y="46" width="148" height="32" rx="12" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <path d="M18 58 L162 58 L162 66 L18 66 Z" fill="#facc15"/>
+          <rect x="12" y="50" width="12" height="10" rx="3" fill="#fde047" stroke="#f59e0b" stroke-width="2"/>
+          <!-- ゴールドエンブレム＆ゴールドホイール -->
+          <polygon points="90,50 93,57 101,57 95,62 97,70 90,65 83,70 85,62 79,57 87,57" fill="#fde047" stroke="#854d0e" stroke-width="1.5"/>
+          <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="48" cy="78" r="8" fill="#fde047"/>
+          <circle cx="132" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="132" cy="78" r="8" fill="#fde047"/>
+        </svg>`,
+
+        dx_fire: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- ゴールド2連はしご -->
+          <rect x="48" y="6" width="118" height="14" rx="4" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
+          <line x1="66" y1="6" x2="66" y2="20" stroke="#854d0e" stroke-width="3"/>
+          <line x1="88" y1="6" x2="88" y2="20" stroke="#854d0e" stroke-width="3"/>
+          <line x1="110" y1="6" x2="110" y2="20" stroke="#854d0e" stroke-width="3"/>
+          <line x1="132" y1="6" x2="132" y2="20" stroke="#854d0e" stroke-width="3"/>
+          <line x1="152" y1="6" x2="152" y2="20" stroke="#854d0e" stroke-width="3"/>
+          <rect x="26" y="12" width="18" height="10" rx="4" fill="#38bdf8" stroke="#facc15" stroke-width="2"/>
+          <!-- メタリックレッド＆金ライン -->
+          <path d="M18 42 L26 22 L64 22 L64 46 L164 46 L164 78 L18 78 Z" fill="#b91c1c" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <rect x="64" y="24" width="98" height="26" rx="4" fill="#dc2626" stroke="#facc15" stroke-width="3.5"/>
+          <path d="M24 44 L30 27 L56 27 L56 44 Z" fill="#bae6fd" stroke="#facc15" stroke-width="2.5"/>
+          <circle cx="96" cy="54" r="10" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+          <rect x="116" y="46" width="34" height="16" rx="3" fill="#facc15" stroke="#854d0e" stroke-width="2"/>
+          <rect x="20" y="65" width="142" height="6" fill="#fde047"/>
+          <circle cx="46" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="46" cy="78" r="8" fill="#fde047"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="134" cy="78" r="8" fill="#fde047"/>
+        </svg>`,
+
+        dx_ambulance: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- ダブル救急灯 -->
+          <rect x="34" y="8" width="24" height="10" rx="4" fill="#38bdf8" stroke="#facc15" stroke-width="2.5"/>
+          <rect x="122" y="8" width="24" height="10" rx="4" fill="#ef4444" stroke="#facc15" stroke-width="2.5"/>
+          <!-- ロイヤルブルー×白×金ラインのドクターカー -->
+          <path d="M18 48 L32 20 L156 20 C161 20 164 24 164 29 L164 78 L18 78 Z" fill="#1e3a8a" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 46 L36 26 L66 26 L66 46 Z" fill="#bae6fd" stroke="#facc15" stroke-width="2.5"/>
+          <rect x="18" y="54" width="146" height="9" fill="#fde047"/>
+          <!-- ゴールドスター・オブ・ライフ風クロス -->
+          <rect x="105" y="25" width="10" height="24" rx="2" fill="#fde047"/>
+          <rect x="98" y="32" width="24" height="10" rx="2" fill="#fde047"/>
+          <circle cx="46" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="46" cy="78" r="8" fill="#fde047"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="134" cy="78" r="8" fill="#fde047"/>
+        </svg>`,
+
+        dx_dump: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- 黄金バケット＋エメラルドキャビン -->
+          <path d="M66 16 L170 16 L158 58 L66 58 Z" fill="#fde047" stroke="#ca8a04" stroke-width="4" stroke-linejoin="round"/>
+          <line x1="90" y1="20" x2="86" y2="54" stroke="#eab308" stroke-width="5"/>
+          <line x1="118" y1="20" x2="114" y2="54" stroke="#eab308" stroke-width="5"/>
+          <line x1="146" y1="20" x2="142" y2="54" stroke="#eab308" stroke-width="5"/>
+          <path d="M18 46 L28 24 L62 24 L62 58 L160 58 L160 76 L18 76 Z" fill="#059669" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 45 L32 29 L56 29 L56 45 Z" fill="#a7f3d0" stroke="#facc15" stroke-width="2.5"/>
+          <circle cx="44" cy="78" r="17" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="44" cy="78" r="8" fill="#fde047"/>
+          <circle cx="132" cy="78" r="17" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="132" cy="78" r="8" fill="#fde047"/>
+        </svg>`,
+
+        dx_shovel: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- 黄金ショベルアーム＆王冠マーク付きロイヤルパープル旋回体 -->
+          <path d="M62 42 L34 14 L18 32" fill="none" stroke="#fde047" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 26 L28 26 L32 48 L10 44 Z" fill="#facc15" stroke="#854d0e" stroke-width="3" stroke-linejoin="round"/>
+          <polygon points="88,12 94,20 102,12 108,20 114,12 112,24 90,24" fill="#fde047" stroke="#854d0e" stroke-width="2"/>
+          <rect x="56" y="24" width="86" height="42" rx="10" fill="#7e22ce" stroke="#facc15" stroke-width="4"/>
+          <rect x="64" y="30" width="34" height="24" rx="4" fill="#e9d5ff" stroke="#facc15" stroke-width="2.5"/>
+          <rect x="106" y="34" width="26" height="18" rx="4" fill="#fde047"/>
+          <rect x="44" y="66" width="108" height="24" rx="12" fill="#1e1b4b" stroke="#facc15" stroke-width="4"/>
+          <circle cx="62" cy="78" r="7" fill="#fde047"/>
+          <circle cx="98" cy="78" r="7" fill="#fde047"/>
+          <circle cx="134" cy="78" r="7" fill="#fde047"/>
+        </svg>`,
+
+        dx_mixer: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- レインボースタードラム -->
+          <ellipse cx="116" cy="40" rx="46" ry="24" transform="rotate(-8 116 40)" fill="#f43f5e" stroke="#facc15" stroke-width="4"/>
+          <path d="M88 22 L104 60" stroke="#fde047" stroke-width="8" stroke-linecap="round"/>
+          <path d="M110 18 L126 58" stroke="#38bdf8" stroke-width="8" stroke-linecap="round"/>
+          <path d="M132 20 L146 54" stroke="#4ade80" stroke-width="8" stroke-linecap="round"/>
+          <!-- パールホワイト×ゴールドキャビン -->
+          <path d="M18 46 L28 24 L62 24 L62 60 L162 60 L162 76 L18 76 Z" fill="#ffffff" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 45 L32 29 L56 29 L56 45 Z" fill="#38bdf8" stroke="#facc15" stroke-width="2.5"/>
+          <circle cx="44" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="44" cy="78" r="8" fill="#fde047"/>
+          <circle cx="132" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="132" cy="78" r="8" fill="#fde047"/>
+        </svg>`,
+
+        dx_bus: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- ロイヤルネイビー×ゴールド豪華観光バス -->
+          <rect x="14" y="14" width="152" height="64" rx="14" fill="#1e1b4b" stroke="#facc15" stroke-width="4"/>
+          <rect x="16" y="48" width="148" height="10" fill="#fde047"/>
+          <rect x="22" y="22" width="26" height="22" rx="4" fill="#fef08a" stroke="#facc15" stroke-width="2.5"/>
+          <rect x="54" y="22" width="32" height="22" rx="4" fill="#bae6fd" stroke="#facc15" stroke-width="2.5"/>
+          <rect x="92" y="22" width="32" height="22" rx="4" fill="#bae6fd" stroke="#facc15" stroke-width="2.5"/>
+          <rect x="130" y="22" width="28" height="22" rx="4" fill="#bae6fd" stroke="#facc15" stroke-width="2.5"/>
+          <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="48" cy="78" r="8" fill="#fde047"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="134" cy="78" r="8" fill="#fde047"/>
+        </svg>`,
+
+        dx_tank: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- クロームシルバー×ゴールド稲妻タンク -->
+          <rect x="66" y="18" width="98" height="42" rx="20" fill="#e2e8f0" stroke="#facc15" stroke-width="4"/>
+          <polygon points="104,22 92,38 108,38 98,54 126,34 110,34 120,22" fill="#facc15" stroke="#854d0e" stroke-width="1.5"/>
+          <path d="M18 46 L28 24 L60 24 L60 60 L162 60 L162 76 L18 76 Z" fill="#334155" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 45 L32 29 L54 29 L54 45 Z" fill="#38bdf8" stroke="#facc15" stroke-width="2.5"/>
+          <circle cx="42" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="42" cy="78" r="7" fill="#fde047"/>
+          <circle cx="112" cy="78" r="15" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="112" cy="78" r="6" fill="#fde047"/>
+          <circle cx="144" cy="78" r="15" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="144" cy="78" r="6" fill="#fde047"/>
+        </svg>`,
+
+        dx_sports: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- 大型ゴールドウイング＆シアンメタリックボディ -->
+          <path d="M146 22 L172 16 L170 26 L156 46 L144 46 Z" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+          <path d="M46 48 L72 24 L126 24 L148 48 Z" fill="#06b6d4" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M56 46 L76 28 L120 28 L136 46 Z" fill="#0f172a" stroke="#facc15" stroke-width="2.5"/>
+          <path d="M12 58 C16 46 32 46 46 46 L154 46 C164 46 170 52 170 62 L170 76 L12 76 Z" fill="#0891b2" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M16 60 L166 60" stroke="#fde047" stroke-width="6"/>
+          <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="48" cy="78" r="8" fill="#fde047"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="134" cy="78" r="8" fill="#fde047"/>
+        </svg>`,
+
+        dx_racing: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- ブラック×ゴールド チャンピオンレーサー -->
+          <path d="M146 20 L172 16 L172 28 L156 48 L144 48 Z" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+          <path d="M62 48 L84 26 L122 26 L136 48 Z" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+          <path d="M8 64 L38 46 L158 46 L168 76 L8 76 Z" fill="#0f172a" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="96" cy="60" r="12" fill="#fde047" stroke="#ca8a04" stroke-width="2.5"/>
+          <text x="96" y="65" text-anchor="middle" font-size="14" font-weight="900" fill="#0f172a">★1</text>
+          <circle cx="46" cy="78" r="17" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="46" cy="78" r="8" fill="#fde047"/>
+          <circle cx="134" cy="78" r="17" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="134" cy="78" r="8" fill="#fde047"/>
+        </svg>`,
+
+        dx_rally: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- 黄金ルーフライト＆スターデカール・ワールドラリー -->
+          <circle cx="62" cy="16" r="5" fill="#fde047" stroke="#854d0e" stroke-width="2"/>
+          <circle cx="74" cy="16" r="5" fill="#fde047" stroke="#854d0e" stroke-width="2"/>
+          <path d="M140 18 L162 14 L156 32 Z" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+          <path d="M44 46 L64 20 L132 20 L146 46 Z" fill="#1d4ed8" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M52 44 L68 25 L126 25 L138 44 Z" fill="#bae6fd" stroke="#facc15" stroke-width="2.5"/>
+          <rect x="16" y="44" width="148" height="32" rx="10" fill="#1e40af" stroke="#facc15" stroke-width="4"/>
+          <polygon points="88,48 92,56 100,56 94,61 96,69 88,64 80,69 82,61 76,56 84,56" fill="#fde047"/>
+          <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="48" cy="78" r="8" fill="#fde047"/>
+          <circle cx="132" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="132" cy="78" r="8" fill="#fde047"/>
+        </svg>`,
+
+        dx_supercar: `<svg viewBox="0 0 180 100" class="w-full h-full">
+          <!-- ギャラクシースーパー（ディープバイオレット×黄金ライン＆ブースター炎） -->
+          <path d="M164 56 L179 50 L175 62 L179 70 L164 68 Z" fill="#38bdf8" stroke="#fde047" stroke-width="2"/>
+          <path d="M148 26 L172 20 L166 44 L152 44 Z" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+          <path d="M10 64 L54 40 L84 22 L134 22 L166 48 L166 76 L10 76 Z" fill="#581c87" stroke="#facc15" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M58 42 L84 27 L128 27 L142 44 Z" fill="#38bdf8" stroke="#facc15" stroke-width="2.5"/>
+          <path d="M16 62 L160 54" stroke="#fde047" stroke-width="5"/>
+          <circle cx="46" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="46" cy="78" r="8" fill="#fde047"/>
+          <circle cx="134" cy="78" r="16" fill="#0f172a" stroke="#facc15" stroke-width="4"/>
+          <circle cx="134" cy="78" r="8" fill="#fde047"/>
+        </svg>`
+      };
+      return sideSVGs[carId] || sideSVGs.patrol;
+    }
+
+    // 上から見た絵（STEP②の3車線道路を下から上へ走るプレイヤーの車用：全24車種対応）
+    function getCarTopSVG(carId) {
+      const topSVGs = {
+        /* ------------------- 🌱 かんたんモード報酬（ノーマル 12台） ------------------- */
+        patrol: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="14" y="26" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="76" y="26" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="14" y="90" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="76" y="90" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="22" y="10" width="56" height="120" rx="20" fill="#ffffff" stroke="#1e293b" stroke-width="4"/>
+          <path d="M24 28 C24 16 34 12 50 12 C66 12 76 16 76 28 L76 42 L24 42 Z" fill="#1e293b"/>
+          <path d="M24 106 L76 106 L76 114 C76 124 66 128 50 128 C34 128 24 124 24 114 Z" fill="#1e293b"/>
+          <ellipse cx="34" cy="14" rx="6" ry="3" fill="#fde047"/>
+          <ellipse cx="66" cy="14" rx="6" ry="3" fill="#fde047"/>
+          <path d="M28 42 L72 42 L67 60 L33 60 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <path d="M33 92 L67 92 L71 105 L29 105 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="34" y="70" width="32" height="10" rx="4" fill="#ef4444" stroke="#1e293b" stroke-width="2.5"/>
+          <circle cx="50" cy="27" r="4" fill="#facc15"/>
+        </svg>`,
+
+        fire: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="24" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="78" y="24" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="12" y="92" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="78" y="92" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="20" y="10" width="60" height="120" rx="12" fill="#dc2626" stroke="#7f1d1d" stroke-width="4"/>
+          <ellipse cx="32" cy="13" rx="6" ry="3" fill="#fde047"/>
+          <ellipse cx="68" cy="13" rx="6" ry="3" fill="#fde047"/>
+          <path d="M24 22 L76 22 L72 36 L28 36 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="32" y="39" width="36" height="8" rx="3" fill="#ef4444" stroke="#1e293b" stroke-width="2"/>
+          <rect x="38" y="52" width="24" height="70" rx="3" fill="#e2e8f0" stroke="#475569" stroke-width="3"/>
+          <line x1="38" y1="64" x2="62" y2="64" stroke="#475569" stroke-width="3"/>
+          <line x1="38" y1="78" x2="62" y2="78" stroke="#475569" stroke-width="3"/>
+          <line x1="38" y1="92" x2="62" y2="92" stroke="#475569" stroke-width="3"/>
+          <line x1="38" y1="106" x2="62" y2="106" stroke="#475569" stroke-width="3"/>
+        </svg>`,
+
+        ambulance: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="14" y="26" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="76" y="26" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="14" y="92" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="76" y="92" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="20" y="10" width="60" height="120" rx="14" fill="#ffffff" stroke="#334155" stroke-width="4"/>
+          <ellipse cx="32" cy="13" rx="6" ry="3" fill="#fde047"/>
+          <ellipse cx="68" cy="13" rx="6" ry="3" fill="#fde047"/>
+          <path d="M25 22 L75 22 L70 38 L30 38 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="32" y="42" width="36" height="8" rx="3" fill="#ef4444" stroke="#1e293b" stroke-width="2"/>
+          <rect x="44" y="64" width="12" height="36" rx="2" fill="#ef4444"/>
+          <rect x="32" y="76" width="36" height="12" rx="2" fill="#ef4444"/>
+        </svg>`,
+
+        dump: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="24" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="78" y="24" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="12" y="90" width="10" height="28" rx="4" fill="#0f172a"/>
+          <rect x="78" y="90" width="10" height="28" rx="4" fill="#0f172a"/>
+          <rect x="22" y="12" width="56" height="40" rx="10" fill="#f59e0b" stroke="#78350f" stroke-width="4"/>
+          <ellipse cx="32" cy="14" rx="6" ry="3" fill="#fde047"/>
+          <ellipse cx="68" cy="14" rx="6" ry="3" fill="#fde047"/>
+          <path d="M26 24 L74 24 L70 38 L30 38 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="18" y="50" width="64" height="78" rx="6" fill="#facc15" stroke="#854d0e" stroke-width="4"/>
+          <rect x="26" y="58" width="48" height="62" rx="4" fill="#ca8a04"/>
+        </svg>`,
+
+        shovel: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="44" width="14" height="78" rx="6" fill="#334155" stroke="#0f172a" stroke-width="3"/>
+          <rect x="74" y="44" width="14" height="78" rx="6" fill="#334155" stroke="#0f172a" stroke-width="3"/>
+          <rect x="22" y="48" width="56" height="70" rx="12" fill="#facc15" stroke="#854d0e" stroke-width="4"/>
+          <rect x="28" y="56" width="24" height="26" rx="4" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="42" y="16" width="16" height="44" rx="4" fill="#f59e0b" stroke="#78350f" stroke-width="3"/>
+          <path d="M30 6 L70 6 L64 20 L36 20 Z" fill="#334155" stroke="#0f172a" stroke-width="3"/>
+        </svg>`,
+
+        mixer: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="24" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="78" y="24" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="12" y="90" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="78" y="90" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="22" y="12" width="56" height="38" rx="10" fill="#16a34a" stroke="#14532d" stroke-width="4"/>
+          <ellipse cx="32" cy="14" rx="6" ry="3" fill="#fde047"/>
+          <ellipse cx="68" cy="14" rx="6" ry="3" fill="#fde047"/>
+          <path d="M26 24 L74 24 L70 38 L30 38 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <ellipse cx="50" cy="88" rx="28" ry="38" fill="#22c55e" stroke="#14532d" stroke-width="4"/>
+          <path d="M26 74 L74 84 M26 94 L74 104" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+        </svg>`,
+
+        bus: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="26" width="8" height="24" rx="3" fill="#0f172a"/>
+          <rect x="80" y="26" width="8" height="24" rx="3" fill="#0f172a"/>
+          <rect x="12" y="92" width="8" height="24" rx="3" fill="#0f172a"/>
+          <rect x="80" y="92" width="8" height="24" rx="3" fill="#0f172a"/>
+          <rect x="18" y="8" width="64" height="124" rx="14" fill="#38bdf8" stroke="#0369a1" stroke-width="4"/>
+          <ellipse cx="30" cy="11" rx="6" ry="3" fill="#fde047"/>
+          <ellipse cx="70" cy="11" rx="6" ry="3" fill="#fde047"/>
+          <path d="M22 18 L78 18 L74 32 L26 32 Z" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+          <rect x="34" y="46" width="32" height="22" rx="4" fill="#bae6fd" stroke="#0284c7" stroke-width="2"/>
+          <rect x="34" y="80" width="32" height="22" rx="4" fill="#bae6fd" stroke="#0284c7" stroke-width="2"/>
+        </svg>`,
+
+        tank: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="22" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="78" y="22" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="12" y="92" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="78" y="92" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="22" y="10" width="56" height="36" rx="10" fill="#ea580c" stroke="#7c2d12" stroke-width="4"/>
+          <ellipse cx="32" cy="13" rx="6" ry="3" fill="#fde047"/>
+          <ellipse cx="68" cy="13" rx="6" ry="3" fill="#fde047"/>
+          <path d="M26 20 L74 20 L70 34 L30 34 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="20" y="46" width="60" height="82" rx="26" fill="#fb923c" stroke="#9a3412" stroke-width="4"/>
+          <circle cx="50" cy="70" r="7" fill="#9a3412"/>
+          <circle cx="50" cy="100" r="7" fill="#9a3412"/>
+        </svg>`,
+
+        sports_red: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="14" y="26" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="76" y="26" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="14" y="88" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="76" y="88" width="10" height="24" rx="4" fill="#0f172a"/>
+          <path d="M28 14 C38 8 62 8 72 14 C82 36 82 100 72 122 C62 130 38 130 28 122 C18 100 18 36 28 14 Z" fill="#ef4444" stroke="#7f1d1d" stroke-width="4"/>
+          <rect x="46" y="10" width="8" height="118" fill="#ffffff"/>
+          <ellipse cx="33" cy="16" rx="5" ry="3" fill="#fde047"/>
+          <ellipse cx="67" cy="16" rx="5" ry="3" fill="#fde047"/>
+          <path d="M30 44 L70 44 L64 88 L36 88 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+        </svg>`,
+
+        racing: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="10" y="26" width="14" height="26" rx="4" fill="#0f172a"/>
+          <rect x="76" y="26" width="14" height="26" rx="4" fill="#0f172a"/>
+          <rect x="10" y="88" width="14" height="26" rx="4" fill="#0f172a"/>
+          <rect x="76" y="88" width="14" height="26" rx="4" fill="#0f172a"/>
+          <rect x="20" y="8" width="60" height="10" rx="3" fill="#facc15" stroke="#1e3a8a" stroke-width="3"/>
+          <path d="M34 16 L66 16 L74 114 L26 114 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="50" cy="36" r="9" fill="#fde047" stroke="#1e293b" stroke-width="2"/>
+          <ellipse cx="50" cy="68" rx="14" ry="20" fill="#0f172a"/>
+          <circle cx="50" cy="66" r="8" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+          <rect x="18" y="114" width="64" height="14" rx="3" fill="#facc15" stroke="#1e3a8a" stroke-width="3"/>
+        </svg>`,
+
+        rally: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="14" y="26" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="76" y="26" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="14" y="90" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="76" y="90" width="10" height="24" rx="4" fill="#0f172a"/>
+          <rect x="22" y="12" width="56" height="116" rx="18" fill="#2563eb" stroke="#1e3a8a" stroke-width="4"/>
+          <circle cx="34" cy="13" r="4" fill="#fde047"/>
+          <circle cx="44" cy="12" r="4" fill="#fde047"/>
+          <circle cx="56" cy="12" r="4" fill="#fde047"/>
+          <circle cx="66" cy="13" r="4" fill="#fde047"/>
+          <path d="M28 40 L72 40 L66 60 L34 60 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+          <rect x="26" y="112" width="48" height="10" rx="3" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+        </svg>`,
+
+        supercar: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="26" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="78" y="26" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="12" y="88" width="10" height="26" rx="4" fill="#0f172a"/>
+          <rect x="78" y="88" width="10" height="26" rx="4" fill="#0f172a"/>
+          <path d="M30 10 L70 10 L82 44 L80 120 L66 130 L34 130 L20 120 L18 44 Z" fill="#facc15" stroke="#854d0e" stroke-width="4" stroke-linejoin="round"/>
+          <polygon points="24,18 36,14 32,26" fill="#ffffff"/>
+          <polygon points="76,18 64,14 68,26" fill="#ffffff"/>
+          <path d="M28 44 L72 44 L64 88 L36 88 Z" fill="#0f172a" stroke="#ca8a04" stroke-width="3"/>
+          <rect x="22" y="114" width="56" height="10" rx="2" fill="#0f172a"/>
+        </svg>`,
+
+        /* ------------------- 🔥 しっかりモード報酬（デラックス 12台） ------------------- */
+        dx_patrol: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="26" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="78" y="26" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="12" y="90" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="78" y="90" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="20" y="10" width="60" height="120" rx="20" fill="#0f172a" stroke="#fde047" stroke-width="4"/>
+          <rect x="45" y="12" width="10" height="116" fill="#fde047"/>
+          <path d="M28 40 L72 40 L67 58 L33 58 Z" fill="#38bdf8" stroke="#fde047" stroke-width="2.5"/>
+          <rect x="30" y="64" width="40" height="10" rx="4" fill="#ef4444" stroke="#fde047" stroke-width="2"/>
+          <rect x="32" y="78" width="36" height="9" rx="4" fill="#ef4444" stroke="#fde047" stroke-width="2"/>
+          <polygon points="50,20 53,26 60,26 55,30 57,36 50,32 43,36 45,30 40,26 47,26" fill="#fde047"/>
+        </svg>`,
+
+        dx_fire: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="24" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="78" y="24" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="12" y="92" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="78" y="92" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="20" y="10" width="60" height="120" rx="12" fill="#b91c1c" stroke="#fde047" stroke-width="4"/>
+          <path d="M24 22 L76 22 L72 36 L28 36 Z" fill="#bae6fd" stroke="#fde047" stroke-width="2.5"/>
+          <rect x="30" y="38" width="40" height="8" rx="3" fill="#38bdf8" stroke="#fde047" stroke-width="2"/>
+          <!-- ゴールド2連はしご -->
+          <rect x="34" y="50" width="32" height="72" rx="4" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+          <line x1="34" y1="64" x2="66" y2="64" stroke="#854d0e" stroke-width="3"/>
+          <line x1="34" y1="78" x2="66" y2="78" stroke="#854d0e" stroke-width="3"/>
+          <line x1="34" y1="92" x2="66" y2="92" stroke="#854d0e" stroke-width="3"/>
+          <line x1="34" y1="106" x2="66" y2="106" stroke="#854d0e" stroke-width="3"/>
+        </svg>`,
+
+        dx_ambulance: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="14" y="26" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="76" y="26" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="14" y="92" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="76" y="92" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="20" y="10" width="60" height="120" rx="14" fill="#1e3a8a" stroke="#fde047" stroke-width="4"/>
+          <path d="M25 22 L75 22 L70 38 L30 38 Z" fill="#bae6fd" stroke="#fde047" stroke-width="2.5"/>
+          <rect x="30" y="42" width="40" height="8" rx="3" fill="#38bdf8" stroke="#fde047" stroke-width="2"/>
+          <rect x="44" y="62" width="12" height="38" rx="2" fill="#fde047"/>
+          <rect x="31" y="75" width="38" height="12" rx="2" fill="#fde047"/>
+        </svg>`,
+
+        dx_dump: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="24" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="78" y="24" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="12" y="90" width="10" height="28" rx="4" fill="#facc15"/>
+          <rect x="78" y="90" width="10" height="28" rx="4" fill="#facc15"/>
+          <rect x="22" y="12" width="56" height="40" rx="10" fill="#059669" stroke="#fde047" stroke-width="4"/>
+          <path d="M26 24 L74 24 L70 38 L30 38 Z" fill="#a7f3d0" stroke="#fde047" stroke-width="2.5"/>
+          <rect x="18" y="50" width="64" height="78" rx="6" fill="#fde047" stroke="#ca8a04" stroke-width="4"/>
+          <rect x="26" y="58" width="48" height="62" rx="4" fill="#eab308"/>
+        </svg>`,
+
+        dx_shovel: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="44" width="14" height="78" rx="6" fill="#1e1b4b" stroke="#fde047" stroke-width="3"/>
+          <rect x="74" y="44" width="14" height="78" rx="6" fill="#1e1b4b" stroke="#fde047" stroke-width="3"/>
+          <rect x="22" y="48" width="56" height="70" rx="12" fill="#7e22ce" stroke="#fde047" stroke-width="4"/>
+          <rect x="28" y="56" width="24" height="26" rx="4" fill="#e9d5ff" stroke="#fde047" stroke-width="2.5"/>
+          <rect x="42" y="16" width="16" height="44" rx="4" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+          <path d="M28 4 L72 4 L64 20 L36 20 Z" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+        </svg>`,
+
+        dx_mixer: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="24" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="78" y="24" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="12" y="90" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="78" y="90" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="22" y="12" width="56" height="38" rx="10" fill="#ffffff" stroke="#fde047" stroke-width="4"/>
+          <path d="M26 24 L74 24 L70 38 L30 38 Z" fill="#38bdf8" stroke="#fde047" stroke-width="2.5"/>
+          <ellipse cx="50" cy="88" rx="28" ry="38" fill="#f43f5e" stroke="#fde047" stroke-width="4"/>
+          <path d="M26 70 L74 80" stroke="#fde047" stroke-width="6" stroke-linecap="round"/>
+          <path d="M24 88 L76 98" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+          <path d="M28 104 L72 114" stroke="#4ade80" stroke-width="6" stroke-linecap="round"/>
+        </svg>`,
+
+        dx_bus: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="26" width="8" height="24" rx="3" fill="#facc15"/>
+          <rect x="80" y="26" width="8" height="24" rx="3" fill="#facc15"/>
+          <rect x="12" y="92" width="8" height="24" rx="3" fill="#facc15"/>
+          <rect x="80" y="92" width="8" height="24" rx="3" fill="#facc15"/>
+          <rect x="18" y="8" width="64" height="124" rx="14" fill="#1e1b4b" stroke="#fde047" stroke-width="4"/>
+          <path d="M22 18 L78 18 L74 32 L26 32 Z" fill="#fef08a" stroke="#fde047" stroke-width="2.5"/>
+          <rect x="32" y="44" width="36" height="68" rx="8" fill="#38bdf8" stroke="#fde047" stroke-width="3"/>
+          <polygon points="50,66 54,74 62,74 56,79 58,87 50,82 42,87 44,79 38,74 46,74" fill="#fde047"/>
+        </svg>`,
+
+        dx_tank: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="22" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="78" y="22" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="12" y="92" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="78" y="92" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="22" y="10" width="56" height="36" rx="10" fill="#334155" stroke="#fde047" stroke-width="4"/>
+          <path d="M26 20 L74 20 L70 34 L30 34 Z" fill="#38bdf8" stroke="#fde047" stroke-width="2.5"/>
+          <rect x="20" y="46" width="60" height="82" rx="26" fill="#e2e8f0" stroke="#fde047" stroke-width="4"/>
+          <polygon points="54,58 38,86 52,86 44,114 66,82 52,82" fill="#fde047" stroke="#854d0e" stroke-width="1.5"/>
+        </svg>`,
+
+        dx_sports: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="14" y="26" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="76" y="26" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="14" y="88" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="76" y="88" width="10" height="24" rx="4" fill="#facc15"/>
+          <path d="M28 14 C38 8 62 8 72 14 C82 36 82 100 72 122 C62 130 38 130 28 122 C18 100 18 36 28 14 Z" fill="#06b6d4" stroke="#fde047" stroke-width="4"/>
+          <rect x="44" y="10" width="12" height="118" fill="#fde047"/>
+          <path d="M30 44 L70 44 L64 88 L36 88 Z" fill="#0f172a" stroke="#fde047" stroke-width="2.5"/>
+          <rect x="20" y="114" width="60" height="12" rx="3" fill="#fde047" stroke="#854d0e" stroke-width="2.5"/>
+        </svg>`,
+
+        dx_racing: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="10" y="26" width="14" height="26" rx="4" fill="#facc15"/>
+          <rect x="76" y="26" width="14" height="26" rx="4" fill="#facc15"/>
+          <rect x="10" y="88" width="14" height="26" rx="4" fill="#facc15"/>
+          <rect x="76" y="88" width="14" height="26" rx="4" fill="#facc15"/>
+          <rect x="18" y="8" width="64" height="12" rx="3" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+          <path d="M34 16 L66 16 L74 114 L26 114 Z" fill="#0f172a" stroke="#fde047" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="50" cy="36" r="10" fill="#fde047" stroke="#854d0e" stroke-width="2"/>
+          <ellipse cx="50" cy="68" rx="14" ry="20" fill="#334155" stroke="#fde047" stroke-width="2"/>
+          <circle cx="50" cy="66" r="8" fill="#fde047"/>
+          <rect x="16" y="114" width="68" height="14" rx="3" fill="#fde047" stroke="#854d0e" stroke-width="3"/>
+        </svg>`,
+
+        dx_rally: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="14" y="26" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="76" y="26" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="14" y="90" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="76" y="90" width="10" height="24" rx="4" fill="#facc15"/>
+          <rect x="22" y="12" width="56" height="116" rx="18" fill="#1e40af" stroke="#fde047" stroke-width="4"/>
+          <circle cx="32" cy="12" r="5" fill="#fde047"/>
+          <circle cx="44" cy="11" r="5" fill="#fde047"/>
+          <circle cx="56" cy="11" r="5" fill="#fde047"/>
+          <circle cx="68" cy="12" r="5" fill="#fde047"/>
+          <path d="M28 40 L72 40 L66 60 L34 60 Z" fill="#bae6fd" stroke="#fde047" stroke-width="2.5"/>
+          <polygon points="50,68 55,78 66,78 57,84 60,94 50,88 40,94 43,84 34,78 45,78" fill="#fde047"/>
+          <rect x="22" y="110" width="56" height="12" rx="3" fill="#fde047" stroke="#854d0e" stroke-width="2.5"/>
+        </svg>`,
+
+        dx_supercar: `<svg viewBox="0 0 100 140" class="w-full h-full">
+          <rect x="12" y="26" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="78" y="26" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="12" y="88" width="10" height="26" rx="4" fill="#facc15"/>
+          <rect x="78" y="88" width="10" height="26" rx="4" fill="#facc15"/>
+          <!-- ツインブースタージェット -->
+          <polygon points="34,128 42,128 38,139" fill="#38bdf8"/>
+          <polygon points="58,128 66,128 62,139" fill="#38bdf8"/>
+          <path d="M30 10 L70 10 L82 44 L80 120 L66 130 L34 130 L20 120 L18 44 Z" fill="#581c87" stroke="#fde047" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M28 44 L72 44 L64 88 L36 88 Z" fill="#38bdf8" stroke="#fde047" stroke-width="2.5"/>
+          <rect x="20" y="112" width="60" height="12" rx="3" fill="#fde047" stroke="#854d0e" stroke-width="2.5"/>
+        </svg>`
+      };
+      return topSVGs[carId] || topSVGs.patrol;
+    }
+
+    // 全24車種のカタログ（tier: 'easy' 12台 / tier: 'hard' デラックス12台）
+    const CarCatalog = [
+      /* 🌱 かんたんモード報酬（ノーマル仕様・全12台） */
+      { id: 'patrol', name: 'パトカー', kana: 'ぱとかー', type: 'はたらくくるま', tier: 'easy', soundType: 'siren_police', unlockedByDefault: true },
+      { id: 'fire', name: 'ショウボウシャ', kana: 'しょうぼうしゃ', type: 'はたらくくるま', tier: 'easy', soundType: 'siren_fire', unlockedByDefault: false },
+      { id: 'ambulance', name: 'キュウキュウシャ', kana: 'きゅうきゅうしゃ', type: 'はたらくくるま', tier: 'easy', soundType: 'siren_amb', unlockedByDefault: false },
+      { id: 'dump', name: 'ダンプカー', kana: 'だんぷかー', type: 'はたらくくるま', tier: 'easy', soundType: 'horn_heavy', unlockedByDefault: false },
+      { id: 'shovel', name: 'ショベルカー', kana: 'しょべるかー', type: 'はたらくくるま', tier: 'easy', soundType: 'horn_heavy', unlockedByDefault: false },
+      { id: 'mixer', name: 'ミキサーシャ', kana: 'みきさーしゃ', type: 'はたらくくるま', tier: 'easy', soundType: 'horn_heavy', unlockedByDefault: false },
+      { id: 'bus', name: 'バス', kana: 'ばす', type: 'はたらくくるま', tier: 'easy', soundType: 'horn_bus', unlockedByDefault: false },
+      { id: 'tank', name: 'タンクローリー', kana: 'たんくろーりー', type: 'はたらくくるま', tier: 'easy', soundType: 'horn_heavy', unlockedByDefault: false },
+      { id: 'sports_red', name: 'スポーツカー', kana: 'すぽーつかー', type: 'スポーツカー', tier: 'easy', soundType: 'engine_rev', unlockedByDefault: false },
+      { id: 'racing', name: 'レーシングカー', kana: 'れーしんぐかー', type: 'スポーツカー', tier: 'easy', soundType: 'engine_rev', unlockedByDefault: false },
+      { id: 'rally', name: 'ラリーカー', kana: 'らりーかー', type: 'スポーツカー', tier: 'easy', soundType: 'engine_rev', unlockedByDefault: false },
+      { id: 'supercar', name: 'スーパーカー', kana: 'すーぱーかー', type: 'スポーツカー', tier: 'easy', soundType: 'engine_rev', unlockedByDefault: false },
+
+      /* 🔥 しっかりモード報酬（デラックス仕様・全12台） */
+      { id: 'dx_patrol', name: 'ゴールドパトカー', kana: 'ごーるどぱとかー', type: '👑デラックス', tier: 'hard', soundType: 'siren_police', unlockedByDefault: false },
+      { id: 'dx_fire', name: 'ハイパーショウボウシャ', kana: 'はいぱーしょうぼうしゃ', type: '👑デラックス', tier: 'hard', soundType: 'siren_fire', unlockedByDefault: false },
+      { id: 'dx_ambulance', name: 'ドクターカー', kana: 'どくたーかー', type: '👑デラックス', tier: 'hard', soundType: 'siren_amb', unlockedByDefault: false },
+      { id: 'dx_dump', name: 'メガダンプカー', kana: 'めがだんぷかー', type: '👑デラックス', tier: 'hard', soundType: 'horn_heavy', unlockedByDefault: false },
+      { id: 'dx_shovel', name: 'キングショベルカー', kana: 'きんぐしょべるかー', type: '👑デラックス', tier: 'hard', soundType: 'horn_heavy', unlockedByDefault: false },
+      { id: 'dx_mixer', name: 'レインボーミキサー', kana: 'れいんぼーみきさー', type: '👑デラックス', tier: 'hard', soundType: 'horn_heavy', unlockedByDefault: false },
+      { id: 'dx_bus', name: 'ロイヤルスターバス', kana: 'ろいやるすたーばす', type: '👑デラックス', tier: 'hard', soundType: 'horn_bus', unlockedByDefault: false },
+      { id: 'dx_tank', name: 'クロームタンクローリー', kana: 'くろーむたんくろーりー', type: '👑デラックス', tier: 'hard', soundType: 'horn_heavy', unlockedByDefault: false },
+      { id: 'dx_sports', name: 'ナイトロスポーツ', kana: 'ないとろすぽーつ', type: '👑デラックス', tier: 'hard', soundType: 'engine_rev', unlockedByDefault: false },
+      { id: 'dx_racing', name: 'チャンピオンレーサー', kana: 'ちゃんぴおんれーさー', type: '👑デラックス', tier: 'hard', soundType: 'engine_rev', unlockedByDefault: false },
+      { id: 'dx_rally', name: 'ワールドラリーカー', kana: 'わーるどらりーかー', type: '👑デラックス', tier: 'hard', soundType: 'engine_rev', unlockedByDefault: false },
+      { id: 'dx_supercar', name: 'ギャラクシースーパー', kana: 'ぎゃらくしーすーぱー', type: '👑デラックス', tier: 'hard', soundType: 'engine_rev', unlockedByDefault: false }
+    ];
+
+    /* ============================================================================
+     * 1-B. STEP②・STEP③用の問題データベース（身近な言葉イラスト・カタカナ語彙・2桁/3桁数字）
+     * ============================================================================ */
+
+    // 車以外の身近な言葉（くだもの・たべもの・どうぶつ・みのまわりのもの）の専用イラストSVG
+    function getWordIllustrationSVG(wordObj) {
+      if (!wordObj) return getCarSideSVG('patrol');
+      if (wordObj.iconType === 'car') {
+        return getCarSideSVG(wordObj.carId);
+      }
+
+      const itemSVGs = {
+        /* --- 🍎 くだもの・たべもの --- */
+        apple: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M60 24 C60 12 68 8 72 8" fill="none" stroke="#78350f" stroke-width="5" stroke-linecap="round"/>
+          <path d="M62 18 C74 10 88 14 84 24 C78 30 66 26 62 18 Z" fill="#22c55e" stroke="#14532d" stroke-width="3"/>
+          <path d="M60 26 C42 20 22 32 24 56 C26 78 44 92 56 88 C58 87 62 87 64 88 C76 92 94 78 96 56 C98 32 78 20 60 26 Z" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          <ellipse cx="40" cy="46" rx="6" ry="12" transform="rotate(-20 40 46)" fill="#fca5a5" opacity="0.8"/>
+        </svg>`,
+
+        banana: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M26 24 C20 56 46 82 86 78 C72 64 52 46 42 22 Z" fill="#eab308" stroke="#854d0e" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M34 18 C36 52 64 74 98 64 C84 52 64 38 50 16 Z" fill="#facc15" stroke="#854d0e" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 16 L52 14 L48 24 L26 24 Z" fill="#65a30d" stroke="#365314" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M48 34 C56 48 70 56 82 58" fill="none" stroke="#fef08a" stroke-width="4" stroke-linecap="round"/>
+        </svg>`,
+
+        melon: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M42 14 L78 14 M60 14 L60 26" stroke="#65a30d" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="60" cy="58" r="34" fill="#86efac" stroke="#15803d" stroke-width="4"/>
+          <path d="M36 36 Q60 54 84 36 M30 56 Q60 72 90 56 M38 76 Q60 60 82 76 M46 28 Q62 58 46 88 M74 28 Q58 58 74 88" fill="none" stroke="#166534" stroke-width="2.5" opacity="0.65"/>
+        </svg>`,
+
+        tomato: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="60" cy="58" rx="36" ry="30" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          <path d="M60 16 L60 32 M60 30 L42 22 M60 30 L78 22 M60 30 L46 36 M60 30 L74 36" stroke="#15803d" stroke-width="5" stroke-linecap="round"/>
+          <ellipse cx="40" cy="48" rx="6" ry="10" transform="rotate(-25 40 48)" fill="#fca5a5"/>
+        </svg>`,
+
+        strawberry: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M34 32 C28 54 44 86 60 90 C76 86 92 54 86 32 C80 22 40 22 34 32 Z" fill="#f43f5e" stroke="#9f1239" stroke-width="4"/>
+          <path d="M36 28 L50 34 L60 22 L70 34 L84 28 L72 18 L60 12 L48 18 Z" fill="#22c55e" stroke="#14532d" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="48" cy="46" r="2.5" fill="#fef08a"/>
+          <circle cx="60" cy="44" r="2.5" fill="#fef08a"/>
+          <circle cx="72" cy="46" r="2.5" fill="#fef08a"/>
+          <circle cx="44" cy="62" r="2.5" fill="#fef08a"/>
+          <circle cx="60" cy="60" r="2.5" fill="#fef08a"/>
+          <circle cx="76" cy="62" r="2.5" fill="#fef08a"/>
+          <circle cx="52" cy="74" r="2.5" fill="#fef08a"/>
+          <circle cx="68" cy="74" r="2.5" fill="#fef08a"/>
+        </svg>`,
+
+        lemon: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M18 52 C24 38 36 24 60 24 C84 24 96 38 102 52 C96 66 84 80 60 80 C36 80 24 66 18 52 Z" fill="#facc15" stroke="#ca8a04" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M36 42 C46 34 64 32 78 38" fill="none" stroke="#fef9c3" stroke-width="5" stroke-linecap="round"/>
+          <path d="M58 24 C62 12 76 10 80 18 C74 24 64 26 58 24 Z" fill="#22c55e" stroke="#14532d" stroke-width="3"/>
+        </svg>`,
+
+        cake: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="60" cy="82" rx="46" ry="10" fill="#e2e8f0" stroke="#64748b" stroke-width="3"/>
+          <polygon points="28,46 92,34 92,76 28,76" fill="#fef3c7" stroke="#b45309" stroke-width="3.5" stroke-linejoin="round"/>
+          <line x1="28" y1="61" x2="92" y2="56" stroke="#f43f5e" stroke-width="5"/>
+          <polygon points="28,46 64,22 92,34" fill="#ffffff" stroke="#cbd5e1" stroke-width="3.5" stroke-linejoin="round"/>
+          <circle cx="62" cy="24" r="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+          <path d="M54 22 C54 10 62 6 62 6 C62 6 70 10 70 22 Z" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
+        </svg>`,
+
+        icecream: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="40,52 80,52 60,92" fill="#f59e0b" stroke="#92400e" stroke-width="3.5" stroke-linejoin="round"/>
+          <line x1="46" y1="60" x2="70" y2="72" stroke="#b45309" stroke-width="2.5"/>
+          <line x1="74" y1="60" x2="50" y2="72" stroke="#b45309" stroke-width="2.5"/>
+          <circle cx="46" cy="44" r="14" fill="#f472b6" stroke="#be185d" stroke-width="3"/>
+          <circle cx="74" cy="44" r="14" fill="#38bdf8" stroke="#0369a1" stroke-width="3"/>
+          <circle cx="60" cy="28" r="16" fill="#fef08a" stroke="#ca8a04" stroke-width="3"/>
+          <circle cx="60" cy="12" r="5" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+        </svg>`,
+
+        pudding: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="60" cy="80" rx="46" ry="10" fill="#ffffff" stroke="#64748b" stroke-width="3.5"/>
+          <path d="M28 76 L38 32 L82 32 L92 76 Z" fill="#fde047" stroke="#ca8a04" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M38 32 L82 32 L85 46 C76 50 72 42 64 46 C56 50 52 42 44 46 C38 48 36 44 35 46 Z" fill="#78350f" stroke="#451a03" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="60" cy="24" r="7" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+          <circle cx="60" cy="16" r="6" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+        </svg>`,
+
+        donut: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="60" cy="50" r="36" fill="#f59e0b" stroke="#92400e" stroke-width="4"/>
+          <circle cx="60" cy="50" r="31" fill="#78350f" stroke="#451a03" stroke-width="2.5"/>
+          <circle cx="60" cy="50" r="12" fill="#e0f2fe" stroke="#92400e" stroke-width="3.5"/>
+          <line x1="42" y1="30" x2="48" y2="34" stroke="#f472b6" stroke-width="4" stroke-linecap="round"/>
+          <line x1="72" y1="28" x2="78" y2="34" stroke="#fde047" stroke-width="4" stroke-linecap="round"/>
+          <line x1="34" y1="52" x2="38" y2="58" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+          <line x1="82" y1="50" x2="86" y2="56" stroke="#4ade80" stroke-width="4" stroke-linecap="round"/>
+          <line x1="48" y1="70" x2="54" y2="74" stroke="#fde047" stroke-width="4" stroke-linecap="round"/>
+          <line x1="68" y1="72" x2="74" y2="68" stroke="#f472b6" stroke-width="4" stroke-linecap="round"/>
+        </svg>`,
+
+        /* --- 🦁 どうぶつ・いきもの --- */
+        lion: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="60" cy="50" r="38" fill="#ea580c" stroke="#7c2d12" stroke-width="4" stroke-dasharray="14 6"/>
+          <circle cx="38" cy="26" r="9" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
+          <circle cx="82" cy="26" r="9" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
+          <circle cx="60" cy="52" r="26" fill="#facc15" stroke="#854d0e" stroke-width="3.5"/>
+          <circle cx="50" cy="46" r="4" fill="#0f172a"/>
+          <circle cx="70" cy="46" r="4" fill="#0f172a"/>
+          <polygon points="55,54 65,54 60,61" fill="#7c2d12"/>
+          <path d="M60 61 L54 67 M60 61 L66 67" stroke="#7c2d12" stroke-width="3" stroke-linecap="round"/>
+          <line x1="34" y1="56" x2="46" y2="58" stroke="#7c2d12" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="86" y1="56" x2="74" y2="58" stroke="#7c2d12" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>`,
+
+        panda: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="34" cy="24" r="12" fill="#0f172a"/>
+          <circle cx="86" cy="24" r="12" fill="#0f172a"/>
+          <circle cx="60" cy="54" r="32" fill="#ffffff" stroke="#1e293b" stroke-width="4"/>
+          <ellipse cx="46" cy="48" rx="9" ry="11" transform="rotate(-15 46 48)" fill="#0f172a"/>
+          <ellipse cx="74" cy="48" rx="9" ry="11" transform="rotate(15 74 48)" fill="#0f172a"/>
+          <circle cx="47" cy="46" r="3" fill="#ffffff"/>
+          <circle cx="73" cy="46" r="3" fill="#ffffff"/>
+          <ellipse cx="60" cy="60" rx="6" ry="4" fill="#0f172a"/>
+          <path d="M54 68 Q60 74 66 68" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="38" cy="62" r="5" fill="#fda4af" opacity="0.7"/>
+          <circle cx="82" cy="62" r="5" fill="#fda4af" opacity="0.7"/>
+        </svg>`,
+
+        koala: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="26" cy="44" r="18" fill="#94a3b8" stroke="#334155" stroke-width="3.5"/>
+          <circle cx="26" cy="44" r="10" fill="#f1f5f9"/>
+          <circle cx="94" cy="44" r="18" fill="#94a3b8" stroke="#334155" stroke-width="3.5"/>
+          <circle cx="94" cy="44" r="10" fill="#f1f5f9"/>
+          <circle cx="60" cy="54" r="28" fill="#cbd5e1" stroke="#334155" stroke-width="4"/>
+          <circle cx="46" cy="48" r="4" fill="#0f172a"/>
+          <circle cx="74" cy="48" r="4" fill="#0f172a"/>
+          <ellipse cx="60" cy="56" rx="8" ry="12" fill="#1e293b"/>
+          <circle cx="40" cy="60" r="5" fill="#fda4af" opacity="0.7"/>
+          <circle cx="80" cy="60" r="5" fill="#fda4af" opacity="0.7"/>
+        </svg>`,
+
+        giraffe: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <rect x="50" y="48" width="20" height="44" fill="#facc15" stroke="#854d0e" stroke-width="3.5"/>
+          <circle cx="56" cy="66" r="4" fill="#92400e"/>
+          <circle cx="64" cy="80" r="5" fill="#92400e"/>
+          <line x1="50" y1="12" x2="52" y2="24" stroke="#854d0e" stroke-width="4"/>
+          <line x1="70" y1="12" x2="68" y2="24" stroke="#854d0e" stroke-width="4"/>
+          <circle cx="50" cy="10" r="4" fill="#78350f"/>
+          <circle cx="70" cy="10" r="4" fill="#78350f"/>
+          <ellipse cx="36" cy="28" rx="8" ry="4" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
+          <ellipse cx="84" cy="28" rx="8" ry="4" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
+          <ellipse cx="60" cy="36" rx="22" ry="18" fill="#facc15" stroke="#854d0e" stroke-width="3.5"/>
+          <ellipse cx="60" cy="44" rx="16" ry="10" fill="#fde68a" stroke="#854d0e" stroke-width="2.5"/>
+          <circle cx="50" cy="30" r="3.5" fill="#0f172a"/>
+          <circle cx="70" cy="30" r="3.5" fill="#0f172a"/>
+          <circle cx="55" cy="42" r="2" fill="#78350f"/>
+          <circle cx="65" cy="42" r="2" fill="#78350f"/>
+        </svg>`,
+
+        penguin: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="46" cy="86" rx="10" ry="5" fill="#f59e0b" stroke="#92400e" stroke-width="2.5"/>
+          <ellipse cx="74" cy="86" rx="10" ry="5" fill="#f59e0b" stroke="#92400e" stroke-width="2.5"/>
+          <ellipse cx="60" cy="50" rx="30" ry="38" fill="#1e293b" stroke="#0f172a" stroke-width="3.5"/>
+          <ellipse cx="60" cy="58" rx="20" ry="26" fill="#ffffff"/>
+          <circle cx="48" cy="34" r="4.5" fill="#ffffff"/>
+          <circle cx="48" cy="34" r="2.5" fill="#0f172a"/>
+          <circle cx="72" cy="34" r="4.5" fill="#ffffff"/>
+          <circle cx="72" cy="34" r="2.5" fill="#0f172a"/>
+          <polygon points="52,40 68,40 60,50" fill="#facc15" stroke="#b45309" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="42" cy="42" r="4" fill="#fda4af"/>
+          <circle cx="78" cy="42" r="4" fill="#fda4af"/>
+        </svg>`,
+
+        dolphin: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M54 26 L66 10 L70 28 Z" fill="#0284c7" stroke="#0c4a6e" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M18 56 C24 30 56 20 84 36 C96 44 102 58 98 72 L108 82 L92 80 L84 90 L82 74 C70 56 46 56 26 66 C16 66 14 60 18 56 Z" fill="#38bdf8" stroke="#0369a1" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M26 64 C44 54 66 54 80 68" fill="none" stroke="#e0f2fe" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="36" cy="46" r="3.5" fill="#0f172a"/>
+        </svg>`,
+
+        whale: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M54 24 Q46 8 34 14 M54 24 Q62 8 74 14 M54 24 L54 10" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M20 58 C20 30 48 24 72 34 C86 40 92 54 98 54 L108 42 L106 66 L92 66 C82 76 54 80 26 76 C20 74 20 66 20 58 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M24 66 C44 66 64 68 76 74 L30 75 Z" fill="#dbeafe"/>
+          <circle cx="38" cy="50" r="3.5" fill="#ffffff"/>
+          <circle cx="38" cy="50" r="2" fill="#0f172a"/>
+        </svg>`,
+
+        /* --- 📺 みのまわりのもの・おもちゃ --- */
+        tv: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <line x1="44" y1="8" x2="58" y2="22" stroke="#475569" stroke-width="4" stroke-linecap="round"/>
+          <line x1="76" y1="8" x2="62" y2="22" stroke="#475569" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="44" cy="8" r="4" fill="#ef4444"/>
+          <circle cx="76" cy="8" r="4" fill="#ef4444"/>
+          <rect x="18" y="22" width="84" height="58" rx="10" fill="#334155" stroke="#0f172a" stroke-width="4"/>
+          <rect x="26" y="30" width="56" height="42" rx="6" fill="#38bdf8" stroke="#0284c7" stroke-width="2.5"/>
+          <circle cx="44" cy="44" r="7" fill="#fde047"/>
+          <path d="M26 64 L44 52 L60 62 L72 54 L82 64 L82 72 L26 72 Z" fill="#4ade80"/>
+          <circle cx="92" cy="40" r="4" fill="#facc15"/>
+          <circle cx="92" cy="54" r="4" fill="#fb7185"/>
+          <rect x="44" y="80" width="32" height="8" rx="3" fill="#475569" stroke="#0f172a" stroke-width="3"/>
+        </svg>`,
+
+        camera: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <rect x="30" y="18" width="18" height="10" rx="3" fill="#ef4444" stroke="#991b1b" stroke-width="3"/>
+          <path d="M48 26 L54 18 L76 18 L82 26 Z" fill="#64748b" stroke="#1e293b" stroke-width="3"/>
+          <rect x="20" y="26" width="80" height="56" rx="12" fill="#38bdf8" stroke="#0369a1" stroke-width="4"/>
+          <rect x="20" y="46" width="80" height="16" fill="#ffffff" opacity="0.4"/>
+          <circle cx="62" cy="54" r="20" fill="#1e293b" stroke="#f8fafc" stroke-width="4"/>
+          <circle cx="62" cy="54" r="11" fill="#0ea5e9"/>
+          <circle cx="57" cy="49" r="3.5" fill="#ffffff"/>
+          <rect x="82" y="32" width="10" height="7" rx="2" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+        </svg>`,
+
+        piano: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <text x="30" y="22" font-size="16" font-weight="900" fill="#ec4899">♪</text>
+          <text x="82" y="20" font-size="16" font-weight="900" fill="#3b82f6">♫</text>
+          <rect x="16" y="26" width="88" height="58" rx="8" fill="#1e293b" stroke="#0f172a" stroke-width="4"/>
+          <rect x="22" y="36" width="76" height="42" rx="4" fill="#ffffff" stroke="#0f172a" stroke-width="3"/>
+          <line x1="37" y1="36" x2="37" y2="78" stroke="#94a3b8" stroke-width="2.5"/>
+          <line x1="52" y1="36" x2="52" y2="78" stroke="#94a3b8" stroke-width="2.5"/>
+          <line x1="68" y1="36" x2="68" y2="78" stroke="#94a3b8" stroke-width="2.5"/>
+          <line x1="83" y1="36" x2="83" y2="78" stroke="#94a3b8" stroke-width="2.5"/>
+          <rect x="32" y="36" width="10" height="24" rx="2" fill="#0f172a"/>
+          <rect x="47" y="36" width="10" height="24" rx="2" fill="#0f172a"/>
+          <rect x="78" y="36" width="10" height="24" rx="2" fill="#0f172a"/>
+        </svg>`,
+
+        robot: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <line x1="60" y1="8" x2="60" y2="20" stroke="#475569" stroke-width="4"/>
+          <circle cx="60" cy="8" r="5" fill="#ef4444" stroke="#991b1b" stroke-width="2"/>
+          <rect x="32" y="20" width="56" height="36" rx="8" fill="#38bdf8" stroke="#0369a1" stroke-width="3.5"/>
+          <rect x="24" y="30" width="8" height="16" rx="3" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+          <rect x="88" y="30" width="8" height="16" rx="3" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+          <circle cx="46" cy="34" r="6" fill="#fef08a" stroke="#0f172a" stroke-width="2.5"/>
+          <circle cx="74" cy="34" r="6" fill="#fef08a" stroke="#0f172a" stroke-width="2.5"/>
+          <rect x="44" y="45" width="32" height="6" rx="3" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+          <rect x="38" y="58" width="44" height="30" rx="6" fill="#94a3b8" stroke="#334155" stroke-width="3.5"/>
+          <circle cx="52" cy="72" r="4" fill="#ef4444"/>
+          <circle cx="68" cy="72" r="4" fill="#22c55e"/>
+        </svg>`,
+
+        rocket: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M50 76 L60 96 L70 76 Z" fill="#f97316" stroke="#c2410c" stroke-width="2.5"/>
+          <path d="M40 54 L24 74 L42 72 Z" fill="#ef4444" stroke="#991b1b" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M80 54 L96 74 L78 72 Z" fill="#ef4444" stroke="#991b1b" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M60 8 C42 26 40 52 42 76 L78 76 C80 52 78 26 60 8 Z" fill="#ffffff" stroke="#334155" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M60 8 C51 18 47 26 45 32 L75 32 C73 26 69 18 60 8 Z" fill="#ef4444" stroke="#991b1b" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="60" cy="48" r="10" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+        </svg>`,
+
+        soccer: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="60" cy="50" r="36" fill="#ffffff" stroke="#0f172a" stroke-width="4"/>
+          <polygon points="60,36 73,45 68,60 52,60 47,45" fill="#0f172a"/>
+          <line x1="60" y1="36" x2="60" y2="16" stroke="#0f172a" stroke-width="3.5"/>
+          <line x1="73" y1="45" x2="92" y2="38" stroke="#0f172a" stroke-width="3.5"/>
+          <line x1="68" y1="60" x2="82" y2="76" stroke="#0f172a" stroke-width="3.5"/>
+          <line x1="52" y1="60" x2="38" y2="76" stroke="#0f172a" stroke-width="3.5"/>
+          <line x1="47" y1="45" x2="28" y2="38" stroke="#0f172a" stroke-width="3.5"/>
+        </svg>`,
+
+        toilet: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <rect x="30" y="14" width="24" height="36" rx="5" fill="#ffffff" stroke="#0284c7" stroke-width="3.5"/>
+          <rect x="26" y="12" width="32" height="8" rx="3" fill="#bae6fd" stroke="#0284c7" stroke-width="3"/>
+          <path d="M30 50 L88 50 C90 68 78 76 66 76 L66 88 L40 88 L40 72 C32 68 30 60 30 50 Z" fill="#ffffff" stroke="#0284c7" stroke-width="3.5" stroke-linejoin="round"/>
+          <ellipse cx="62" cy="50" rx="26" ry="5" fill="#38bdf8" stroke="#0284c7" stroke-width="3"/>
+          <polygon points="84,22 87,28 93,28 88,32 90,38 84,34 78,38 80,32 75,28 81,28" fill="#facc15"/>
+        </svg>`,
+
+        cup: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M78 36 C96 36 96 64 76 64" fill="none" stroke="#0284c7" stroke-width="7" stroke-linecap="round"/>
+          <path d="M30 24 L82 24 L74 82 C73 86 68 88 56 88 C44 88 39 86 38 82 Z" fill="#38bdf8" stroke="#0369a1" stroke-width="4" stroke-linejoin="round"/>
+          <ellipse cx="56" cy="24" rx="26" ry="6" fill="#e0f2fe" stroke="#0369a1" stroke-width="3.5"/>
+          <polygon points="56,44 59,51 67,51 61,56 63,64 56,59 49,64 51,56 45,51 53,51" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/>
+        </svg>`,
+
+        spoon: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M68 46 L96 78 C100 82 94 88 90 84 L58 54 Z" fill="#cbd5e1" stroke="#334155" stroke-width="3.5" stroke-linejoin="round"/>
+          <ellipse cx="46" cy="36" rx="24" ry="18" transform="rotate(38 46 36)" fill="#e2e8f0" stroke="#334155" stroke-width="4"/>
+          <path d="M34 26 C42 22 52 26 56 34" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+        </svg>`,
+
+        crayon: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <g transform="rotate(-18 46 52)">
+            <polygon points="36,26 46,10 56,26" fill="#ef4444" stroke="#991b1b" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="34" y="26" width="24" height="54" rx="3" fill="#f87171" stroke="#991b1b" stroke-width="3"/>
+            <rect x="34" y="36" width="24" height="32" fill="#fee2e2" stroke="#991b1b" stroke-width="2"/>
+          </g>
+          <g transform="rotate(16 76 54)">
+            <polygon points="66,28 76,12 86,28" fill="#2563eb" stroke="#1e3a8a" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="64" y="28" width="24" height="54" rx="3" fill="#60a5fa" stroke="#1e3a8a" stroke-width="3"/>
+            <rect x="64" y="38" width="24" height="32" fill="#dbeafe" stroke="#1e3a8a" stroke-width="2"/>
+          </g>
+        </svg>`
+      };
+
+      return itemSVGs[wordObj.itemId] || getCarSideSVG('patrol');
+    }
+
+    // 5歳児が身近に知っている車以外の言葉リスト（全27語）
+    const EverydayWords = [
+      // 🍎 くだもの・たべもの
+      { itemId: 'apple', katakana: 'リンゴ', hiragana: 'りんご', iconType: 'item' },
+      { itemId: 'banana', katakana: 'バナナ', hiragana: 'ばなな', iconType: 'item' },
+      { itemId: 'melon', katakana: 'メロン', hiragana: 'めろん', iconType: 'item' },
+      { itemId: 'tomato', katakana: 'トマト', hiragana: 'とまと', iconType: 'item' },
+      { itemId: 'strawberry', katakana: 'イチゴ', hiragana: 'いちご', iconType: 'item' },
+      { itemId: 'lemon', katakana: 'レモン', hiragana: 'れもん', iconType: 'item' },
+      { itemId: 'cake', katakana: 'ケーキ', hiragana: 'けーき', iconType: 'item' },
+      { itemId: 'icecream', katakana: 'アイス', hiragana: 'あいす', iconType: 'item' },
+      { itemId: 'pudding', katakana: 'プリン', hiragana: 'ぷりん', iconType: 'item' },
+      { itemId: 'donut', katakana: 'ドーナツ', hiragana: 'どーなつ', iconType: 'item' },
+      // 🦁 どうぶつ・いきもの
+      { itemId: 'lion', katakana: 'ライオン', hiragana: 'らいおん', iconType: 'item' },
+      { itemId: 'panda', katakana: 'パンダ', hiragana: 'ぱんだ', iconType: 'item' },
+      { itemId: 'koala', katakana: 'コアラ', hiragana: 'こあら', iconType: 'item' },
+      { itemId: 'giraffe', katakana: 'キリン', hiragana: 'きりん', iconType: 'item' },
+      { itemId: 'penguin', katakana: 'ペンギン', hiragana: 'ぺんぎん', iconType: 'item' },
+      { itemId: 'dolphin', katakana: 'イルカ', hiragana: 'いるか', iconType: 'item' },
+      { itemId: 'whale', katakana: 'クジラ', hiragana: 'くじら', iconType: 'item' },
+      // 📺 みのまわりのもの・おもちゃ
+      { itemId: 'tv', katakana: 'テレビ', hiragana: 'てれび', iconType: 'item' },
+      { itemId: 'camera', katakana: 'カメラ', hiragana: 'かめら', iconType: 'item' },
+      { itemId: 'piano', katakana: 'ピアノ', hiragana: 'ぴあの', iconType: 'item' },
+      { itemId: 'robot', katakana: 'ロボット', hiragana: 'ろぼっと', iconType: 'item' },
+      { itemId: 'rocket', katakana: 'ロケット', hiragana: 'ろけっと', iconType: 'item' },
+      { itemId: 'soccer', katakana: 'サッカー', hiragana: 'さっかー', iconType: 'item' },
+      { itemId: 'toilet', katakana: 'トイレ', hiragana: 'といれ', iconType: 'item' },
+      { itemId: 'cup', katakana: 'コップ', hiragana: 'こっぷ', iconType: 'item' },
+      { itemId: 'spoon', katakana: 'スプーン', hiragana: 'すぷーん', iconType: 'item' },
+      { itemId: 'crayon', katakana: 'クレヨン', hiragana: 'くれよん', iconType: 'item' }
+    ];
+
+    // STEP②の言葉問題：車の名前（12種）＋身近な言葉（27種）＝全39種を出題
+    const WordPool = [
+      ...CarCatalog.filter(c => c.tier === 'easy').map(car => ({
+        carId: car.id,
+        katakana: car.name,
+        hiragana: car.kana,
+        iconType: 'car'
+      })),
+      ...EverydayWords
+    ];
+
+    const KataToHira = {
+      'ア':'あ','イ':'い','ウ':'う','エ':'え','オ':'お',
+      'カ':'か','キ':'き','ク':'く','ケ':'け','コ':'こ',
+      'サ':'さ','シ':'し','ス':'す','セ':'せ','ソ':'そ',
+      'タ':'た','チ':'ち','ツ':'つ','テ':'て','ト':'と',
+      'ナ':'な','ニ':'に','ヌ':'ぬ','ネ':'ね','ノ':'の',
+      'ハ':'は','ヒ':'ひ','フ':'ふ','ヘ':'へ','ホ':'ほ',
+      'マ':'ま','ミ':'み','ム':'む','メ':'め','モ':'も',
+      'ヤ':'や','ユ':'ゆ','ヨ':'よ',
+      'ラ':'ら','リ':'り','ル':'る','レ':'れ','ロ':'ろ',
+      'ワ':'わ','ヲ':'を','ン':'ん',
+      'ガ':'が','ギ':'ぎ','グ':'ぐ','ゲ':'げ','ゴ':'ご',
+      'ザ':'ざ','ジ':'じ','ズ':'ず','ゼ':'ぜ','ゾ':'ぞ',
+      'ダ':'だ','ヂ':'ぢ','ヅ':'づ','デ':'で','ド':'ど',
+      'バ':'ば','ビ':'び','ブ':'ぶ','ベ':'べ','ボ':'ぼ',
+      'パ':'ぱ','ピ':'ぴ','プ':'ぷ','ペ':'ぺ','ポ':'ぽ',
+      'ャ':'ゃ','ュ':'ゅ','ョ':'ょ','ッ':'っ','ー':'ー'
+    };
+
+    const SimilarKatakana = {
+      'ア': ['マ', 'ヤ', 'ム', 'te' === 'te' ? 'テ' : 'ラ'],
+      'イ': ['ト', 'ナ', 'リ', 'テ'],
+      'ウ': ['ワ', 'ラ', 'フ', 'ク'],
+      'エ': ['ユ', 'ヨ', 'コ', 'ロ'],
+      'オ': ['ホ', 'ネ', 'ナ', 'カ'],
+      'カ': ['ガ', 'タ', 'ク', 'セ'],
+      'キ': ['ギ', 'サ', 'チ', 'ケ'],
+      'ク': ['タ', 'ケ', 'ワ', 'グ'],
+      'ケ': ['ク', 'タ', 'キ', 'テ'],
+      'コ': ['ユ', 'ヨ', 'ロ', 'エ'],
+      'サ': ['ザ', 'セ', 'キ', 'チ'],
+      'シ': ['ツ', 'ン', 'ミ', 'ソ'],
+      'ス': ['ヌ', 'フ', 'マ', 'ズ'],
+      'セ': ['サ', 'ヒ', 'ヤ', 'カ'],
+      'ソ': ['ン', 'ツ', 'シ', 'リ'],
+      'タ': ['ダ', 'ク', 'カ', 'ナ'],
+      'チ': ['テ', 'キ', 'サ', 'ナ'],
+      'ツ': ['シ', 'ソ', 'ン', 'ウ'],
+      'テ': ['チ', 'ラ', 'ナ', 'ト'],
+      'ト': ['ナ', 'テ', 'コ', 'ド'],
+      'ナ': ['メ', 'ヌ', 'チ', 'タ'],
+      'ニ': ['ミ', 'エ', 'コ', 'ユ'],
+      'ヌ': ['ス', 'フ', 'タ', 'メ'],
+      'ネ': ['ホ', 'オ', 'ヌ', 'ラ'],
+      'ノ': ['ソ', 'ン', 'リ', 'メ'],
+      'ハ': ['バ', 'パ', 'ル', 'ソ'],
+      'ヒ': ['ビ', 'ピ', 'セ', 'ニ'],
+      'フ': ['ワ', 'ラ', 'ウ', 'ス'],
+      'ヘ': ['ベ', 'ペ', 'ハ', 'ノ'],
+      'ホ': ['ボ', 'ポ', 'オ', 'ネ'],
+      'マ': ['ア', 'ム', 'ス', 'ヌ'],
+      'ミ': ['シ', 'ニ', 'ヨ', 'ス'],
+      'ム': ['マ', 'ル', 'レ', 'ア'],
+      'メ': ['ナ', 'ヌ', 'ノ', 'ソ'],
+      'モ': ['ヒ', 'チ', 'エ', 'ヨ'],
+      'ヤ': ['ア', 'セ', 'カ', 'マ'],
+      'ユ': ['コ', 'ヨ', 'エ', 'ロ'],
+      'ヨ': ['コ', 'ユ', 'ロ', 'エ'],
+      'ラ': ['フ', 'ワ', 'ウ', 'リ'],
+      'リ': ['ル', 'ノ', 'ソ', 'ン'],
+      'ル': ['レ', 'ロ', 'リ', 'ノ'],
+      'レ': ['ル', 'ム', 'メ', 'ロ'],
+      'ロ': ['コ', 'ヨ', 'マ', 'ル'],
+      'ワ': ['ウ', 'フ', 'ラ', 'ク'],
+      'ン': ['ソ', 'シ', 'ツ', 'ノ'],
+      'ガ': ['カ', 'ダ', 'タ', 'グ'],
+      'ギ': ['キ', 'ザ', 'チ', 'ゲ'],
+      'グ': ['ク', 'ケ', 'タ', 'ダ'],
+      'ゴ': ['コ', 'ロ', 'ヨ', 'ボ'],
+      'ジ': ['シ', 'ツ', 'ズ', 'ビ'],
+      'ダ': ['タ', 'ナ', 'ガ', 'ラ'],
+      'ド': ['ト', 'ナ', 'テ', 'ボ'],
+      'バ': ['パ', 'ハ', 'マ', 'カ'],
+      'ビ': ['ピ', 'ヒ', 'シ', 'ジ'],
+      'ブ': ['プ', 'フ', 'ワ', 'グ'],
+      'ベ': ['ペ', 'ヘ', 'マ', 'ト'],
+      'ボ': ['ホ', 'ポ', 'オ', 'ネ'],
+      'パ': ['バ', 'ハ', 'マ', 'タ'],
+      'ピ': ['ビ', 'ヒ', 'セ', 'ミ'],
+      'プ': ['ブ', 'フ', 'ワ', 'ス'],
+      'ペ': ['ベ', 'ヘ', 'ハ', 'パ'],
+      'ポ': ['ボ', 'ホ', 'オ', 'パ'],
+      'ャ': ['ヤ', 'ュ', 'ョ', 'マ'],
+      'ュ': ['ユ', 'ョ', 'ャ', 'コ'],
+      'ョ': ['ヨ', 'ュ', 'ャ', 'コ'],
+      'ッ': ['ツ', 'シ', 'ソ', 'ュ'],
+      'ー': ['ン', 'ノ', 'ル', 'リ']
+    };
+
+    // STEP③：2桁（かんたん）・3桁（しっかり）の位取りトレーニング問題
+    const NumberQuestionsEasy = [
+      { num: 12, kana: 'じゅうに', distractors: [21, 20, 15] },
+      { num: 15, kana: 'じゅうご', distractors: [51, 50, 12] },
+      { num: 23, kana: 'にじゅうさん', distractors: [32, 20, 30] },
+      { num: 25, kana: 'にじゅうご', distractors: [52, 20, 28] },
+      { num: 30, kana: 'さんじゅう', distractors: [3, 13, 33] },
+      { num: 34, kana: 'さんじゅうよん', distractors: [43, 30, 40] },
+      { num: 46, kana: 'よんじゅうろく', distractors: [64, 40, 60] },
+      { num: 58, kana: 'ごじゅうはち', distractors: [85, 50, 80] },
+      { num: 70, kana: 'ななじゅう', distractors: [17, 77, 71] },
+      { num: 89, kana: 'はちじゅうきゅう', distractors: [98, 80, 90] }
+    ];
+
+    const NumberQuestionsHard = [
+      { num: 100, kana: 'ひゃく', distractors: [10, 101, 110] },
+      { num: 105, kana: 'ひゃくご', distractors: [15, 150, 501] },
+      { num: 120, kana: 'ひゃくにじゅう', distractors: [12, 102, 210] },
+      { num: 130, kana: 'ひゃくさんじゅう', distractors: [103, 310, 30] },
+      { num: 150, kana: 'ひゃくごじゅう', distractors: [105, 510, 50] },
+      { num: 200, kana: 'にひゃく', distractors: [20, 202, 120] },
+      { num: 208, kana: 'にひゃくはち', distractors: [28, 280, 802] },
+      { num: 240, kana: 'にひゃくよんじゅう', distractors: [204, 420, 42] },
+      { num: 300, kana: 'さんびゃく', distractors: [30, 303, 130] },
+      { num: 365, kana: 'さんびゃくろくじゅうご', distractors: [356, 635, 305] }
+    ];
+
+    /* ============================================================================
+     * 1-C. 50音表データ（ひらがな・カタカナ併記）
+     * ============================================================================ */
+    // 基本50音（左から あ・か・さ・た・な・は・ま・や・ら・わ の10列 × 5段）
+    const KanaBasicColumns = [
+      { label: 'あ', color: 'bg-rose-50 border-rose-300 text-rose-900', cells: [['あ','ア'],['い','イ'],['う','ウ'],['え','エ'],['お','オ']] },
+      { label: 'か', color: 'bg-orange-50 border-orange-300 text-orange-900', cells: [['か','カ'],['き','キ'],['く','ク'],['け','ケ'],['こ','コ']] },
+      { label: 'さ', color: 'bg-amber-50 border-amber-300 text-amber-900', cells: [['さ','サ'],['し','シ'],['す','ス'],['せ','セ'],['そ','ソ']] },
+      { label: 'た', color: 'bg-lime-50 border-lime-300 text-lime-900', cells: [['た','タ'],['ち','チ'],['つ','ツ'],['て','テ'],['と','ト']] },
+      { label: 'な', color: 'bg-emerald-50 border-emerald-300 text-emerald-900', cells: [['な','ナ'],['に','ニ'],['ぬ','ヌ'],['ね','ネ'],['の','ノ']] },
+      { label: 'は', color: 'bg-teal-50 border-teal-300 text-teal-900', cells: [['は','ハ'],['ひ','ヒ'],['ふ','フ'],['へ','ヘ'],['ほ','ホ']] },
+      { label: 'ま', color: 'bg-sky-50 border-sky-300 text-sky-900', cells: [['ま','マ'],['み','ミ'],['む','ム'],['め','メ'],['も','モ']] },
+      { label: 'や', color: 'bg-indigo-50 border-indigo-300 text-indigo-900', cells: [['や','ヤ'],null,['ゆ','ユ'],null,['よ','ヨ']] },
+      { label: 'ら', color: 'bg-purple-50 border-purple-300 text-purple-900', cells: [['ら','ラ'],['り','リ'],['る','ル'],['れ','レ'],['ろ','ロ']] },
+      { label: 'わ', color: 'bg-pink-50 border-pink-300 text-pink-900', cells: [['わ','ワ'],null,['を','ヲ'],null,['ん','ン']] }
+    ];
+
+    // 濁音・半濁音・小さい文字・伸ばす棒（車の名前に頻出する文字）
+    const KanaExtraColumns = [
+      { label: 'が', color: 'bg-orange-50 border-orange-300 text-orange-900', cells: [['が','ガ'],['ぎ','ギ'],['ぐ','グ'],['げ','ゲ'],['ご','ゴ']] },
+      { label: 'ざ', color: 'bg-amber-50 border-amber-300 text-amber-900', cells: [['ざ','ザ'],['じ','ジ'],['ず','ズ'],['ぜ','ゼ'],['ぞ','ゾ']] },
+      { label: 'だ', color: 'bg-lime-50 border-lime-300 text-lime-900', cells: [['だ','ダ'],['ぢ','ヂ'],['づ','ヅ'],['で','デ'],['ど','ド']] },
+      { label: 'ば', color: 'bg-teal-50 border-teal-300 text-teal-900', cells: [['ば','バ'],['び','ビ'],['ぶ','ブ'],['べ','ベ'],['ぼ','ボ']] },
+      { label: 'ぱ', color: 'bg-sky-50 border-sky-300 text-sky-900', cells: [['ぱ','パ'],['ぴ','ピ'],['ぷ','プ'],['ぺ','ペ'],['ぽ','ポ']] },
+      { label: 'ゃ・ー', color: 'bg-rose-50 border-rose-300 text-rose-900', cells: [['ゃ','ャ','ちいさい や'],['ゅ','ュ','ちいさい ゆ'],['ょ','ョ','ちいさい よ'],['っ','ッ','ちいさい つ'],['ー','ー','のばす おと']] }
+    ];
+
+    /* ============================================================================
+     * 2. スマホ・Geminiアプリ内プレビュー（WebView）完全対応 ハイブリッド音声エンジン
+     *    - 同期ジェスチャーロック解除（setTimeout廃止）
+     *    - speechSynthesis が無反応なWebView環境では自動的に <audio> ストリームTTSへフォールバック
+     * ============================================================================ */
+    window._activeUtterance = null;
+    window._cachedJaVoice = null;
+    window._webViewSilenceDetected = false;
+    window._ttsFallbackTimer = null;
+    window._audioUnlocked = false;
+
+    // 日本語ボイスの事前キャッシュ（Android / iOS 対策）
+    function loadJapaneseVoice() {
+      if (!('speechSynthesis' in window)) return;
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+          window._cachedJaVoice =
+            voices.find(v => v.lang && (v.lang === 'ja-JP' || v.lang === 'ja_JP')) ||
+            voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ja')) ||
+            null;
+        }
+      } catch (e) {
+        console.warn('Voice load error:', e);
+      }
+    }
+    if ('speechSynthesis' in window) {
+      loadJapaneseVoice();
+      window.speechSynthesis.onvoiceschanged = loadJapaneseVoice;
+    }
+
+    // スマホ用クラウドTTS（<audio>要素による再生：Geminiアプリ内WebViewでも確実に鳴る）
+    function playCloudTTS(text, callback) {
+      const audioEl = document.getElementById('tts-cloud-audio');
+      if (!audioEl) {
+        if (typeof callback === 'function') callback();
+        return;
+      }
+      try {
+        audioEl.pause();
+        const cleanText = String(text).replace(/\s+/g, ' ').trim();
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
+        let doneCalled = false;
+        const finish = () => {
+          if (!doneCalled) {
+            doneCalled = true;
+            audioEl.onended = null;
+            audioEl.onerror = null;
+            if (typeof callback === 'function') callback();
+          }
+        };
+        audioEl.onended = finish;
+        audioEl.onerror = finish;
+        audioEl.src = url;
+        audioEl.rate = 1.0;
+        const playPromise = audioEl.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.warn('Cloud TTS play fallback warning:', err);
+            finish();
+          });
+        }
+      } catch (e) {
+        console.warn('Cloud TTS exception:', e);
+        if (typeof callback === 'function') callback();
+      }
+    }
+
+    // メイン音声読み上げ関数（ユーザー操作と同期して即座に呼び出す）
+    function speakText(text, callback) {
+      if (!text) {
+        if (typeof callback === 'function') callback();
+        return;
+      }
+
+      if (window._ttsFallbackTimer) {
+        clearTimeout(window._ttsFallbackTimer);
+        window._ttsFallbackTimer = null;
+      }
+
+      const mode = (window.Game && Game.state && Game.state.voiceMode) ? Game.state.voiceMode : 'auto';
+
+      // 1. 「スマホアプリ用（cloud）」モード、または既にWebViewで標準TTSが無反応と判明している場合
+      if (mode === 'cloud' || (mode === 'auto' && window._webViewSilenceDetected) || !('speechSynthesis' in window)) {
+        playCloudTTS(text, callback);
+        return;
+      }
+
+      // 2. 端末標準の speechSynthesis を同期実行（setTimeoutを使わずタップ直後に呼ぶ）
+      try {
+        const synth = window.speechSynthesis;
+        // Android WebView対策：再生中のときだけcancel()を呼ぶ（毎回呼ぶとキューがフリーズするため）
+        if (synth.speaking || synth.pending) {
+          synth.cancel();
+        }
+        if (synth.paused) {
+          synth.resume();
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP';
+        utterance.rate = 0.95;
+        utterance.pitch = 1.08;
+
+        if (!window._cachedJaVoice) loadJapaneseVoice();
+        if (window._cachedJaVoice) {
+          utterance.voice = window._cachedJaVoice;
+        }
+
+        let started = false;
+        let finished = false;
+        const done = () => {
+          if (!finished) {
+            finished = true;
+            if (window._ttsFallbackTimer) {
+              clearTimeout(window._ttsFallbackTimer);
+              window._ttsFallbackTimer = null;
+            }
+            if (typeof callback === 'function') callback();
+          }
+        };
+
+        utterance.onstart = () => {
+          started = true;
+          if (window._ttsFallbackTimer) {
+            clearTimeout(window._ttsFallbackTimer);
+            window._ttsFallbackTimer = null;
+          }
+        };
+        utterance.onend = done;
+        utterance.onerror = () => {
+          // エラー発生時は自動モードならクラウド音声へ即座に切り替え
+          if (!started && mode === 'auto') {
+            window._webViewSilenceDetected = true;
+            playCloudTTS(text, callback);
+          } else {
+            done();
+          }
+        };
+
+        window._activeUtterance = utterance;
+        synth.speak(utterance);
+
+        // Geminiアプリ内WebView検知：320ms以内にonstartが発火しない場合、WebViewでTTSがブロックされているため即座に<audio>音声へ自動フォールバック！
+        if (mode === 'auto') {
+          window._ttsFallbackTimer = setTimeout(() => {
+            if (!started && !finished) {
+              window._webViewSilenceDetected = true;
+              try { synth.cancel(); } catch (e) {}
+              playCloudTTS(text, callback);
+            }
+          }, 320);
+        }
+      } catch (e) {
+        console.warn('Speech synthesis fallback to cloud:', e);
+        if (mode === 'auto') {
+          window._webViewSilenceDetected = true;
+          playCloudTTS(text, callback);
+        } else if (typeof callback === 'function') {
+          callback();
+        }
+      }
+    }
+
+    const Sound = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        // 初回タップ時に常駐 <audio> 要素と speechSynthesis のロックを同時解除
+        if (!window._audioUnlocked) {
+          window._audioUnlocked = true;
+          const audioEl = document.getElementById('tts-cloud-audio');
+          if (audioEl) {
+            // 無音の極小WAVで再生権限をアンロック（以降のステップ遷移時の自動読み上げを許可させる）
+            audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+            const p = audioEl.play();
+            if (p !== undefined) {
+              p.then(() => {
+                audioEl.pause();
+                audioEl.currentTime = 0;
+              }).catch(() => {});
+            }
+          }
+          if ('speechSynthesis' in window) {
+            try { window.speechSynthesis.resume(); } catch (e) {}
+          }
+        }
+      },
+
+      speak(text, callback) {
+        this.init();
+        speakText(text, callback);
+      },
+
+      playCorrect() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        this.tone(659.25, now, 0.14, 'sine', 0.25);
+        this.tone(880.00, now + 0.14, 0.35, 'sine', 0.3);
+      },
+
+      playGentleTryAgain() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        this.tone(392.00, now, 0.12, 'triangle', 0.2);
+        this.tone(329.63, now + 0.12, 0.22, 'triangle', 0.2);
+      },
+
+      playExplosion() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        // ホワイトノイズ＋ローパスフィルターで迫力のあるコミカルな爆発音「ドカーン！」を生成
+        const bufferSize = this.ctx.sampleRate * 0.75;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.22));
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(900, now);
+        filter.frequency.exponentialRampToValueAtTime(90, now + 0.7);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.55, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.74);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(now);
+        noise.stop(now + 0.75);
+
+        // 低音の衝撃波トーンを重ねる
+        this.tone(130, now, 0.35, 'sawtooth', 0.35);
+        this.tone(65, now + 0.05, 0.55, 'sine', 0.4);
+      },
+
+      playPitfall() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        // 「ヒューン……ドスン！」と穴に落ちていくスライド音
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.65);
+        gain.gain.setValueAtTime(0.28, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.68);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.68);
+
+        // 着地時の「ドスン」
+        this.tone(95, now + 0.65, 0.25, 'triangle', 0.35);
+      },
+
+      playFanfare() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [
+          { f: 523.25, t: 0.0, d: 0.14 },
+          { f: 659.25, t: 0.15, d: 0.14 },
+          { f: 783.99, t: 0.30, d: 0.14 },
+          { f: 1046.50, t: 0.45, d: 0.45 }
+        ];
+        notes.forEach(n => this.tone(n.f, now + n.t, n.d, 'triangle', 0.28));
+      },
+
+      playCarSound(soundType) {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        if (soundType === 'siren_police' || soundType === 'siren_fire') {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(550, now);
+          osc.frequency.linearRampToValueAtTime(880, now + 0.35);
+          osc.frequency.linearRampToValueAtTime(550, now + 0.7);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.72);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.72);
+        } else if (soundType === 'siren_amb') {
+          this.tone(960, now, 0.22, 'sine', 0.2);
+          this.tone(770, now + 0.24, 0.25, 'sine', 0.2);
+        } else if (soundType === 'engine_rev') {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(110, now);
+          osc.frequency.exponentialRampToValueAtTime(320, now + 0.28);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.55);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.58);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.58);
+        } else if (soundType === 'horn_bus') {
+          this.tone(440, now, 0.12, 'square', 0.15);
+          this.tone(440, now + 0.16, 0.22, 'square', 0.15);
+        } else {
+          this.tone(220, now, 0.14, 'sawtooth', 0.18);
+          this.tone(277, now + 0.15, 0.28, 'sawtooth', 0.18);
+        }
+      },
+
+      tone(freq, startTime, duration, type = 'sine', volume = 0.2) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(volume, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      }
+    };
+
+    /* ============================================================================
+     * 3. アナログ時計SVGジェネレーター（赤＝短針、青＝長針でデジタル時計と完全リンク）
+     * ============================================================================ */
+    function createAnalogClockSVG(hour, minute) {
+      // 短針は30分（:30）のとき次の数字との中間に進めるリアルかつ分かりやすい設計
+      const hourAngle = ((hour % 12) + minute / 60) * 30;
+      const minAngle = minute * 6;
+
+      let numbersHTML = '';
+      for (let i = 1; i <= 12; i++) {
+        const rad = ((i * 30 - 90) * Math.PI) / 180;
+        const x = 100 + 70 * Math.cos(rad);
+        const y = 100 + 70 * Math.sin(rad);
+        // 対象の「時」の数字を少し強調
+        const isTargetHour = (i === hour);
+        numbersHTML += `
+          <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central"
+                font-size="${isTargetHour ? '22' : '19'}" font-weight="900"
+                fill="${isTargetHour ? '#be123c' : '#1e293b'}">${i}</text>
+        `;
+      }
+
+      // 目盛りドット
+      let ticksHTML = '';
+      for (let i = 0; i < 12; i++) {
+        const rad = ((i * 30) * Math.PI) / 180;
+        const x1 = 100 + 86 * Math.cos(rad);
+        const y1 = 100 + 86 * Math.sin(rad);
+        ticksHTML += `<circle cx="${x1}" cy="${y1}" r="2.5" fill="#94a3b8"/>`;
+      }
+
+      return `
+        <svg viewBox="0 0 200 200" class="w-full h-full max-w-[190px] max-h-[190px] drop-shadow">
+          <!-- 時計の外枠 -->
+          <circle cx="100" cy="100" r="95" fill="#ffffff" stroke="#334155" stroke-width="8"/>
+          ${ticksHTML}
+          ${numbersHTML}
+
+          <!-- 長針（青・分） -->
+          <g transform="rotate(${minAngle} 100 100)">
+            <line x1="100" y1="100" x2="100" y2="30" stroke="#0284c7" stroke-width="8" stroke-linecap="round"/>
+            <polygon points="100,20 93,34 107,34" fill="#0284c7"/>
+          </g>
+
+          <!-- 短針（赤・時） -->
+          <g transform="rotate(${hourAngle} 100 100)">
+            <line x1="100" y1="100" x2="100" y2="48" stroke="#e11d48" stroke-width="11" stroke-linecap="round"/>
+            <polygon points="100,38 91,52 109,52" fill="#e11d48"/>
+          </g>
+
+          <!-- 中心の留め具 -->
+          <circle cx="100" cy="100" r="8" fill="#facc15" stroke="#1e293b" stroke-width="3"/>
+        </svg>
+      `;
+    }
+
+    /* ============================================================================
+     * 4. メインゲームコントローラー
+     * ============================================================================ */
+    const Game = {
+      state: {
+        difficulty: 'easy', // 'easy' | 'hard'
+        garageTab: 'easy',  // 'easy' | 'hard'
+        kanaChartTab: 'basic', // 'basic' | 'extra'
+        voiceMode: 'auto',  // 'auto' | 'cloud' | 'native'
+        stars: 0,
+        streakEasy: 0,      // かんたんモードの連続クリア数 (0〜5)
+        streakHard: 0,      // しっかりモードの連続クリア数 (0〜5)
+        resetStreakOnMistake: true, // ミス時に連続スタンプを0に戻すか（標準: true）
+        unlockedCars: ['patrol'],   // 初期解放は「パトカー」のみ
+        selectedCarId: 'patrol',
+
+        // 現在の問題データ
+        step1: null,
+        step2: null,
+        step3: null,
+        currentLane: 1,
+        isBusy: false,
+        hintTimer: null
+      },
+
+      init() {
+        this.loadSaveData();
+        this.updateHeaderUI();
+        this.renderTitleScreen();
+
+        // 画面のどこかを最初にタッチした瞬間にスマホの音声ロックを解除
+        const unlockHandler = () => {
+          Sound.init();
+          document.removeEventListener('pointerdown', unlockHandler);
+          document.removeEventListener('touchstart', unlockHandler);
+        };
+        document.addEventListener('pointerdown', unlockHandler, { passive: true });
+        document.addEventListener('touchstart', unlockHandler, { passive: true });
+      },
+
+      loadSaveData() {
+        try {
+          const raw = localStorage.getItem('kids_drive_game_v2');
+          if (raw) {
+            const data = JSON.parse(raw);
+            if (typeof data.stars === 'number') this.state.stars = data.stars;
+            if (typeof data.streakEasy === 'number') this.state.streakEasy = data.streakEasy;
+            if (typeof data.streakHard === 'number') this.state.streakHard = data.streakHard;
+            if (typeof data.resetStreakOnMistake === 'boolean') this.state.resetStreakOnMistake = data.resetStreakOnMistake;
+            if (data.voiceMode) this.state.voiceMode = data.voiceMode;
+            if (Array.isArray(data.unlockedCars) && data.unlockedCars.length > 0) {
+              this.state.unlockedCars = data.unlockedCars;
+            }
+            if (data.selectedCarId) this.state.selectedCarId = data.selectedCarId;
+            if (data.difficulty) {
+              this.state.difficulty = data.difficulty;
+              this.state.garageTab = data.difficulty;
+            }
+          }
+        } catch (e) {
+          console.warn('Save data load skipped:', e);
+        }
+      },
+
+      saveData() {
+        try {
+          localStorage.setItem('kids_drive_game_v2', JSON.stringify({
+            stars: this.state.stars,
+            streakEasy: this.state.streakEasy,
+            streakHard: this.state.streakHard,
+            resetStreakOnMistake: this.state.resetStreakOnMistake,
+            voiceMode: this.state.voiceMode,
+            unlockedCars: this.state.unlockedCars,
+            selectedCarId: this.state.selectedCarId,
+            difficulty: this.state.difficulty
+          }));
+        } catch (e) {
+          console.warn('Save data write skipped:', e);
+        }
+      },
+
+      getSelectedCar() {
+        return CarCatalog.find(c => c.id === this.state.selectedCarId) || CarCatalog[0];
+      },
+
+      getCurrentStreak() {
+        return this.state.difficulty === 'easy' ? this.state.streakEasy : this.state.streakHard;
+      },
+
+      setCurrentStreak(val) {
+        if (this.state.difficulty === 'easy') {
+          this.state.streakEasy = val;
+        } else {
+          this.state.streakHard = val;
+        }
+      },
+
+      clearHintTimer() {
+        if (this.state.hintTimer) {
+          clearTimeout(this.state.hintTimer);
+          this.state.hintTimer = null;
+        }
+      },
+
+      setDifficulty(mode) {
+        Sound.init();
+        this.state.difficulty = mode;
+        this.state.garageTab = mode;
+        this.saveData();
+        this.updateHeaderUI();
+        this.renderTitleScreen();
+        Sound.playCorrect();
+        Sound.speak(mode === 'easy' ? 'かんたん モード！' : 'しっかり モード！');
+
+        // プレイ中に切り替えた場合は現在のステップを新しい難易度で再出題
+        if (!document.getElementById('screen-step1').classList.contains('hidden')) {
+          this.setupStep1();
+        } else if (!document.getElementById('screen-step2').classList.contains('hidden')) {
+          this.setupStep2();
+        } else if (!document.getElementById('screen-step3').classList.contains('hidden')) {
+          this.setupStep3();
+        }
+      },
+
+      updateHeaderUI() {
+        document.getElementById('star-count').textContent = this.state.stars;
+        document.getElementById('garage-count-badge').textContent = `${this.state.unlockedCars.length}/${CarCatalog.length}`;
+
+        const btnEasy = document.getElementById('mode-easy');
+        const btnHard = document.getElementById('mode-hard');
+        if (this.state.difficulty === 'easy') {
+          btnEasy.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow';
+          btnHard.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
+        } else {
+          btnHard.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-rose-500 text-white shadow';
+          btnEasy.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
+        }
+      },
+
+      /* ----------------------------------------------------------------
+       * 解答ミス時の共通処理（メッセージモーダルを表示してホーム画面へ戻る）
+       * ---------------------------------------------------------------- */
+      handleMistake(correctDescriptionText, speechMessage) {
+        this.state.isBusy = true;
+        this.clearHintTimer();
+        Sound.playGentleTryAgain();
+
+        if (this.state.resetStreakOnMistake) {
+          this.setCurrentStreak(0);
+          this.saveData();
+        }
+
+        const box = document.getElementById('mistake-correct-box');
+        if (box) box.innerHTML = correctDescriptionText;
+
+        const note = document.getElementById('mistake-streak-note');
+        if (note) {
+          note.textContent = this.state.resetStreakOnMistake
+            ? 'れんぞくスタンプ は 0 に もどるよ。つぎは 5かい れんぞくクリア を めざそう！'
+            : 'スタンプ は そのまま のこっているよ！ もういちど ちょうせん しよう！';
+        }
+
+        const modal = document.getElementById('modal-mistake');
+        if (modal) modal.classList.remove('hidden');
+
+        Sound.speak(`あれれ？ まちがえちゃった！ ${speechMessage} ホームに もどって もういちど ちょうせん しよう！`);
+      },
+
+      closeMistakeModalAndGoHome() {
+        Sound.init();
+        const modal = document.getElementById('modal-mistake');
+        if (modal) modal.classList.add('hidden');
+        this.goTitle();
+      },
+
+      /* ----------------------------------------------------------------
+       * おうちのひと設定モーダル
+       * ---------------------------------------------------------------- */
+      openParentSettings() {
+        Sound.init();
+        this.updateParentSettingsUI();
+        document.getElementById('modal-parent-settings').classList.remove('hidden');
+      },
+
+      closeParentSettings() {
+        document.getElementById('modal-parent-settings').classList.add('hidden');
+      },
+
+      /* ----------------------------------------------------------------
+       * ひらがな・カタカナ 50音表モーダル
+       * ---------------------------------------------------------------- */
+      openKanaChart() {
+        Sound.init();
+        // ステップ②プレイ中に開いた場合、探している文字があれば該当するタブを自動で選択
+        if (!document.getElementById('screen-step2').classList.contains('hidden') && this.state.step2) {
+          this.clearHintTimer();
+          const activeIdx = this.state.step2.targetIndices[this.state.step2.stepCursor];
+          const targetKata = this.state.step2.kataChars[activeIdx];
+          const isExtra = KanaExtraColumns.some(col => col.cells.some(c => c && c[1] === targetKata));
+          this.state.kanaChartTab = isExtra ? 'extra' : 'basic';
+        }
+        this.renderKanaChart();
+        document.getElementById('modal-kana-chart').classList.remove('hidden');
+      },
+
+      closeKanaChart() {
+        Sound.init();
+        document.getElementById('modal-kana-chart').classList.add('hidden');
+        // ステップ②プレイ中ならヒントタイマーを再開
+        if (!document.getElementById('screen-step2').classList.contains('hidden') && !this.state.isBusy) {
+          this.startStep2HintTimer();
+        }
+      },
+
+      switchKanaChartTab(tab) {
+        Sound.init();
+        this.state.kanaChartTab = tab;
+        this.renderKanaChart();
+      },
+
+      renderKanaChart() {
+        const tabBasic = document.getElementById('kana-tab-basic');
+        const tabExtra = document.getElementById('kana-tab-extra');
+        if (this.state.kanaChartTab === 'basic') {
+          tabBasic.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-sky-500 text-white border-sky-700 shadow';
+          tabExtra.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300';
+        } else {
+          tabExtra.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-rose-500 text-white border-rose-700 shadow';
+          tabBasic.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300';
+        }
+
+        const body = document.getElementById('kana-chart-body');
+        body.innerHTML = '';
+
+        const columns = this.state.kanaChartTab === 'basic' ? KanaBasicColumns : KanaExtraColumns;
+        const gridColsClass = this.state.kanaChartTab === 'basic' ? 'grid-cols-10' : 'grid-cols-6';
+
+        const grid = document.createElement('div');
+        grid.className = `grid ${gridColsClass} gap-1 sm:gap-1.5 w-full h-full items-stretch`;
+
+        columns.forEach(col => {
+          const colDiv = document.createElement('div');
+          colDiv.className = 'grid grid-rows-5 gap-1 sm:gap-1.5 h-full';
+
+          col.cells.forEach(cell => {
+            if (!cell) {
+              const empty = document.createElement('div');
+              empty.className = 'rounded-xl bg-slate-50 border border-dashed border-slate-200';
+              colDiv.appendChild(empty);
+              return;
+            }
+
+            const [hira, kata, customSpeech] = cell;
+            const btn = document.createElement('button');
+            btn.className = `rounded-xl border-2 ${col.color} flex flex-col items-center justify-center p-0.5 shadow-sm active:scale-90 transition-transform hover:brightness-95`;
+            btn.innerHTML = `
+              <span class="text-[11px] sm:text-sm font-extrabold opacity-85 leading-none">${hira}</span>
+              <span class="text-base sm:text-2xl font-black text-slate-900 leading-tight mt-0.5">${kata}</span>
+            `;
+            btn.onclick = () => {
+              Sound.playCorrect();
+              Sound.speak(customSpeech || hira);
+            };
+            colDiv.appendChild(btn);
+          });
+
+          grid.appendChild(colDiv);
+        });
+
+        body.appendChild(grid);
+      },
+
+      setPenaltyMode(resetOnMistake) {
+        Sound.init();
+        this.state.resetStreakOnMistake = resetOnMistake;
+        this.saveData();
+        this.updateParentSettingsUI();
+        Sound.playCorrect();
+      },
+
+      setVoiceMode(mode) {
+        Sound.init();
+        this.state.voiceMode = mode;
+        if (mode === 'native') {
+          window._webViewSilenceDetected = false;
+        }
+        this.saveData();
+        this.updateParentSettingsUI();
+        Sound.playCorrect();
+        Sound.speak('こえの モードを きりかえたよ！');
+      },
+
+      testVoiceOutput() {
+        Sound.init();
+        Sound.playCorrect();
+        Sound.speak('こんにちは！ くるま で おでかけ しよう！');
+      },
+
+      updateParentSettingsUI() {
+        const btnOn = document.getElementById('setting-reset-on');
+        const btnOff = document.getElementById('setting-reset-off');
+        if (this.state.resetStreakOnMistake) {
+          btnOn.className = 'py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-rose-500 text-white border-rose-700 shadow';
+          btnOff.className = 'py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
+        } else {
+          btnOff.className = 'py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-emerald-500 text-white border-emerald-700 shadow';
+          btnOn.className = 'py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
+        }
+
+        // 音声モードボタンのハイライト更新
+        const modes = ['auto', 'cloud', 'native'];
+        modes.forEach(m => {
+          const el = document.getElementById(`voice-mode-${m}`);
+          if (!el) return;
+          if (this.state.voiceMode === m) {
+            el.className = 'py-2 px-2 rounded-xl font-black text-xs border-2 bg-sky-500 text-white border-sky-700 shadow';
+          } else {
+            el.className = 'py-2 px-2 rounded-xl font-black text-xs border-2 bg-white text-slate-600 border-slate-300';
+          }
+        });
+      },
+
+      showScreen(screenId, activeStep = 0) {
+        this.clearHintTimer();
+        Confetti.stop();
+        const screens = ['screen-title', 'screen-garage', 'screen-step1', 'screen-step2', 'screen-step3', 'screen-reward'];
+        screens.forEach(id => {
+          document.getElementById(id).classList.toggle('hidden', id !== screenId);
+        });
+
+        const stepInd = document.getElementById('step-indicator');
+        if (activeStep >= 1 && activeStep <= 3) {
+          stepInd.classList.remove('hidden');
+          stepInd.classList.add('flex');
+          for (let i = 1; i <= 3; i++) {
+            const el = document.getElementById(`ind-${i}`);
+            if (i === activeStep) {
+              el.className = 'px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-500 text-white shadow';
+            } else if (i < activeStep) {
+              el.className = 'px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-500 text-white';
+            } else {
+              el.className = 'px-2.5 py-0.5 rounded-full text-xs font-black text-slate-400';
+            }
+          }
+        } else {
+          stepInd.classList.add('hidden');
+          stepInd.classList.remove('flex');
+        }
+      },
+
+      /* ----------------------------------------------------------------
+       * タイトル＆マイガレージ
+       * ---------------------------------------------------------------- */
+      goTitle() {
+        Sound.init();
+        this.renderTitleScreen();
+        this.showScreen('screen-title', 0);
+      },
+
+      renderTitleScreen() {
+        const car = this.getSelectedCar();
+        document.getElementById('title-car-svg').innerHTML = getCarSideSVG(car.id);
+        document.getElementById('title-car-name').textContent = car.name;
+
+        const dxBadge = document.getElementById('title-car-badge');
+        if (dxBadge) {
+          dxBadge.classList.toggle('hidden', car.tier !== 'hard');
+        }
+
+        // 5回連続クリアスタンプゲージの描画
+        const streak = this.getCurrentStreak();
+        const isEasy = this.state.difficulty === 'easy';
+        const tierCars = CarCatalog.filter(c => c.tier === this.state.difficulty);
+        const remainingCars = tierCars.filter(c => !this.state.unlockedCars.includes(c.id));
+
+        const labelEl = document.getElementById('title-streak-label');
+        const remainEl = document.getElementById('title-streak-remain');
+        if (labelEl) {
+          labelEl.textContent = isEasy ? '🌱 かんたん れんぞくスタンプ' : '🔥 しっかり れんぞくスタンプ';
+          labelEl.className = isEasy ? 'text-emerald-700 font-black' : 'text-rose-600 font-black';
+        }
+        if (remainEl) {
+          if (remainingCars.length === 0) {
+            remainEl.textContent = '✨ コンプリート！ ✨';
+          } else {
+            remainEl.textContent = `あと ${5 - streak}かい で 新車ゲット！`;
+          }
+        }
+
+        const starsContainer = document.getElementById('title-streak-stars');
+        if (starsContainer) {
+          starsContainer.innerHTML = '';
+          for (let i = 1; i <= 5; i++) {
+            const filled = i <= streak;
+            const span = document.createElement('div');
+            span.className = `w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center text-lg sm:text-xl font-black transition-all ${
+              filled
+                ? 'bg-amber-400 border-amber-600 text-white shadow scale-105'
+                : 'bg-slate-100 border-slate-300 text-slate-300'
+            }`;
+            span.textContent = filled ? '★' : i;
+            starsContainer.appendChild(span);
+          }
+        }
+
+        this.updateHeaderUI();
+      },
+
+      honkSelectedCar() {
+        const car = this.getSelectedCar();
+        Sound.playCarSound(car.soundType);
+        Sound.speak(car.kana);
+      },
+
+      switchGarageTab(tab) {
+        Sound.init();
+        this.state.garageTab = tab;
+        this.renderGarageGrid();
+      },
+
+      openGarage() {
+        Sound.init();
+        this.state.garageTab = this.state.difficulty;
+        this.renderGarageGrid();
+        this.showScreen('screen-garage', 0);
+      },
+
+      renderGarageGrid() {
+        const easyCars = CarCatalog.filter(c => c.tier === 'easy');
+        const hardCars = CarCatalog.filter(c => c.tier === 'hard');
+        const unlockedEasy = easyCars.filter(c => this.state.unlockedCars.includes(c.id)).length;
+        const unlockedHard = hardCars.filter(c => this.state.unlockedCars.includes(c.id)).length;
+
+        document.getElementById('garage-easy-count').textContent = `${unlockedEasy}/${easyCars.length}`;
+        document.getElementById('garage-hard-count').textContent = `${unlockedHard}/${hardCars.length}`;
+
+        const tabEasy = document.getElementById('garage-tab-easy');
+        const tabHard = document.getElementById('garage-tab-hard');
+        if (this.state.garageTab === 'easy') {
+          tabEasy.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-emerald-500 text-white border-emerald-700 shadow';
+          tabHard.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-slate-700 text-slate-300 border-slate-900';
+        } else {
+          tabHard.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-rose-500 text-white border-rose-800 shadow';
+          tabEasy.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-slate-700 text-slate-300 border-slate-900';
+        }
+
+        const grid = document.getElementById('garage-grid');
+        grid.innerHTML = '';
+
+        const list = CarCatalog.filter(c => c.tier === this.state.garageTab);
+        list.forEach(car => {
+          const isUnlocked = this.state.unlockedCars.includes(car.id);
+          const isSelected = (this.state.selectedCarId === car.id);
+
+          const card = document.createElement('button');
+          card.className = `btn-3d relative rounded-2xl p-2 flex flex-col items-center justify-between border-4 transition-all ${
+            isSelected
+              ? 'bg-amber-100 border-amber-400 text-slate-900 shadow-lg scale-[1.02]'
+              : isUnlocked
+              ? (car.tier === 'hard' ? 'bg-gradient-to-b from-slate-700 to-indigo-950 border-amber-400/80 text-white' : 'bg-slate-700 border-slate-500 text-white hover:border-sky-400')
+              : 'bg-slate-900/70 border-slate-700 text-slate-500 opacity-75'
+          }`;
+
+          if (isUnlocked) {
+            card.innerHTML = `
+              ${isSelected ? '<span class="absolute top-1 right-1 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">のってるよ</span>' : ''}
+              ${car.tier === 'hard' ? '<span class="absolute top-1 left-1 text-xs">👑</span>' : ''}
+              <div class="w-20 h-11 sm:w-26 sm:h-14 my-auto">${getCarSideSVG(car.id)}</div>
+              <div class="text-[11px] sm:text-xs font-black tracking-tight mt-1 leading-tight">${car.name}</div>
+            `;
+            card.onclick = () => {
+              this.state.selectedCarId = car.id;
+              this.saveData();
+              Sound.playCarSound(car.soundType);
+              Sound.speak(`${car.kana} に のるよ！`);
+              this.renderGarageGrid();
+            };
+          } else {
+            const modeLabel = car.tier === 'easy' ? '🌱かんたん5回' : '🔥しっかり5回';
+            card.innerHTML = `
+              <div class="w-20 h-11 sm:w-26 sm:h-14 my-auto opacity-15 grayscale">${getCarSideSVG(car.id)}</div>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-xl sm:text-2xl">🔒</span>
+                <span class="text-[10px] font-black text-amber-400 mt-0.5">${modeLabel}</span>
+              </div>
+              <div class="text-[11px] sm:text-xs font-black">？？？</div>
+            `;
+            card.onclick = () => {
+              Sound.playGentleTryAgain();
+              const modeSpeech = car.tier === 'easy' ? 'かんたんモード' : 'しっかりモード';
+              Sound.speak(`${modeSpeech} を 5かい れんぞく で クリア すると のれるように なるよ！`);
+            };
+          }
+
+          grid.appendChild(card);
+        });
+      },
+
+      /* ----------------------------------------------------------------
+       * ミッション開始 ➔ ステップ①（時計）
+       * ---------------------------------------------------------------- */
+      startMission() {
+        Sound.init();
+        const car = this.getSelectedCar();
+        Sound.playCarSound(car.soundType);
+        this.setupStep1();
+      },
+
+      setupStep1() {
+        this.state.isBusy = false;
+        this.showScreen('screen-step1', 1);
+
+        const car = this.getSelectedCar();
+        document.getElementById('step1-car-preview').innerHTML = getCarSideSVG(car.id);
+        document.getElementById('step1-feedback').textContent = 'あかい みじかい はり の すうじ を みてみよう！';
+
+        const targetHour = Math.floor(Math.random() * 12) + 1;
+        const targetMin = (this.state.difficulty === 'hard' && Math.random() < 0.5) ? 30 : 0;
+
+        // 3択のアナログ時計を生成
+        const choiceCount = 3;
+        const choices = [{ hour: targetHour, min: targetMin, isCorrect: true }];
+
+        while (choices.length < choiceCount) {
+          let h = Math.floor(Math.random() * 12) + 1;
+          let m = targetMin;
+          if (this.state.difficulty === 'hard' && choices.length === 2) {
+            h = targetHour;
+            m = targetMin === 0 ? 30 : 0;
+          }
+          if (!choices.some(c => c.hour === h && c.min === m)) {
+            choices.push({ hour: h, min: m, isCorrect: false });
+          }
+        }
+        choices.sort(() => Math.random() - 0.5);
+
+        this.state.step1 = { targetHour, targetMin, choices };
+
+        document.getElementById('digital-hour').textContent = targetHour;
+        document.getElementById('digital-min').textContent = targetMin === 0 ? '00' : '30';
+
+        const timeText = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
+        document.getElementById('step1-question-text').textContent = `「 ${timeText} 」に しゅっぱつ！ おなじ とけい は どれかな？`;
+
+        const container = document.getElementById('clock-choices');
+        container.innerHTML = '';
+
+        choices.forEach((c, idx) => {
+          const btn = document.createElement('button');
+          btn.id = `clock-btn-${idx}`;
+          btn.className = 'btn-3d flex-1 max-w-[210px] bg-white rounded-3xl p-2.5 sm:p-4 border-4 border-b-8 border-sky-400 shadow-xl flex flex-col items-center justify-center aspect-square';
+          btn.innerHTML = createAnalogClockSVG(c.hour, c.min);
+          btn.onclick = () => this.answerStep1(idx);
+          container.appendChild(btn);
+        });
+
+        this.speakStep1Prompt();
+        this.startStep1HintTimer();
+      },
+
+      speakStep1Prompt() {
+        if (!this.state.step1) return;
+        Sound.init();
+        const { targetHour, targetMin } = this.state.step1;
+        const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ 30ぷん`;
+        Sound.speak(`${timeSpeech} に しゅっぱつ！ おなじ とけい は どれかな？`);
+      },
+
+      startStep1HintTimer() {
+        this.clearHintTimer();
+        // 30秒間操作がなければ正解の時計がキラキラ揺れてヒントを出す
+        this.state.hintTimer = setTimeout(() => {
+          if (!this.state.step1 || this.state.isBusy) return;
+          const correctIdx = this.state.step1.choices.findIndex(c => c.isCorrect);
+          const btn = document.getElementById(`clock-btn-${correctIdx}`);
+          if (btn) btn.classList.add('hint-active');
+        }, 30000);
+      },
+
+      answerStep1(idx) {
+        if (this.state.isBusy) return;
+        const choice = this.state.step1.choices[idx];
+        const btn = document.getElementById(`clock-btn-${idx}`);
+
+        if (choice.isCorrect) {
+          this.state.isBusy = true;
+          this.clearHintTimer();
+          btn.classList.remove('hint-active');
+          btn.classList.replace('border-sky-400', 'border-emerald-500');
+          btn.classList.add('bg-emerald-50', 'scale-105');
+
+          // 正解時はチャイム音（ピンポーン）と車の音のみ再生（読み上げなし）
+          Sound.playCorrect();
+          const car = this.getSelectedCar();
+          setTimeout(() => Sound.playCarSound(car.soundType), 250);
+
+          const { targetHour, targetMin } = this.state.step1;
+          const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
+          document.getElementById('step1-feedback').textContent = `ピンポーン！ ${timeSpeech} しゅっぱつ しんこう！`;
+
+          setTimeout(() => {
+            this.setupStep2();
+          }, 1200);
+        } else {
+          // 間違えた場合は正解をメッセージで伝えてホーム画面へ戻る
+          const { targetHour, targetMin } = this.state.step1;
+          const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
+          const minAdvice = targetMin === 0 ? 'ながい はり が「12」' : 'ながい はり が「6」';
+          this.handleMistake(
+            `せいかいは <span class="text-rose-600">あかい みじかい はり が「${targetHour}」</span>、<br><span class="text-sky-600">${minAdvice}</span> の とけい だよ！`,
+            `せいかいは、みじかい はり が ${targetHour} の、${timeSpeech} の とけい だよ！`
+          );
+        }
+      },
+
+      /* ----------------------------------------------------------------
+       * ステップ②：カタカナ・ドライブ（ひらがな➔カタカナ＆言葉の認識）
+       * ---------------------------------------------------------------- */
+      setupStep2() {
+        this.state.isBusy = false;
+        this.state.currentLane = 1;
+        this.showScreen('screen-step2', 2);
+
+        // 自分の車を上から見た絵（getCarTopSVG）で中央車線の下部スタート位置に配置
+        const car = this.getSelectedCar();
+        const playerCarEl = document.getElementById('player-car-svg');
+        if (playerCarEl) {
+          playerCarEl.innerHTML = getCarTopSVG(car.id);
+          playerCarEl.style.transform = 'translateY(0px)';
+        }
+        this.resetStep2CarPosition(1);
+
+        // 車の名前＋身近な言葉（リンゴ・バナナ・テレビ等）からランダムに出題
+        const wordObj = WordPool[Math.floor(Math.random() * WordPool.length)];
+        const kataChars = Array.from(wordObj.katakana);
+        const hiraChars = Array.from(wordObj.hiragana);
+
+        // 上部のターゲットアイコンに言葉のイラスト（車は横向き絵、それ以外は専用イラストSVG）を表示
+        const iconContainer = document.getElementById('step2-target-icon');
+        if (iconContainer) {
+          iconContainer.innerHTML = `<div class="w-full h-full">${getWordIllustrationSVG(wordObj)}</div>`;
+        }
+
+        // 難易度による穴埋め位置の設定
+        // 🌱かんたん：1文字のみ穴埋め
+        // 🔥しっかり：先頭から1文字ずつすべて順番に集める
+        let targetIndices = [];
+        if (this.state.difficulty === 'easy') {
+          const candidates = kataChars.map((ch, i) => ({ ch, i })).filter(x => x.ch !== 'ー' && x.ch !== 'ッ');
+          const picked = candidates[Math.floor(Math.random() * candidates.length)] || { i: 0 };
+          targetIndices = [picked.i];
+        } else {
+          targetIndices = kataChars.map((_, i) => i);
+        }
+
+        this.state.step2 = {
+          wordObj,
+          kataChars,
+          hiraChars,
+          targetIndices,
+          stepCursor: 0,
+          currentChoices: []
+        };
+
+        this.renderStep2Question();
+        this.speakStep2Prompt();
+      },
+
+      speakStep2Prompt() {
+        if (!this.state.step2) return;
+        Sound.init();
+        const { wordObj, hiraChars, targetIndices, stepCursor } = this.state.step2;
+        const activeIdx = targetIndices[stepCursor];
+        const targetHira = hiraChars[activeIdx] || '';
+        const hiraRead = targetHira === 'ー' ? 'のばす おと' : targetHira;
+        Sound.speak(`${wordObj.hiragana}！ 「${hiraRead}」の カタカナ は どれかな？`);
+      },
+
+      renderStep2Question() {
+        if (!this.state.step2) return;
+        const { kataChars, hiraChars, targetIndices, stepCursor } = this.state.step2;
+        const activeIdx = targetIndices[stepCursor];
+        const targetKata = kataChars[activeIdx];
+        const targetHira = hiraChars[activeIdx];
+
+        // 次の文字問題が始まる際に、マイカーを道路の下部スタート位置に再配置
+        this.resetStep2CarPosition(this.state.currentLane);
+
+        // 上部の文字スロット描画（上にひらがな、下にカタカナ）
+        const slotsEl = document.getElementById('step2-word-slots');
+        slotsEl.innerHTML = '';
+
+        kataChars.forEach((ch, idx) => {
+          const isCompleted = !targetIndices.includes(idx) || targetIndices.indexOf(idx) < stepCursor;
+          const isCurrent = (idx === activeIdx);
+
+          const box = document.createElement('div');
+          box.className = 'flex flex-col items-center';
+          box.innerHTML = `
+            <span class="text-xs sm:text-sm font-black ${isCurrent ? 'text-rose-600 scale-110' : 'text-slate-500'} mb-0.5">
+              ${hiraChars[idx] || ''}
+            </span>
+            <div class="w-9 h-11 sm:w-11 sm:h-13 rounded-xl border-4 flex items-center justify-center text-lg sm:text-2xl font-black shadow-sm transition-all ${
+              isCurrent
+                ? 'bg-amber-100 border-rose-500 text-rose-600 animate-bounce'
+                : isCompleted
+                ? 'bg-emerald-50 border-emerald-500 text-slate-900'
+                : 'bg-slate-100 border-slate-300 text-slate-400'
+            }">
+              ${isCompleted ? ch : isCurrent ? '？' : '・'}
+            </div>
+          `;
+          slotsEl.appendChild(box);
+        });
+
+        document.getElementById('step2-guide-badge').textContent = `「 ${targetHira} 」の カタカナ は どの みち かな？`;
+
+        // 3車線の選択肢を生成
+        const pool = SimilarKatakana[targetKata] || ['ア', 'カ', 'サ', 'タ', 'ナ', 'ハ', 'マ', 'ラ'];
+        const choices = [{ kata: targetKata, hira: KataToHira[targetKata] || targetHira, isCorrect: true }];
+
+        for (const cand of pool) {
+          if (choices.length >= 3) break;
+          if (!choices.some(c => c.kata === cand)) {
+            choices.push({ kata: cand, hira: KataToHira[cand] || '', isCorrect: false });
+          }
+        }
+        choices.sort(() => Math.random() - 0.5);
+        this.state.step2.currentChoices = choices;
+
+        const lanesEl = document.getElementById('step2-lanes');
+        lanesEl.innerHTML = '';
+
+        choices.forEach((c, laneIdx) => {
+          const btn = document.createElement('button');
+          btn.id = `lane-btn-${laneIdx}`;
+          btn.className = 'btn-3d w-full bg-white hover:bg-amber-50 rounded-3xl py-4 sm:py-6 px-2 border-4 border-b-8 border-sky-500 shadow-2xl flex flex-col items-center justify-center relative';
+          btn.innerHTML = `
+            <span class="text-xs font-black text-sky-600 bg-sky-100 px-2.5 py-0.5 rounded-full mb-1">タップ！</span>
+            <span class="text-4xl sm:text-5xl font-black text-slate-900 leading-none my-1">${c.kata}</span>
+            <span id="lane-hint-${laneIdx}" class="mt-1 text-base sm:text-lg font-black text-rose-600 bg-rose-100 px-3 py-0.5 rounded-full opacity-0 transition-opacity duration-300">
+              （${c.hira}）
+            </span>
+          `;
+          btn.onclick = () => this.answerStep2(laneIdx);
+          lanesEl.appendChild(btn);
+        });
+
+        this.startStep2HintTimer();
+      },
+
+      startStep2HintTimer() {
+        this.clearHintTimer();
+        // 30秒間操作がなければ、全選択肢の下にひらがなヒントが浮かび上がり、正解がキラキラ揺れる
+        this.state.hintTimer = setTimeout(() => {
+          if (!this.state.step2 || this.state.isBusy) return;
+          this.state.step2.currentChoices.forEach((c, idx) => {
+            const hintSpan = document.getElementById(`lane-hint-${idx}`);
+            if (hintSpan) hintSpan.classList.remove('opacity-0');
+            if (c.isCorrect) {
+              const btn = document.getElementById(`lane-btn-${idx}`);
+              if (btn) btn.classList.add('hint-active');
+            }
+          });
+        }, 30000);
+      },
+
+      resetStep2CarPosition(laneIdx = 1) {
+        this.state.currentLane = laneIdx;
+        const wrapper = document.getElementById('player-car-wrapper');
+        const playerCarEl = document.getElementById('player-car-svg');
+        const explosionEl = document.getElementById('step2-explosion');
+        if (explosionEl) {
+          explosionEl.classList.add('hidden');
+          explosionEl.classList.remove('boom-active');
+        }
+        if (playerCarEl) {
+          playerCarEl.style.transform = 'translateY(0px) scale(1)';
+          playerCarEl.style.opacity = '1';
+        }
+        if (wrapper) {
+          const centerPercent = laneIdx * 33.3333 + 16.6667;
+          wrapper.style.transition = 'none';
+          wrapper.style.left = `${centerPercent}%`;
+          wrapper.style.bottom = '8px';
+          wrapper.style.opacity = '1';
+          wrapper.style.transform = 'translateX(-50%) rotate(0deg)';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              wrapper.style.transition = 'left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.65s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, transform 0.28s ease';
+            });
+          });
+        }
+      },
+
+      moveCarToLane(laneIdx) {
+        this.state.currentLane = laneIdx;
+        const wrapper = document.getElementById('player-car-wrapper');
+        if (wrapper) {
+          // 3車線それぞれの中心（左: 16.6667%, 中央: 50%, 右: 83.3333%）に translateX(-50%) で正確にセンタリング
+          const centerPercent = laneIdx * 33.3333 + 16.6667;
+          wrapper.style.left = `${centerPercent}%`;
+          wrapper.style.transform = 'translateX(-50%) rotate(0deg)';
+        }
+      },
+
+      answerStep2(laneIdx) {
+        if (this.state.isBusy || !this.state.step2) return;
+        const prevLane = this.state.currentLane;
+        this.moveCarToLane(laneIdx);
+
+        const choice = this.state.step2.currentChoices[laneIdx];
+        const btn = document.getElementById(`lane-btn-${laneIdx}`);
+        const wrapper = document.getElementById('player-car-wrapper');
+
+        if (choice && choice.isCorrect) {
+          this.state.isBusy = true;
+          this.clearHintTimer();
+          if (btn) {
+            btn.classList.remove('hint-active');
+            btn.classList.replace('border-sky-500', 'border-emerald-500');
+            btn.classList.add('bg-emerald-100', 'scale-105');
+          }
+
+          Sound.playCorrect();
+          const readChar = choice.hira === 'ー' ? 'のばす おと' : choice.hira;
+          Sound.speak(`${readChar}！`);
+
+          // 1段階目：選んだ車線へステアリングを切る演出
+          if (wrapper) {
+            const tiltDeg = laneIdx < prevLane ? -12 : laneIdx > prevLane ? 12 : 0;
+            wrapper.style.transform = `translateX(-50%) rotate(${tiltDeg}deg)`;
+
+            // 2段階目：車体をまっすぐにして道路の上端まで一気に走り抜け、端でフェードアウトして消える
+            setTimeout(() => {
+              if (!wrapper) return;
+              const roadContainer = wrapper.parentElement ? wrapper.parentElement.parentElement : null;
+              const driveDistance = roadContainer ? roadContainer.clientHeight + 40 : 440;
+              wrapper.style.transform = 'translateX(-50%) rotate(0deg)';
+              wrapper.style.bottom = `${driveDistance}px`;
+            }, 180);
+
+            // 道の端（上部）に到達するタイミングで車をスッと消す
+            setTimeout(() => {
+              if (!wrapper) return;
+              wrapper.style.opacity = '0';
+            }, 640);
+          }
+
+          setTimeout(() => {
+            if (!this.state.step2) return;
+            this.state.step2.stepCursor++;
+            if (this.state.step2.stepCursor >= this.state.step2.targetIndices.length) {
+              this.completeStep2Word();
+            } else {
+              this.state.isBusy = false;
+              this.renderStep2Question();
+            }
+          }, 980);
+        } else {
+          // 間違えた場合：選んだ文字のところまで移動して車が爆発するアニメーション！
+          this.state.isBusy = true;
+          this.clearHintTimer();
+
+          const playerCarEl = document.getElementById('player-car-svg');
+          const explosionEl = document.getElementById('step2-explosion');
+          const step2Screen = document.getElementById('screen-step2');
+
+          const activeIdx = this.state.step2.targetIndices[this.state.step2.stepCursor];
+          const targetKata = this.state.step2.kataChars[activeIdx];
+          const targetHira = this.state.step2.hiraChars[activeIdx];
+          const readHira = targetHira === 'ー' ? 'のばす おと' : targetHira;
+
+          if (wrapper) {
+            const tiltDeg = laneIdx < prevLane ? -12 : laneIdx > prevLane ? 12 : 0;
+            wrapper.style.transform = `translateX(-50%) rotate(${tiltDeg}deg)`;
+
+            // 標識（文字）の位置まで前進させる
+            setTimeout(() => {
+              if (!wrapper) return;
+              const roadContainer = wrapper.parentElement ? wrapper.parentElement.parentElement : null;
+              let crashBottom = 210;
+              if (roadContainer && btn) {
+                const roadRect = roadContainer.getBoundingClientRect();
+                const btnRect = btn.getBoundingClientRect();
+                crashBottom = Math.max(120, roadRect.bottom - btnRect.bottom - 10);
+              }
+              wrapper.style.transition = 'left 0.25s ease, bottom 0.38s cubic-bezier(0.55, 0.08, 0.68, 0.53), transform 0.25s ease';
+              wrapper.style.transform = 'translateX(-50%) rotate(0deg)';
+              wrapper.style.bottom = `${crashBottom}px`;
+            }, 140);
+
+            // 文字に到達した瞬間にドカーン！と爆発
+            setTimeout(() => {
+              Sound.playExplosion();
+              if (btn) {
+                btn.classList.replace('border-sky-500', 'border-rose-600');
+                btn.classList.add('bg-rose-100', 'scale-95');
+              }
+              if (step2Screen) {
+                step2Screen.classList.add('shake-active');
+                setTimeout(() => step2Screen.classList.remove('shake-active'), 500);
+              }
+              if (playerCarEl) {
+                playerCarEl.style.opacity = '0';
+                playerCarEl.style.transform = 'scale(0.3)';
+              }
+              if (explosionEl) {
+                explosionEl.classList.remove('hidden');
+                explosionEl.classList.add('boom-active');
+              }
+            }, 520);
+          }
+
+          // 爆発アニメーションのあとに従来のホームに戻るメッセージを表示
+          setTimeout(() => {
+            this.handleMistake(
+              `「 ${targetHira} 」の カタカナ は <span class="text-3xl text-rose-600 mx-1">「 ${targetKata} 」</span> だよ！`,
+              `${readHira} の カタカナ は、${readHira} だよ！`
+            );
+          }, 1550);
+        }
+      },
+
+      completeStep2Word() {
+        if (!this.state.step2) return;
+        const { wordObj, kataChars, hiraChars } = this.state.step2;
+        const slotsEl = document.getElementById('step2-word-slots');
+        slotsEl.innerHTML = '';
+        kataChars.forEach((ch, idx) => {
+          const box = document.createElement('div');
+          box.className = 'flex flex-col items-center pop-in';
+          box.innerHTML = `
+            <span class="text-xs sm:text-sm font-black text-emerald-700 mb-0.5">${hiraChars[idx] || ''}</span>
+            <div class="w-9 h-11 sm:w-11 sm:h-13 rounded-xl border-4 bg-amber-300 border-amber-500 text-slate-900 flex items-center justify-center text-lg sm:text-2xl font-black shadow">
+              ${ch}
+            </div>
+          `;
+          slotsEl.appendChild(box);
+        });
+
+        const iconEl = document.getElementById('step2-target-icon');
+        if (iconEl) iconEl.classList.add('scale-110', 'bg-amber-100', 'border-amber-400');
+
+        // 言葉完成時は車の効果音とファンファーレのみ再生（「やったね」の後の読み上げなし）
+        const car = this.getSelectedCar();
+        Sound.playCarSound(car.soundType);
+        Sound.playFanfare();
+        document.getElementById('step2-guide-badge').textContent = `やったね！「 ${wordObj.katakana} 」かんせい！`;
+
+        setTimeout(() => {
+          if (iconEl) iconEl.classList.remove('scale-110', 'bg-amber-100', 'border-amber-400');
+          this.setupStep3();
+        }, 1500);
+      },
+
+      /* ----------------------------------------------------------------
+       * ステップ③：ゴール駐車（2桁・3桁の数字と位取り）
+       * ---------------------------------------------------------------- */
+      setupStep3() {
+        this.state.isBusy = false;
+        this.showScreen('screen-step3', 3);
+
+        const car = this.getSelectedCar();
+        document.getElementById('step3-car-svg').innerHTML = getCarSideSVG(car.id);
+        document.getElementById('step3-feedback').textContent = 'ばんごう を よく みて タップ してね！';
+
+        // 駐車場の下部通路にトップビューのマイカーを中央配置でリセット
+        const movingCar = document.getElementById('step3-moving-car');
+        const topCarSvg = document.getElementById('step3-car-top-svg');
+        if (topCarSvg) {
+          topCarSvg.innerHTML = getCarTopSVG(car.id);
+          topCarSvg.classList.add('car-idle');
+        }
+        if (movingCar) {
+          movingCar.style.transition = 'none';
+          movingCar.style.left = '50%';
+          movingCar.style.opacity = '1';
+          movingCar.style.transform = 'translate(-50%, 0px) rotate(0deg) scale(1)';
+          // 次フレームでトランジションを有効化
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              movingCar.style.transition = 'left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease';
+            });
+          });
+        }
+
+        const pool = this.state.difficulty === 'easy' ? NumberQuestionsEasy : NumberQuestionsHard;
+        const q = pool[Math.floor(Math.random() * pool.length)];
+
+        const dists = [...q.distractors].sort(() => Math.random() - 0.5).slice(0, 2);
+        const choices = [
+          { num: q.num, isCorrect: true },
+          { num: dists[0], isCorrect: false },
+          { num: dists[1], isCorrect: false }
+        ].sort(() => Math.random() - 0.5);
+
+        this.state.step3 = { q, choices };
+
+        document.getElementById('step3-kana-number').textContent = `「 ${q.kana} 」ばん`;
+
+        const lotsEl = document.getElementById('parking-lots');
+        lotsEl.innerHTML = '';
+
+        choices.forEach((c, idx) => {
+          const btn = document.createElement('button');
+          btn.id = `park-btn-${idx}`;
+          btn.className = 'btn-3d relative overflow-hidden bg-slate-800 hover:bg-slate-750 rounded-3xl p-2.5 sm:p-4 border-4 border-dashed border-amber-400 shadow-2xl flex flex-col items-center justify-between min-h-[145px] sm:min-h-[180px]';
+          btn.innerHTML = `
+            <span class="bg-sky-500 text-white text-[11px] sm:text-xs font-black px-2.5 py-0.5 rounded-full z-10">P ちゅうしゃじょう</span>
+            <div id="pitfall-hole-${idx}" class="pitfall-hole"></div>
+            <span id="park-num-${idx}" class="text-3xl sm:text-5xl font-black text-white tracking-wider my-auto transition-all duration-300 z-10">${c.num}</span>
+            <div id="parked-car-slot-${idx}" class="w-full h-8 sm:h-10 flex items-center justify-center text-xs font-bold text-amber-300 z-10">
+              ここへ とめる
+            </div>
+          `;
+          btn.onclick = () => this.answerStep3(idx);
+          lotsEl.appendChild(btn);
+        });
+
+        this.speakStep3Prompt();
+        this.startStep3HintTimer();
+      },
+
+      speakStep3Prompt() {
+        if (!this.state.step3) return;
+        Sound.init();
+        Sound.speak(`${this.state.step3.q.kana} ばん の ちゅうしゃじょう に とめよう！`);
+      },
+
+      startStep3HintTimer() {
+        this.clearHintTimer();
+        // 30秒間操作がなければ正解の駐車場がキラキラ揺れてヒントを出す
+        this.state.hintTimer = setTimeout(() => {
+          if (!this.state.step3 || this.state.isBusy) return;
+          const correctIdx = this.state.step3.choices.findIndex(c => c.isCorrect);
+          const btn = document.getElementById(`park-btn-${correctIdx}`);
+          if (btn) btn.classList.add('hint-active');
+        }, 30000);
+      },
+
+      answerStep3(idx) {
+        if (this.state.isBusy) return;
+        const choice = this.state.step3.choices[idx];
+        const btn = document.getElementById(`park-btn-${idx}`);
+
+        if (choice.isCorrect) {
+          this.state.isBusy = true;
+          this.clearHintTimer();
+          btn.classList.remove('hint-active', 'border-dashed');
+          btn.classList.replace('border-amber-400', 'border-emerald-400');
+          btn.classList.add('bg-emerald-900/70');
+
+          // チャイム音（ピンポーン）とエンジン音のみ再生（正解後の読み上げなし）
+          const car = this.getSelectedCar();
+          Sound.playCorrect();
+          Sound.playCarSound(car.soundType);
+          document.getElementById('step3-feedback').textContent = `ピンポーン！「${choice.num}」ばん に ちゅうしゃ するよ！`;
+
+          const movingCar = document.getElementById('step3-moving-car');
+          const topCarSvg = document.getElementById('step3-car-top-svg');
+          const slot = document.getElementById(`parked-car-slot-${idx}`);
+          const numLabel = document.getElementById(`park-num-${idx}`);
+
+          if (slot) {
+            slot.innerHTML = '<span class="text-emerald-300 font-black animate-pulse">オーライ！</span>';
+          }
+          if (numLabel) {
+            numLabel.classList.add('-translate-y-2', 'scale-90', 'text-emerald-300');
+          }
+
+          if (movingCar) {
+            // 1段階目：選んだ駐車場の正面（左=16.67%, 中央=50%, 右=83.33%）へステアリングを切って横移動
+            const targetLeftPercent = idx * 33.3333 + 16.6667;
+            const tiltDeg = idx === 0 ? -14 : idx === 2 ? 14 : 0;
+            movingCar.style.left = `${targetLeftPercent}%`;
+            movingCar.style.transform = `translate(-50%, -10px) rotate(${tiltDeg}deg)`;
+
+            // 2段階目：車体をまっすぐに戻して駐車枠の中へスッと前進して駐車完了
+            setTimeout(() => {
+              const btnRect = btn.getBoundingClientRect();
+              const carRect = movingCar.getBoundingClientRect();
+              const currentCenterY = carRect.top + carRect.height / 2;
+              const targetCenterY = btnRect.top + btnRect.height * 0.58;
+              const deltaY = targetCenterY - currentCenterY - 10;
+
+              movingCar.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg) scale(0.92)`;
+
+              setTimeout(() => {
+                if (topCarSvg) topCarSvg.classList.remove('car-idle');
+                if (slot) slot.innerHTML = '<span class="text-amber-300 font-black">✨ 駐車完了！ ✨</span>';
+                document.getElementById('step3-feedback').textContent = `やったー！「${choice.num}」ばん に ちゅうしゃ かんりょう！`;
+                Sound.playFanfare();
+              }, 480);
+            }, 380);
+          }
+
+          setTimeout(() => {
+            this.showRewardScreen();
+          }, 1950);
+        } else {
+          // 間違えた場合：選んだ数字のところまで移動したら落とし穴に落ちるアニメーション！
+          this.state.isBusy = true;
+          this.clearHintTimer();
+
+          const movingCar = document.getElementById('step3-moving-car');
+          const topCarSvg = document.getElementById('step3-car-top-svg');
+          const pitfall = document.getElementById(`pitfall-hole-${idx}`);
+          const numLabel = document.getElementById(`park-num-${idx}`);
+          const slot = document.getElementById(`parked-car-slot-${idx}`);
+          const { num, kana } = this.state.step3.q;
+
+          if (movingCar) {
+            // 1段階目：選んだ駐車場の正面へ横移動
+            const targetLeftPercent = idx * 33.3333 + 16.6667;
+            const tiltDeg = idx === 0 ? -14 : idx === 2 ? 14 : 0;
+            movingCar.style.left = `${targetLeftPercent}%`;
+            movingCar.style.transform = `translate(-50%, -10px) rotate(${tiltDeg}deg) scale(1)`;
+
+            // 2段階目：駐車スペース（数字の上）まで前進
+            setTimeout(() => {
+              const btnRect = btn.getBoundingClientRect();
+              const carRect = movingCar.getBoundingClientRect();
+              const currentCenterY = carRect.top + carRect.height / 2;
+              const targetCenterY = btnRect.top + btnRect.height * 0.56;
+              const deltaY = targetCenterY - currentCenterY - 10;
+
+              movingCar.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg) scale(0.95)`;
+
+              // 3段階目：数字の上に到着した瞬間に落とし穴がパカッと開いてクルクル落ちていく！
+              setTimeout(() => {
+                Sound.playPitfall();
+                if (topCarSvg) topCarSvg.classList.remove('car-idle');
+                if (pitfall) pitfall.classList.add('open');
+                if (numLabel) numLabel.classList.add('opacity-20', 'scale-50');
+                if (slot) slot.innerHTML = '<span class="text-rose-400 font-black">🕳️ おとしあな！</span>';
+                document.getElementById('step3-feedback').textContent = 'うわぁ〜！ おとしあな に おちちゃった！';
+
+                movingCar.style.transition = 'transform 0.65s cubic-bezier(0.55, 0.08, 0.68, 0.53), opacity 0.55s ease';
+                movingCar.style.transform = `translate(-50%, ${deltaY + 8}px) rotate(540deg) scale(0)`;
+                movingCar.style.opacity = '0';
+              }, 460);
+            }, 340);
+          }
+
+          // 落とし穴アニメーションのあとに従来のホームに戻るメッセージを表示
+          setTimeout(() => {
+            this.handleMistake(
+              `「 ${kana} 」ばん は <span class="text-3xl text-rose-600 mx-1">「 ${num} 」</span> だよ！`,
+              `せいかいは、${kana} ばん だよ！`
+            );
+          }, 1680);
+        }
+      },
+
+      /* ----------------------------------------------------------------
+       * ご褒美＆5回連続クリア新車アンロック画面
+       * ---------------------------------------------------------------- */
+      showRewardScreen() {
+        this.state.stars += 1;
+
+        // 現在の難易度の連続クリアスタンプを+1
+        const newStreak = this.getCurrentStreak() + 1;
+        this.setCurrentStreak(newStreak);
+
+        const isEasy = this.state.difficulty === 'easy';
+        const modeName = isEasy ? '🌱 かんたんモード' : '🔥 しっかりモード';
+        let newlyUnlockedCar = null;
+
+        // 5回連続クリア達成時に、現在の難易度の未解放車両を1台アンロック！
+        if (newStreak >= 5) {
+          this.setCurrentStreak(0);
+          const lockedTierCars = CarCatalog.filter(
+            c => c.tier === this.state.difficulty && !this.state.unlockedCars.includes(c.id)
+          );
+          if (lockedTierCars.length > 0) {
+            newlyUnlockedCar = lockedTierCars[0];
+            this.state.unlockedCars.push(newlyUnlockedCar.id);
+            this.state.selectedCarId = newlyUnlockedCar.id;
+          }
+        }
+
+        this.saveData();
+        this.updateHeaderUI();
+        this.showScreen('screen-reward', 0);
+        Confetti.start();
+
+        const card = document.getElementById('reward-card');
+        const nextBtnText = document.getElementById('reward-next-btn-text');
+
+        if (newlyUnlockedCar) {
+          if (nextBtnText) nextBtnText.textContent = 'この くるま で ドライブ！';
+          const badgeStyle = newlyUnlockedCar.tier === 'hard'
+            ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 text-slate-900 border-2 border-amber-600'
+            : 'bg-amber-400 text-slate-900';
+
+          card.innerHTML = `
+            <span class="${badgeStyle} font-black text-xs sm:text-sm px-4 py-1 rounded-full mb-2 shadow">
+              🎊 5かい れんぞくクリア 達成！ あたらしい くるま！ 🎊
+            </span>
+            <div class="w-48 h-28 sm:w-56 sm:h-32 my-2 car-idle">${getCarSideSVG(newlyUnlockedCar.id)}</div>
+            <div class="text-xs font-black text-amber-600">${newlyUnlockedCar.type}</div>
+            <div class="text-2xl sm:text-3xl font-black text-rose-600 mt-0.5">${newlyUnlockedCar.name}</div>
+            <p class="text-xs sm:text-sm font-bold text-slate-600 mt-2 text-center">
+              5かい まちがえずに クリア できたね！ すごい！！
+            </p>
+          `;
+          setTimeout(() => {
+            Sound.playCarSound(newlyUnlockedCar.soundType);
+            Sound.speak(`5かい れんぞく クリア おめでとう！ あたらしい くるま、${newlyUnlockedCar.kana} を ゲット したよ！`);
+          }, 400);
+        } else {
+          // 1〜4回目クリア時（または全車コンプリート時）：5つの連続スタンプゲージを表示
+          if (nextBtnText) nextBtnText.textContent = 'つぎの ドライブへ！';
+          const currentCar = this.getSelectedCar();
+          const remainCount = 5 - newStreak;
+
+          let starsHTML = '<div class="flex items-center justify-center gap-2 my-2">';
+          for (let i = 1; i <= 5; i++) {
+            const filled = i <= newStreak;
+            starsHTML += `
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-4 flex items-center justify-center text-xl sm:text-2xl font-black ${
+                filled
+                  ? 'bg-amber-400 border-amber-600 text-white shadow-lg scale-110'
+                  : 'bg-slate-100 border-slate-300 text-slate-300'
+              }">
+                ${filled ? '★' : i}
+              </div>
+            `;
+          }
+          starsHTML += '</div>';
+
+          const lockedTierCars = CarCatalog.filter(
+            c => c.tier === this.state.difficulty && !this.state.unlockedCars.includes(c.id)
+          );
+
+          const progressMsg = lockedTierCars.length > 0
+            ? `あと <span class="text-rose-600 text-xl sm:text-2xl">${remainCount}かい</span> れんぞくクリアで あたらしい くるま！`
+            : `${modeName} の くるま は ぜんぶ コンプリート しているよ！`;
+
+          card.innerHTML = `
+            <span class="bg-sky-500 text-white font-black text-xs sm:text-sm px-4 py-1 rounded-full mb-1 shadow">
+              ${modeName}：${newStreak}かい れんぞく クリア！
+            </span>
+            <div class="w-40 h-22 sm:w-48 sm:h-26 my-1 car-idle">${getCarSideSVG(currentCar.id)}</div>
+            ${starsHTML}
+            <p class="text-sm sm:text-base font-black text-slate-800 mt-1 text-center">
+              ${progressMsg}
+            </p>
+          `;
+          setTimeout(() => {
+            if (lockedTierCars.length > 0) {
+              Sound.speak(`やったね！ ${newStreak}かい れんぞく クリア！ あと ${remainCount}かい で あたらしい くるま を ゲット できるよ！`);
+            } else {
+              Sound.speak(`やったね！ ${newStreak}かい れんぞく クリア！ すごいね！`);
+            }
+          }, 400);
+        }
+      }
+    };
+
+    /* ============================================================================
+     * 5. 紙吹雪（コンフェッティ）エフェクト
+     * ============================================================================ */
+    const Confetti = {
+      animId: null,
+      particles: [],
+      start() {
+        const canvas = document.getElementById('confetti-canvas');
+        if (!canvas) return;
+        canvas.classList.remove('hidden');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const ctx = canvas.getContext('2d');
+
+        const colors = ['#f43f5e', '#facc15', '#38bdf8', '#4ade80', '#a855f7', '#fb923c'];
+        this.particles = Array.from({ length: 65 }, () => ({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          size: Math.random() * 10 + 7,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          speedY: Math.random() * 3 + 2,
+          speedX: (Math.random() - 0.5) * 2.5,
+          angle: Math.random() * 360,
+          spin: (Math.random() - 0.5) * 8
+        }));
+
+        const loop = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          this.particles.forEach(p => {
+            p.y += p.speedY;
+            p.x += p.speedX;
+            p.angle += p.spin;
+            if (p.y > canvas.height) p.y = -20;
+
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate((p.angle * Math.PI) / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+            ctx.restore();
+          });
+          this.animId = requestAnimationFrame(loop);
+        };
+        loop();
+      },
+      stop() {
+        if (this.animId) {
+          cancelAnimationFrame(this.animId);
+          this.animId = null;
+        }
+        const canvas = document.getElementById('confetti-canvas');
+        if (canvas) canvas.classList.add('hidden');
+      }
+    };
+
+    // 起動時にゲーム初期化
+    window.onload = () => {
+      Game.init();
+    };
+  </script>
+</body>
+</html>
