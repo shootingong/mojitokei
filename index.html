@@ -2,7 +2,17 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- iPad / iPhone (Safari) & Android (Chrome) ホーム画面追加時の全画面ネイティブアプリ化（PWA）設定 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="おでかけドライブ">
+  <meta name="application-name" content="おでかけドライブ">
+  <meta name="theme-color" content="#38bdf8">
+  <link id="app-touch-icon" rel="apple-touch-icon" href="">
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="">
+  <link id="app-manifest" rel="manifest" href="">
   <title>カスタムガレージ＆おでかけドライブ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&display=swap" rel="stylesheet">
@@ -24,6 +34,13 @@
       font-family: 'M PLUS Rounded 1c', sans-serif;
       background-color: #1e293b;
       overscroll-behavior: none;
+    }
+    /* フルスクリーン・ノッチ・ホームバー領域（Safe Area）の保護 */
+    #app {
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
     }
 
     /* 道路のアニメーション */
@@ -135,16 +152,21 @@
 
     <!-- 上部共通ナビゲーションバー -->
     <header class="w-full bg-white/95 backdrop-blur border-b-4 border-sky-300 px-3 py-2 flex items-center justify-between z-30 shrink-0">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2">
         <button id="btn-home" onclick="Game.goTitle()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-3 py-2 rounded-2xl border-b-4 border-sky-700 flex items-center gap-1 text-sm sm:text-base shadow">
           <span class="text-xl">🏠</span>
           <span>ホーム</span>
         </button>
         <!-- スター所持数 -->
-        <div class="bg-amber-100 border-2 border-amber-400 px-3 py-1.5 rounded-2xl flex items-center gap-1.5 shadow-inner">
+        <div class="bg-amber-100 border-2 border-amber-400 px-2.5 sm:px-3 py-1.5 rounded-2xl flex items-center gap-1 shadow-inner">
           <span class="text-xl sm:text-2xl">⭐</span>
           <span id="star-count" class="text-lg sm:text-xl font-black text-amber-700">0</span>
         </div>
+        <!-- ワンタップ全画面切り替えボタン（ブラウザ直接起動時用） -->
+        <button id="btn-fullscreen-header" onclick="Game.toggleFullScreen()" title="ぜんがめんにする" class="btn-3d bg-slate-100 hover:bg-slate-200 text-slate-700 font-black px-2.5 py-1.5 rounded-2xl border-b-4 border-slate-300 text-xs sm:text-sm flex items-center gap-1 shadow-sm">
+          <span>⛶</span>
+          <span class="hidden md:inline">ぜんがめん</span>
+        </button>
       </div>
 
       <!-- ステップ進行インジケーター（プレイ中のみ表示） -->
@@ -519,6 +541,19 @@
               <span>⚙️</span><span>おうちのひと設定</span>
             </h3>
             <button onclick="Game.closeParentSettings()" class="text-slate-400 hover:text-slate-700 font-black text-xl px-2">✕</button>
+          </div>
+
+          <!-- 全画面表示（アドレスバー非表示）設定 -->
+          <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-sm font-black text-emerald-900">⛶ ぜんがめん モード</div>
+              <p class="text-[11px] text-slate-600 leading-tight mt-0.5">
+                ブラウザのURLバーを消して画面いっぱいに表示します（ホーム画面に追加すると最初から全画面になります）。
+              </p>
+            </div>
+            <button id="btn-fullscreen-settings" onclick="Game.toggleFullScreen()" class="btn-3d shrink-0 bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs px-3 py-2.5 rounded-xl border-b-4 border-emerald-700 shadow">
+              ⛶ ぜんがめん
+            </button>
           </div>
 
           <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex flex-col gap-2">
@@ -2244,9 +2279,14 @@
       },
 
       init() {
+        this.setupPWA();
         this.loadSaveData();
         this.updateHeaderUI();
         this.renderTitleScreen();
+
+        // フルスクリーン状態の変化を監視してボタン表示を更新
+        document.addEventListener('fullscreenchange', () => this.updateFullscreenButtonUI());
+        document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenButtonUI());
 
         // 画面のどこかを最初にタッチした瞬間にスマホの音声ロックを解除
         const unlockHandler = () => {
@@ -2256,6 +2296,100 @@
         };
         document.addEventListener('pointerdown', unlockHandler, { passive: true });
         document.addEventListener('touchstart', unlockHandler, { passive: true });
+      },
+
+      /* ----------------------------------------------------------------
+       * PWA（ホーム画面追加時の全画面ネイティブアプリ化＆アイコン自動設定）
+       * ---------------------------------------------------------------- */
+      setupPWA() {
+        try {
+          // ホーム画面用のかわいいパトカーアイコンSVGを生成
+          const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+            <rect width="180" height="180" rx="40" fill="#38bdf8"/>
+            <circle cx="145" cy="35" r="18" fill="#fde047"/>
+            <rect x="0" y="132" width="180" height="48" fill="#334155"/>
+            <g transform="translate(0, 38)">
+              <rect x="78" y="10" width="24" height="10" rx="4" fill="#ef4444" stroke="#1e293b" stroke-width="3"/>
+              <path d="M40 48 L58 20 L122 20 L142 48 Z" fill="#ffffff" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+              <path d="M62 25 L86 25 L86 45 L48 45 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+              <path d="M94 25 L118 25 L132 45 L94 45 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+              <rect x="16" y="46" width="148" height="32" rx="12" fill="#ffffff" stroke="#1e293b" stroke-width="4"/>
+              <path d="M18 62 L162 62 L162 68 C162 74 157 78 151 78 L29 78 C23 78 18 74 18 68 Z" fill="#1e293b"/>
+              <circle cx="90" cy="62" r="7" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+              <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+              <circle cx="48" cy="78" r="7" fill="#cbd5e1"/>
+              <circle cx="132" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+              <circle cx="132" cy="78" r="7" fill="#cbd5e1"/>
+            </g>
+          </svg>`;
+          const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
+
+          const touchIconEl = document.getElementById('app-touch-icon');
+          const favIconEl = document.getElementById('app-favicon');
+          if (touchIconEl) touchIconEl.href = iconDataUrl;
+          if (favIconEl) favIconEl.href = iconDataUrl;
+
+          // Web App Manifest（display: standalone でアドレスバー・ブラウザUIを完全非表示化）
+          const manifestObj = {
+            name: 'カスタムガレージ＆おでかけドライブ',
+            short_name: 'おでかけドライブ',
+            description: '5歳からの とけい・カタカナ・すうじ ドライブゲーム',
+            start_url: './index.html',
+            display: 'standalone',
+            orientation: 'portrait',
+            background_color: '#e0f2fe',
+            theme_color: '#38bdf8',
+            icons: [
+              {
+                src: iconDataUrl,
+                sizes: '192x192 512x512',
+                type: 'image/svg+xml',
+                purpose: 'any maskable'
+              }
+            ]
+          };
+          const manifestJson = JSON.stringify(manifestObj);
+          const manifestUrl = 'data:application/manifest+json;utf8,' + encodeURIComponent(manifestJson);
+          const manifestEl = document.getElementById('app-manifest');
+          if (manifestEl) manifestEl.href = manifestUrl;
+        } catch (e) {
+          console.warn('PWA setup skipped:', e);
+        }
+      },
+
+      /* ----------------------------------------------------------------
+       * フルスクリーンAPI切り替え（ブラウザのまま開いた時でもワンタップで全画面化）
+       * ---------------------------------------------------------------- */
+      toggleFullScreen() {
+        Sound.init();
+        const doc = window.document;
+        const docEl = doc.documentElement;
+        const requestFullScreen = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        const cancelFullScreen = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+
+        if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
+          if (requestFullScreen) {
+            requestFullScreen.call(docEl).catch(() => {});
+          }
+        } else {
+          if (cancelFullScreen) {
+            cancelFullScreen.call(doc).catch(() => {});
+          }
+        }
+      },
+
+      updateFullscreenButtonUI() {
+        const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        const headerBtn = document.getElementById('btn-fullscreen-header');
+        const settingsBtn = document.getElementById('btn-fullscreen-settings');
+        if (headerBtn) {
+          headerBtn.innerHTML = isFull
+            ? '<span>❎</span><span class="hidden md:inline">もとにもどす</span>'
+            : '<span>⛶</span><span class="hidden md:inline">ぜんがめん</span>';
+        }
+        if (settingsBtn) {
+          settingsBtn.textContent = isFull ? '❎ もとにもどす' : '⛶ ぜんがめん';
+        }
       },
 
       loadSaveData() {
