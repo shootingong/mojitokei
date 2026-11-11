@@ -96,6 +96,43 @@
       transform: translateY(5px);
     }
 
+    /* STEP① スタートゲート（遮断機）の開閉トランジション */
+    .gate-barrier-arm {
+      transform-origin: 14px 14px;
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .gate-barrier-arm.open {
+      transform: rotate(-88deg);
+    }
+
+    /* STEP② ターボジェット炎アニメーション（青ターボ＆レア虹ターボ） */
+    @keyframes turboFlicker {
+      0%, 100% { transform: translateX(-50%) scaleY(1) scaleX(1); }
+      50% { transform: translateX(-50%) scaleY(1.28) scaleX(0.92); }
+    }
+    .turbo-flame-anim {
+      animation: turboFlicker 0.11s ease-in-out infinite;
+      transform-origin: center top;
+    }
+    @keyframes rainbowGlow {
+      0% { filter: drop-shadow(0 0 10px #f43f5e) drop-shadow(0 0 18px #facc15); }
+      33% { filter: drop-shadow(0 0 10px #4ade80) drop-shadow(0 0 18px #38bdf8); }
+      66% { filter: drop-shadow(0 0 10px #a855f7) drop-shadow(0 0 18px #ec4899); }
+      100% { filter: drop-shadow(0 0 10px #f43f5e) drop-shadow(0 0 18px #facc15); }
+    }
+    .rainbow-car-aura {
+      animation: rainbowGlow 0.35s linear infinite;
+    }
+
+    /* 50音表の該当行（縦の並び）ハイライト */
+    @keyframes colHighlightPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.65); }
+      50% { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0); }
+    }
+    .kana-col-target {
+      animation: colHighlightPulse 1.2s infinite;
+    }
+
     /* STEP② 爆発アニメーション */
     @keyframes boomBurst {
       0% { transform: scale(0.2) rotate(-12deg); opacity: 1; }
@@ -137,6 +174,45 @@
       transform: translate(-50%, -50%) scale(1);
       opacity: 1;
     }
+
+    /* STEP② ターボジェット炎＆虹色キラキラ演出 */
+    @keyframes turboFlameFlicker {
+      0%, 100% { transform: translateX(-50%) scaleY(1) scaleX(1); opacity: 0.95; }
+      50% { transform: translateX(-50%) scaleY(1.28) scaleX(1.12); opacity: 1; }
+    }
+    .turbo-flame-anim {
+      animation: turboFlameFlicker 0.1s ease-in-out infinite;
+      transform-origin: top center;
+    }
+    @keyframes rainbowCarGlow {
+      0% { filter: drop-shadow(0 0 12px #f43f5e) drop-shadow(0 0 22px #facc15); }
+      33% { filter: drop-shadow(0 0 12px #4ade80) drop-shadow(0 0 22px #38bdf8); }
+      66% { filter: drop-shadow(0 0 12px #a855f7) drop-shadow(0 0 22px #ec4899); }
+      100% { filter: drop-shadow(0 0 12px #f43f5e) drop-shadow(0 0 22px #facc15); }
+    }
+    .rainbow-aura {
+      animation: rainbowCarGlow 0.35s linear infinite;
+    }
+    @keyframes sparkleFloat {
+      0% { transform: translateY(0) scale(0.6) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(55px) scale(1.35) rotate(180deg); opacity: 0; }
+    }
+    .sparkle-particle {
+      animation: sparkleFloat 0.55s ease-out infinite;
+    }
+
+    /* 50音表の対象行（縦列）ハイライト */
+    @keyframes colHighlightPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.75); }
+      50% { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0); }
+    }
+    .kana-col-highlight {
+      background: linear-gradient(to bottom, #fef08a, #fef9c3);
+      border: 3px solid #f59e0b;
+      border-radius: 1rem;
+      padding: 2px;
+      animation: colHighlightPulse 1.3s infinite;
+    }
   </style>
 </head>
 <body class="flex justify-center items-center bg-slate-900" oncontextmenu="return false;">
@@ -150,27 +226,36 @@
     <!-- 紙吹雪エフェクト用キャンバス -->
     <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 w-full h-full hidden"></canvas>
 
+    <!-- 2ライフ制の復活トースト通知＆難易度長押しガイド通知 -->
+    <div id="recovery-toast" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-900 font-black px-5 py-2.5 rounded-3xl border-4 border-rose-500 shadow-2xl flex items-center gap-2 text-sm sm:text-lg whitespace-nowrap pop-in pointer-events-none">
+      <span class="text-2xl">💪</span>
+      <span id="recovery-toast-text">あっぶなーい！ あと 1かい チャレンジ できるよ！</span>
+    </div>
+    <div id="lock-toast" class="hidden fixed top-16 right-3 z-50 bg-slate-900/95 text-white font-black px-4 py-2 rounded-2xl border-2 border-amber-400 shadow-xl flex items-center gap-2 text-xs sm:text-sm pointer-events-none pop-in">
+      <span>🔒</span>
+      <span>ながおし（1.2びょう）で むずかしさを かえられるよ</span>
+    </div>
+
     <!-- 上部共通ナビゲーションバー -->
-    <header class="w-full bg-white/95 backdrop-blur border-b-4 border-sky-300 px-3 py-2 flex items-center justify-between z-30 shrink-0">
+    <header class="w-full bg-white/95 backdrop-blur border-b-4 border-sky-300 px-2.5 sm:px-3 py-2 flex items-center justify-between z-30 shrink-0">
       <div class="flex items-center gap-1.5 sm:gap-2">
-        <button id="btn-home" onclick="Game.goTitle()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-3 py-2 rounded-2xl border-b-4 border-sky-700 flex items-center gap-1 text-sm sm:text-base shadow">
-          <span class="text-xl">🏠</span>
+        <button id="btn-home" onclick="Game.goTitle()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-2.5 sm:px-3 py-2 rounded-2xl border-b-4 border-sky-700 flex items-center gap-1 text-xs sm:text-base shadow">
+          <span class="text-lg sm:text-xl">🏠</span>
           <span>ホーム</span>
         </button>
         <!-- スター所持数 -->
-        <div class="bg-amber-100 border-2 border-amber-400 px-2.5 sm:px-3 py-1.5 rounded-2xl flex items-center gap-1 shadow-inner">
-          <span class="text-xl sm:text-2xl">⭐</span>
-          <span id="star-count" class="text-lg sm:text-xl font-black text-amber-700">0</span>
+        <div class="bg-amber-100 border-2 border-amber-400 px-2 sm:px-3 py-1.5 rounded-2xl flex items-center gap-1 shadow-inner">
+          <span class="text-lg sm:text-2xl">⭐</span>
+          <span id="star-count" class="text-base sm:text-xl font-black text-amber-700">0</span>
         </div>
         <!-- ワンタップ全画面切り替えボタン（ブラウザ直接起動時用） -->
-        <button id="btn-fullscreen-header" onclick="Game.toggleFullScreen()" title="ぜんがめんにする" class="btn-3d bg-slate-100 hover:bg-slate-200 text-slate-700 font-black px-2.5 py-1.5 rounded-2xl border-b-4 border-slate-300 text-xs sm:text-sm flex items-center gap-1 shadow-sm">
-          <span>⛶</span>
-          <span class="hidden md:inline">ぜんがめん</span>
+        <button id="btn-fullscreen-header" onclick="Game.toggleFullScreen()" class="btn-3d bg-emerald-500 hover:bg-emerald-400 text-white font-black px-2.5 py-2 rounded-2xl border-b-4 border-emerald-700 flex items-center gap-1 text-xs sm:text-sm shadow">
+          <span>⛶</span><span class="hidden md:inline">ぜんがめん</span>
         </button>
       </div>
 
       <!-- ステップ進行インジケーター（プレイ中のみ表示） -->
-      <div id="step-indicator" class="hidden sm:flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full border-2 border-slate-300">
+      <div id="step-indicator" class="hidden sm:flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full border-2 border-slate-300">
         <span id="ind-1" class="px-2 py-0.5 rounded-full text-xs font-black bg-sky-500 text-white">①とけい</span>
         <span class="text-slate-400 font-bold">▶</span>
         <span id="ind-2" class="px-2 py-0.5 rounded-full text-xs font-black text-slate-400">②ことば</span>
@@ -178,14 +263,30 @@
         <span id="ind-3" class="px-2 py-0.5 rounded-full text-xs font-black text-slate-400">③すうじ</span>
       </div>
 
-      <!-- 難易度切り替えスイッチ -->
-      <div class="flex items-center bg-slate-200 p-1 rounded-2xl border-2 border-slate-300">
-        <button id="mode-easy" onclick="Game.setDifficulty('easy')" class="px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow">
-          🌱かんたん
+      <!-- 難易度切り替えスイッチ（誤タップ防止：1.2秒長押し式） -->
+      <div class="relative flex items-center bg-slate-200 p-1 rounded-2xl border-2 border-slate-300">
+        <button id="mode-easy"
+                onpointerdown="Game.startDifficultyHold('easy', event)"
+                onpointerup="Game.cancelDifficultyHold()"
+                onpointerleave="Game.cancelDifficultyHold()"
+                onpointercancel="Game.cancelDifficultyHold()"
+                class="relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow">
+          <span id="hold-bar-easy" class="absolute inset-y-0 left-0 bg-white/45 w-0 pointer-events-none"></span>
+          <span class="relative z-10">🌱かんたん</span>
         </button>
-        <button id="mode-hard" onclick="Game.setDifficulty('hard')" class="px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600">
-          🔥しっかり
+        <button id="mode-hard"
+                onpointerdown="Game.startDifficultyHold('hard', event)"
+                onpointerup="Game.cancelDifficultyHold()"
+                onpointerleave="Game.cancelDifficultyHold()"
+                onpointercancel="Game.cancelDifficultyHold()"
+                class="relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600">
+          <span id="hold-bar-hard" class="absolute inset-y-0 left-0 bg-amber-400/50 w-0 pointer-events-none"></span>
+          <span class="relative z-10">🔥しっかり</span>
         </button>
+        <!-- 短押し時のガイドトースト -->
+        <div id="hold-guide-toast" class="hidden absolute top-full right-0 mt-1.5 bg-slate-900/95 text-amber-300 text-[11px] font-black px-3 py-1.5 rounded-xl shadow-xl whitespace-nowrap z-50 border border-amber-400 pointer-events-none">
+          🔒 ながおし（1.2びょう）で きりかえ
+        </div>
       </div>
     </header>
 
@@ -193,99 +294,96 @@
     <main class="relative flex-1 w-full h-full overflow-hidden flex flex-col">
 
       <!-- ==========================================
-           1. タイトル＆マイガレージ選択ホーム画面
+           1. タイトル（ホーム）画面
            ========================================== -->
-      <section id="screen-title" class="flex-1 flex flex-col items-center justify-between p-3 sm:p-5 bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-100 relative overflow-hidden">
-        <!-- 背景の雲と太陽 -->
-        <div class="absolute top-3 left-5 text-4xl sm:text-5xl opacity-80 pointer-events-none">☁️</div>
-        <div class="absolute top-6 right-6 text-4xl sm:text-5xl opacity-90 pointer-events-none">☀️</div>
+      <section id="screen-title" class="flex-1 flex flex-col justify-between items-center p-3 sm:p-5 bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-100 relative overflow-hidden">
+        <!-- 背景の太陽と雲 -->
+        <div class="absolute top-3 left-5 text-4xl sm:text-5xl opacity-90 pointer-events-none">☀️</div>
+        <div class="absolute top-5 right-8 text-3xl sm:text-4xl opacity-80 pointer-events-none">☁️</div>
 
         <!-- タイトルロゴ -->
-        <div class="text-center z-10 mt-1">
-          <div class="inline-block bg-amber-400 text-slate-900 font-black text-xs sm:text-sm px-3 py-0.5 rounded-full border-2 border-amber-600 shadow mb-1">
-            5さいからの とけい・カタカナ・すうじ
+        <div class="text-center z-10 mt-0.5">
+          <div class="inline-block bg-amber-400 text-slate-900 font-black text-xs sm:text-sm px-3.5 py-1 rounded-full border-2 border-amber-600 shadow mb-1">
+            🚗 5さいからの とけい・カタカナ・すうじ 🚗
           </div>
-          <h1 class="text-2xl sm:text-4xl font-black text-sky-900 drop-shadow-sm tracking-tight leading-tight">
-            カスタムガレージ＆<br class="sm:hidden">おでかけドライブ
+          <h1 class="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight drop-shadow-sm">
+            おでかけドライブ！
           </h1>
         </div>
 
-        <!-- 現在選択中のマイカー展示ステージ -->
-        <div class="relative w-full max-w-md bg-white/90 rounded-3xl border-4 border-sky-400 shadow-xl p-3 sm:p-4 flex flex-col items-center z-10 my-1">
-          <div class="flex items-center justify-between w-full mb-1">
-            <span class="text-xs font-black text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300">
-              いま のっている くるま
-            </span>
-            <span id="title-car-badge" class="hidden text-xs font-black text-amber-900 bg-gradient-to-r from-amber-300 to-yellow-400 px-2.5 py-0.5 rounded-full border border-amber-500 shadow-sm">
-              👑 しっかりデラックス
-            </span>
+        <!-- 現在のマイカー展示ステージ（横から見た絵） -->
+        <div class="relative w-full max-w-md bg-white/90 backdrop-blur rounded-3xl border-4 border-sky-400 shadow-xl p-3 sm:p-4 flex flex-col items-center z-10 my-1">
+          <div class="w-full flex items-center justify-between mb-1">
+            <span class="text-xs font-black text-sky-600 bg-sky-100 px-3 py-0.5 rounded-full border border-sky-300">いま のっている くるま</span>
+            <span id="title-car-badge" class="hidden text-xs font-black text-amber-900 bg-gradient-to-r from-amber-300 to-yellow-400 px-2.5 py-0.5 rounded-full border border-amber-500 shadow-sm">👑 デラックス</span>
           </div>
-
-          <div id="title-car-svg" onclick="Game.honkSelectedCar()" class="w-40 h-22 sm:w-48 sm:h-26 car-idle cursor-pointer my-1 flex items-center justify-center">
-            <!-- 選択中の車のSVG -->
+          <div id="title-car-svg" onclick="Game.honkSelectedCar()" class="w-44 h-24 sm:w-52 sm:h-28 car-idle cursor-pointer flex items-center justify-center my-0.5">
+            <!-- JSで選択中の車（横向きSVG）を描画 -->
           </div>
-          <div class="flex items-center gap-2">
-            <span id="title-car-name" class="text-xl sm:text-2xl font-black text-slate-800">パトカー</span>
-            <button onclick="Game.honkSelectedCar()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 font-black px-2.5 py-1 rounded-full text-xs border-b-2 border-amber-600 active:translate-y-0.5">
+          <div class="flex items-center gap-2 mt-0.5">
+            <span id="title-car-name" class="text-lg sm:text-2xl font-black text-slate-800">パトカー</span>
+            <button onclick="Game.honkSelectedCar()" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-xs px-2.5 py-1 rounded-full border-b-2 border-amber-600 shadow">
               🔊 おとをならす
             </button>
           </div>
+        </div>
 
-          <!-- 5回連続クリアスタンプ進捗バー -->
-          <div class="w-full mt-2.5 pt-2 border-t-2 border-dashed border-slate-200 flex flex-col items-center">
-            <div class="flex items-center justify-between w-full text-xs font-black text-slate-600 px-1 mb-1">
-              <span id="title-streak-label">🌱 かんたん れんぞくクリア</span>
-              <span id="title-streak-remain" class="text-rose-600">あと 5かい で 新車ゲット！</span>
-            </div>
-            <div id="title-streak-stars" class="flex items-center justify-center gap-2 sm:gap-3">
-              <!-- JSで5つのスタンプ枠を描画 -->
-            </div>
+        <!-- 5回連続クリアスタンプカード -->
+        <div class="w-full max-w-md bg-white/95 rounded-2xl border-2 border-amber-400 px-3 py-2 shadow-md z-10">
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span id="title-streak-label" class="text-emerald-700 font-black">🌱 かんたん れんぞくスタンプ</span>
+            <span id="title-streak-remain" class="font-black text-rose-600">あと 5かい で 新車ゲット！</span>
+          </div>
+          <div id="title-streak-stars" class="flex items-center justify-around gap-1">
+            <!-- JSで5個のスタンプ枠を生成 -->
           </div>
         </div>
 
-        <!-- アクションボタン群 -->
-        <div class="w-full max-w-md flex flex-col gap-2.5 z-10 mb-1">
-          <button onclick="Game.startMission()" class="btn-3d w-full bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white font-black text-xl sm:text-2xl py-3.5 sm:py-4 rounded-3xl border-b-8 border-rose-800 shadow-xl flex items-center justify-center gap-3">
-            <span class="text-2xl sm:text-3xl">🚦</span>
+        <!-- メインアクションボタン群 -->
+        <div class="w-full max-w-md flex flex-col gap-2 z-10 mb-0.5">
+          <button onclick="Game.startMission()" class="btn-3d w-full bg-rose-500 hover:bg-rose-400 text-white font-black text-xl sm:text-2xl py-3.5 sm:py-4 rounded-3xl border-b-8 border-rose-700 shadow-xl flex items-center justify-center gap-2">
+            <span>🚦</span>
             <span>しゅっぱつ しんこう！</span>
           </button>
 
-          <div class="grid grid-cols-5 gap-2">
-            <button onclick="Game.openGarage()" class="btn-3d col-span-2 bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-900 font-black text-sm sm:text-base py-2.5 px-2 rounded-2xl border-b-4 border-amber-700 shadow-lg flex items-center justify-center gap-1">
-              <span class="text-lg">🛠️</span>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="Game.openGarage()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-xs sm:text-sm py-2.5 px-2 rounded-2xl border-b-4 border-amber-600 shadow flex items-center justify-center gap-1">
+              <span>🛠️</span>
               <span>ガレージ</span>
-              <span id="garage-count-badge" class="bg-white px-1.5 py-0.5 rounded-full text-[11px] font-black text-amber-800 border border-amber-400">1/24</span>
+              <span id="garage-count-badge" class="bg-white/90 text-slate-800 text-[10px] px-1.5 py-0.5 rounded-full">1/24</span>
             </button>
-            <button onclick="Game.openKanaChart()" class="btn-3d col-span-2 bg-gradient-to-b from-sky-400 to-sky-500 hover:from-sky-300 hover:to-sky-400 text-white font-black text-sm sm:text-base py-2.5 px-2 rounded-2xl border-b-4 border-sky-700 shadow-lg flex items-center justify-center gap-1">
-              <span class="text-lg">📖</span>
+            <button onclick="Game.openKanaChart()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black text-xs sm:text-sm py-2.5 px-2 rounded-2xl border-b-4 border-sky-700 shadow flex items-center justify-center gap-1">
+              <span>📖</span>
               <span>50おんひょう</span>
             </button>
-            <button onclick="Game.openParentSettings()" class="btn-3d col-span-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black text-xs py-2.5 rounded-2xl border-b-4 border-slate-400 shadow flex flex-col items-center justify-center leading-tight">
-              <span class="text-base">⚙️</span>
-              <span class="text-[10px]">せってい</span>
+            <button onclick="Game.openParentSettings()" class="btn-3d bg-slate-700 hover:bg-slate-600 text-white font-black text-xs sm:text-sm py-2.5 px-2 rounded-2xl border-b-4 border-slate-900 shadow flex items-center justify-center gap-1">
+              <span>⚙️</span>
+              <span>せってい</span>
             </button>
           </div>
         </div>
       </section>
 
       <!-- ==========================================
-           2. マイガレージ（全24車種：かんたん12台＋しっかりデラックス12台）
+           2. マイガレージ（全24車種コレクション）画面
            ========================================== -->
-      <section id="screen-garage" class="hidden flex-1 flex flex-col p-3 sm:p-5 bg-slate-800 text-white overflow-hidden">
-        <div class="flex items-center justify-between mb-2 shrink-0">
+      <section id="screen-garage" class="hidden flex-1 flex flex-col justify-between p-3 sm:p-5 bg-slate-800 text-white overflow-hidden">
+        <div class="flex items-center justify-between gap-2 shrink-0">
           <div>
-            <h2 class="text-lg sm:text-2xl font-black text-amber-400 flex items-center gap-2">
-              <span>🛠️</span><span>マイガレージ（ぜんぶで 24だい）</span>
+            <h2 class="text-lg sm:text-2xl font-black text-amber-400 flex items-center gap-1.5">
+              <span>🛠️</span><span>マイガレージ（くるま ずかん）</span>
             </h2>
-            <p class="text-xs text-slate-300 font-bold">5かい れんぞくクリア で あたらしい くるま が ふえるよ！</p>
+            <p class="text-[11px] sm:text-xs text-slate-300 font-bold">
+              5かい れんぞく クリア で あたらしい くるま が ふえるよ！
+            </p>
           </div>
-          <button onclick="Game.goTitle()" class="btn-3d bg-sky-500 text-white font-black px-4 py-2 rounded-2xl border-b-4 border-sky-700 text-sm">
-            もどる
+          <button onclick="Game.goTitle()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black text-xs sm:text-sm px-3.5 py-2 rounded-2xl border-b-4 border-sky-700 shadow shrink-0">
+            🏠 もどる
           </button>
         </div>
 
-        <!-- ガレージタブ切り替え（かんたん / しっかりデラックス） -->
-        <div class="grid grid-cols-2 gap-2 mb-2.5 shrink-0">
+        <!-- ノーマル / デラックス 切り替えタブ -->
+        <div class="grid grid-cols-2 gap-2 my-2 shrink-0">
           <button id="garage-tab-easy" onclick="Game.switchGarageTab('easy')" class="btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-emerald-500 text-white border-emerald-700 shadow">
             <span>🌱 かんたん の くるま</span>
             <span id="garage-easy-count" class="bg-black/25 px-2 py-0.5 rounded-full text-xs">1/12</span>
@@ -296,58 +394,164 @@
           </button>
         </div>
 
-        <!-- 車種グリッド一覧 -->
-        <div id="garage-grid" class="flex-1 grid grid-cols-3 sm:grid-cols-4 gap-2.5 overflow-y-auto p-1">
+        <!-- 車グリッド（横3列×4段＝12台表示） -->
+        <div id="garage-grid" class="flex-1 grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-2.5 overflow-y-auto p-1">
           <!-- JSで動的生成 -->
+        </div>
+
+        <div class="pt-2 shrink-0">
+          <button onclick="Game.startMission()" class="btn-3d w-full bg-rose-500 hover:bg-rose-400 text-white font-black text-base sm:text-lg py-3 rounded-2xl border-b-4 border-rose-700 shadow-lg flex items-center justify-center gap-2">
+            <span>🚦</span><span>えらんだ くるま で しゅっぱつ！</span>
+          </button>
         </div>
       </section>
 
       <!-- ==========================================
-           3. ステップ①：出発タイマー（デジタル時計 ➔ アナログ時計）
+           3. ステップ①：出発タイマー（案A：スタートゲート＆信号＋案B：朝・昼・夕方・夜の空＆ヘッドライト）
            ========================================== -->
-      <section id="screen-step1" class="hidden flex-1 flex flex-col justify-between p-3 sm:p-5 bg-gradient-to-b from-indigo-50 to-sky-100">
-        <!-- 問題ヘッダー＆デジタル時計 -->
-        <div class="bg-white rounded-3xl border-4 border-sky-300 p-3 sm:p-4 shadow-md flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <button onclick="Game.speakStep1Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-12 h-12 rounded-2xl border-b-4 border-amber-600 flex items-center justify-center text-2xl shrink-0 shadow">
+      <section id="screen-step1" class="hidden flex-1 flex flex-col justify-between p-2.5 sm:p-4 bg-gradient-to-b from-amber-50 to-sky-100 overflow-hidden">
+        <!-- 上部：問題文＆手動ヒントボタンバー -->
+        <div class="bg-white/95 rounded-2xl border-2 border-sky-300 px-3 py-2 shadow-sm flex items-center justify-between gap-2 shrink-0">
+          <div class="flex items-center gap-2 min-w-0">
+            <button onclick="Game.speakStep1Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-10 h-10 rounded-xl border-b-4 border-amber-600 flex items-center justify-center text-xl shrink-0 shadow">
               🔊
             </button>
-            <div>
-              <div class="text-xs font-black text-sky-600">ステップ① しゅっぱつタイマー</div>
-              <div id="step1-question-text" class="text-base sm:text-xl font-black text-slate-800">
+            <div class="min-w-0">
+              <div class="text-[11px] font-black text-sky-600 leading-none">ステップ① しゅっぱつゲート</div>
+              <div id="step1-question-text" class="text-sm sm:text-lg font-black text-slate-800 truncate mt-0.5">
                 「 3じ 」に しゅっぱつ！ おなじ とけい は どれかな？
               </div>
             </div>
           </div>
+          <button onclick="Game.triggerManualHint(1)" class="btn-3d bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-black px-3 py-1.5 rounded-xl border-b-4 border-yellow-500 text-xs sm:text-sm flex items-center gap-1 shadow shrink-0">
+            <span>💡</span><span>ヒント</span>
+          </button>
+        </div>
 
-          <!-- デジタル時計表示（赤＝時、青＝分で色分けリンク） -->
-          <div class="bg-slate-900 px-5 py-2 rounded-2xl border-4 border-slate-400 shadow-inner flex items-center gap-1 shrink-0">
-            <span class="text-xs font-bold text-slate-400 mr-1">デジタル</span>
-            <span id="digital-hour" class="text-3xl sm:text-4xl font-black text-rose-400 tracking-wider">3</span>
-            <span class="text-2xl sm:text-3xl font-black text-white pb-1">:</span>
-            <span id="digital-min" class="text-3xl sm:text-4xl font-black text-sky-400 tracking-wider">00</span>
+        <!-- 問題文の囲いの下：3ライフ表示 -->
+        <div class="flex justify-center my-0.5 shrink-0 z-20">
+          <div class="bg-white/95 border-2 border-rose-400 px-4 py-1 rounded-full shadow-md flex items-center gap-2">
+            <span class="text-xs sm:text-sm font-black text-rose-600">ライフ</span>
+            <div class="step-life-hearts flex items-center gap-1 text-lg sm:text-xl leading-none">
+              <span>❤️</span><span>❤️</span><span>❤️</span>
+            </div>
           </div>
         </div>
 
-        <!-- ヒントガイド -->
-        <div class="text-center my-1">
-          <span class="inline-block bg-white/90 px-4 py-1 rounded-full text-xs sm:text-sm font-black text-slate-700 border-2 border-slate-300 shadow-sm">
-            💡 <span class="text-rose-600">あかい みじかい はり</span> と <span class="text-sky-600">あおい ながい はり</span> を みてね！
-          </span>
+        <!-- 中央上部：案A＋案B アウトドア・スタートゲート＆道路シーン -->
+        <div id="step1-scene" class="relative w-full h-36 sm:h-44 rounded-3xl border-4 border-sky-400 shadow-lg overflow-hidden my-1 shrink-0 transition-colors duration-500 bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200">
+          <!-- 空の太陽・月・星・雲レイヤー（JSで時間帯に応じて動的描画） -->
+          <div id="step1-sky-decor" class="absolute inset-0 pointer-events-none"></div>
+
+          <!-- 左上：時間帯バッジ（☀️あさ / ☀️おひる / 🌇ゆうがた / 🌙よる） -->
+          <div id="step1-time-badge" class="absolute top-2.5 left-3 z-20 bg-white/90 backdrop-blur px-3 py-1 rounded-full border-2 border-sky-400 shadow-sm text-xs sm:text-sm font-black text-slate-800 flex items-center gap-1">
+            <span>☀️</span><span>あさ</span>
+          </div>
+
+          <!-- 右上：道路デジタル時計ゲート看板（赤＝時、青＝分） -->
+          <div class="absolute top-2 right-3 z-20 bg-slate-900 px-3.5 py-1.5 rounded-2xl border-4 border-slate-300 shadow-xl flex items-center gap-1">
+            <div class="flex flex-col items-center mr-1">
+              <span class="text-[9px] font-black text-amber-300 leading-none">しゅっぱつ</span>
+              <span class="text-[9px] font-bold text-slate-400 leading-none mt-0.5">デジタル</span>
+            </div>
+            <span id="digital-hour" class="text-2xl sm:text-4xl font-black text-rose-400 tracking-wider leading-none">3</span>
+            <span class="text-xl sm:text-3xl font-black text-white leading-none pb-0.5">:</span>
+            <span id="digital-min" class="text-2xl sm:text-4xl font-black text-sky-400 tracking-wider leading-none">00</span>
+          </div>
+
+          <!-- 遠くの緑の丘・木々 -->
+          <div id="step1-hills" class="absolute bottom-14 inset-x-0 h-10 pointer-events-none flex items-end justify-between px-6 opacity-90">
+            <div class="w-40 h-8 bg-emerald-500/80 rounded-t-full"></div>
+            <div class="w-56 h-10 bg-emerald-600/80 rounded-t-full -ml-12"></div>
+            <div class="w-44 h-7 bg-emerald-500/80 rounded-t-full -ml-10"></div>
+          </div>
+
+          <!-- 道路（アスファルト＋白破線＋START停止線） -->
+          <div class="absolute bottom-0 inset-x-0 h-14 sm:h-16 bg-slate-700 border-t-4 border-emerald-600 flex items-center overflow-hidden">
+            <!-- 中央の白破線 -->
+            <div class="w-full h-1.5 border-t-4 border-dashed border-white/75"></div>
+            <!-- START停止ライン（道路を縦に横断） -->
+            <div class="absolute left-[54%] inset-y-0 w-7 bg-white/95 border-x-2 border-slate-400 flex items-center justify-center shadow">
+              <span class="text-[9px] sm:text-[10px] font-black text-slate-800 tracking-tighter -rotate-90 select-none">START</span>
+            </div>
+          </div>
+
+          <!-- 信号機（STARTラインの奥に設置） -->
+          <div class="absolute left-[56%] bottom-14 sm:bottom-16 z-10 flex flex-col items-center pointer-events-none">
+            <div class="bg-slate-800 border-2 border-slate-400 rounded-xl p-1 flex flex-col gap-1 shadow-lg">
+              <div id="step1-light-red" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e] transition-all"></div>
+              <div id="step1-light-yellow" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-950 transition-all"></div>
+              <div id="step1-light-green" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-950 transition-all"></div>
+            </div>
+            <div class="w-2 h-4 bg-slate-500"></div>
+          </div>
+
+          <!-- 待機＆発進するマイカー（右向き・夕方と夜はヘッドライトビームが点灯！） -->
+          <div id="step1-car-actor"
+               style="left: 12%; transform: translateX(0px) rotate(0deg); transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);"
+               class="absolute bottom-1 sm:bottom-1.5 z-20 w-28 h-16 sm:w-36 sm:h-20 flex items-center justify-center pointer-events-none">
+            <!-- 夕方・夜用の黄色いヘッドライトビーム（車の前方＝右側へ照射） -->
+            <div id="step1-headlight-beam" class="hidden absolute left-[78%] top-[28%] w-36 sm:w-44 h-12 pointer-events-none z-0">
+              <svg viewBox="0 0 160 60" class="w-full h-full overflow-visible">
+                <defs>
+                  <linearGradient id="headlightGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+                    <stop offset="0%" stop-color="#fef08a" stop-opacity="0.92"/>
+                    <stop offset="55%" stop-color="#fde047" stop-opacity="0.5"/>
+                    <stop offset="100%" stop-color="#fde047" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <polygon points="0,24 155,2 155,58 0,36" fill="url(#headlightGrad)"/>
+              </svg>
+            </div>
+            <!-- 車の横向きSVG（元々左向きなので scaleX(-1) で右向きに反転） -->
+            <div id="step1-car-svg-box" class="w-full h-full car-idle relative z-10">
+              <div id="step1-car-preview" class="w-full h-full" style="transform: scaleX(-1);"></div>
+            </div>
+            <!-- 不正解時の急ブレーキ吹き出し -->
+            <div id="step1-brake-badge" class="hidden absolute -top-5 right-0 bg-rose-600 text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full border-2 border-white shadow-md whitespace-nowrap z-30">
+              💥 ガチャン！ブレーキ！
+            </div>
+          </div>
+
+          <!-- 道路を上から下までしっかり塞ぐ紅白スタートゲート（遮断機） -->
+          <!-- 車よりも手前（z-30）に配置し、バーが道路の上端から下端まで垂直に降りて車の進路を物理的に遮断する -->
+          <div class="absolute left-[49%] bottom-0 z-30 w-24 h-24 sm:h-26 pointer-events-none">
+            <svg viewBox="0 0 100 105" class="w-full h-full overflow-visible">
+              <!-- 奥側のゲート支柱（道路の上端） -->
+              <rect x="6" y="4" width="16" height="24" rx="4" fill="#475569" stroke="#1e293b" stroke-width="2.5"/>
+              <!-- 道路を横断して塞ぐ紅白バー＋STOP標識（開くときは上へ約90度跳ね上がる） -->
+              <g id="step1-gate-arm" class="gate-barrier-arm">
+                <!-- 道路の上端(y=14)から下端(y=98)まで道路を完全に遮る紅白ストライプバー -->
+                <rect x="9" y="12" width="10" height="86" rx="4" fill="#ffffff" stroke="#1e293b" stroke-width="2.5"/>
+                <rect x="10" y="20" width="8" height="12" fill="#ef4444"/>
+                <rect x="10" y="42" width="8" height="12" fill="#ef4444"/>
+                <rect x="10" y="64" width="8" height="12" fill="#ef4444"/>
+                <rect x="10" y="84" width="8" height="10" fill="#ef4444"/>
+                <!-- 車の目の前に立ちはだかるSTOPボード -->
+                <rect x="0" y="44" width="28" height="22" rx="5" fill="#ef4444" stroke="#ffffff" stroke-width="2.5"/>
+                <text x="14" y="58" text-anchor="middle" font-size="9" font-weight="900" fill="#ffffff">STOP</text>
+              </g>
+              <!-- 支柱の回転ピン -->
+              <circle cx="14" cy="14" r="5" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+              <!-- 手前側のゲート受け台（道路の下端） -->
+              <rect x="6" y="92" width="16" height="12" rx="3" fill="#334155" stroke="#0f172a" stroke-width="2"/>
+            </svg>
+          </div>
         </div>
 
-        <!-- アナログ時計の選択肢（2択または3択） -->
-        <div id="clock-choices" class="flex-1 flex items-center justify-center gap-3 sm:gap-6 my-1">
+        <!-- アナログ時計の選択肢（3択） -->
+        <div id="clock-choices" class="flex-1 flex items-center justify-center gap-2.5 sm:gap-5 my-0.5 min-h-0">
           <!-- JSでアナログ時計ボタンを生成 -->
         </div>
 
-        <!-- 下部：待機中のマイカー -->
-        <div class="bg-slate-700 rounded-2xl p-2 px-4 flex items-center justify-between text-white border-b-4 border-slate-900">
+        <!-- 下部：ガイドメッセージバー -->
+        <div class="bg-slate-800 rounded-2xl py-2 px-3.5 flex items-center justify-between text-white border-b-4 border-slate-950 shrink-0">
           <div class="flex items-center gap-2">
-            <span class="text-xl">🚦</span>
-            <span id="step1-feedback" class="text-sm sm:text-base font-black text-amber-300">ただしい とけい を タップ して しゅっぱつ しよう！</span>
+            <span class="text-lg">🚦</span>
+            <span id="step1-feedback" class="text-xs sm:text-sm font-black text-amber-300">
+              あかい みじかい はり と あおい ながい はり を みてね！
+            </span>
           </div>
-          <div id="step1-car-preview" class="w-16 h-9"></div>
         </div>
       </section>
 
@@ -368,11 +572,16 @@
             </div>
 
             <div class="flex items-center gap-1.5 shrink-0">
-              <span id="step2-guide-badge" class="hidden md:inline-block text-xs font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+              <span id="step2-guide-badge" class="hidden lg:inline-block text-xs font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
                 ひらがな と おなじ カタカナ を えらぼう！
               </span>
+              <!-- 手動ヒントボタン -->
+              <button onclick="Game.triggerManualHint(2)" class="btn-3d bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-black px-2.5 py-1.5 rounded-xl border-b-4 border-yellow-500 text-xs sm:text-sm flex items-center gap-1 shadow">
+                <span>💡</span>
+                <span>ヒント</span>
+              </button>
               <!-- いつでも開ける50音表ボタン -->
-              <button onclick="Game.openKanaChart()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-3 py-1.5 rounded-xl border-b-4 border-sky-700 text-xs sm:text-sm flex items-center gap-1 shadow">
+              <button onclick="Game.openKanaChart()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-2.5 sm:px-3 py-1.5 rounded-xl border-b-4 border-sky-700 text-xs sm:text-sm flex items-center gap-1 shadow">
                 <span>📖</span>
                 <span>50おんひょう</span>
               </button>
@@ -390,6 +599,16 @@
           </div>
         </div>
 
+        <!-- 問題文の囲いの下：3ライフ表示 -->
+        <div class="w-full flex justify-center py-1 bg-emerald-700/60 z-20 shrink-0">
+          <div class="bg-white/95 border-2 border-rose-400 px-4 py-1 rounded-full shadow-md flex items-center gap-2">
+            <span class="text-xs sm:text-sm font-black text-rose-600">ライフ</span>
+            <div class="step-life-hearts flex items-center gap-1 text-lg sm:text-xl leading-none">
+              <span>❤️</span><span>❤️</span><span>❤️</span>
+            </div>
+          </div>
+        </div>
+
         <!-- 中央〜下部：3車線道路エリア -->
         <div class="relative flex-1 w-full max-w-lg mx-auto bg-slate-700 border-x-8 border-amber-400 flex flex-col justify-between overflow-hidden shadow-2xl">
           <!-- 車線の白破線（3車線＝2本の境界線） -->
@@ -401,12 +620,37 @@
             <!-- JSで3つの車線の標識ボタンを生成 -->
           </div>
 
+          <!-- レア！にじいろターボ発動時の豪華バナー -->
+          <div id="step2-rainbow-badge" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none">
+            <div class="bg-gradient-to-r from-rose-500 via-amber-400 via-emerald-400 via-sky-500 to-purple-500 p-1 rounded-3xl shadow-2xl pop-in">
+              <div class="bg-white/95 px-4 py-1.5 rounded-2xl flex items-center gap-1.5 whitespace-nowrap">
+                <span class="text-xl sm:text-2xl">🌈</span>
+                <span class="text-sm sm:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-amber-600 to-purple-700">レア！ にじいろターボ！！</span>
+                <span class="text-xl sm:text-2xl">✨</span>
+              </div>
+            </div>
+          </div>
+
           <!-- 下部：3車線を移動・走行するマイカー（各車線の真ん中にピタッと配置） -->
           <div class="relative w-full h-28 sm:h-32 z-10 pointer-events-none mb-2">
+            <!-- レア虹ターボ発動時のキラキラバナー -->
+            <div id="step2-rainbow-banner" class="hidden absolute -top-8 left-1/2 -translate-x-1/2 z-40 bg-gradient-to-r from-rose-500 via-amber-400 to-sky-500 text-white text-xs sm:text-sm font-black px-4 py-1 rounded-full border-2 border-white shadow-xl whitespace-nowrap pop-in">
+              🌈 レア！ にじいろターボ！！ ✨
+            </div>
+
             <div id="player-car-wrapper"
                  style="left: 50%; bottom: 8px; opacity: 1; transform: translateX(-50%) rotate(0deg); transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.65s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, transform 0.3s ease;"
                  class="absolute bottom-2 w-24 sm:w-28 flex flex-col items-center justify-center">
-              <div id="player-car-svg" class="w-16 h-20 sm:w-20 sm:h-24 car-idle filter drop-shadow-xl transition-transform duration-300"></div>
+              <!-- 車体＋後部バンパー直結のターボ炎ラッパー -->
+              <div id="player-car-actor" class="relative w-16 h-20 sm:w-20 sm:h-24 flex items-center justify-center">
+                <div id="player-car-svg" class="w-full h-full car-idle filter drop-shadow-xl transition-transform duration-300 relative z-10"></div>
+                <!-- ターボジェット炎（#player-car-actor内部のleft:50%・top:84%に固定し、どの車線でも車の真後ろ中央から噴射） -->
+                <div id="step2-turbo-fx"
+                     style="left: 50%; top: 84%; transform: translateX(-50%);"
+                     class="hidden absolute w-14 h-20 sm:w-16 sm:h-24 pointer-events-none z-0 turbo-flame-anim">
+                  <!-- JSで青ターボまたはレア虹ターボのSVGを挿入 -->
+                </div>
+              </div>
               <!-- 爆発エフェクトオーバーレイ -->
               <div id="step2-explosion" class="hidden absolute -inset-8 flex flex-col items-center justify-center pointer-events-none z-30">
                 <svg viewBox="0 0 160 160" class="w-36 h-36 sm:w-44 sm:h-44 drop-shadow-2xl">
@@ -433,35 +677,47 @@
            ========================================== -->
       <section id="screen-step3" class="hidden flex-1 flex flex-col justify-between p-3 sm:p-5 bg-gradient-to-b from-amber-50 to-orange-100">
         <!-- 問題ヘッダー -->
-        <div class="bg-white rounded-3xl border-4 border-amber-400 p-3 sm:p-4 shadow-md flex items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <button onclick="Game.speakStep3Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-12 h-12 rounded-2xl border-b-4 border-amber-600 flex items-center justify-center text-2xl shrink-0 shadow">
+        <div class="bg-white rounded-3xl border-4 border-amber-400 p-3 sm:p-4 shadow-md flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <button onclick="Game.speakStep3Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl border-b-4 border-amber-600 flex items-center justify-center text-2xl shrink-0 shadow">
               🔊
             </button>
-            <div>
+            <div class="min-w-0">
               <div class="text-xs font-black text-amber-700">ステップ③ ゴールちゅうしゃじょう</div>
-              <div class="text-base sm:text-xl font-black text-slate-800">
-                <span id="step3-kana-number" class="text-rose-600 text-xl sm:text-2xl underline decoration-wavy decoration-amber-400">「 にじゅうご 」ばん</span> に くるま を とめよう！
+              <div class="text-sm sm:text-xl font-black text-slate-800 truncate">
+                <span id="step3-kana-number" class="text-rose-600 text-lg sm:text-2xl underline decoration-wavy decoration-amber-400">「 にじゅうご 」ばん</span> に とめよう！
               </div>
             </div>
           </div>
-          <button onclick="Game.speakStep3Prompt()" class="hidden sm:flex bg-amber-100 hover:bg-amber-200 text-amber-900 font-black px-3 py-2 rounded-xl text-xs border-2 border-amber-300 items-center gap-1 shrink-0">
-            <span>👂</span><span>もういちど きく</span>
-          </button>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="Game.triggerManualHint(3)" class="btn-3d bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-black px-3 py-2 rounded-xl border-b-4 border-yellow-500 text-xs sm:text-sm flex items-center gap-1 shadow">
+              <span>💡</span><span>ヒント</span>
+            </button>
+            <button onclick="Game.speakStep3Prompt()" class="hidden md:flex bg-amber-100 hover:bg-amber-200 text-amber-900 font-black px-3 py-2 rounded-xl text-xs border-2 border-amber-300 items-center gap-1">
+              <span>👂</span><span>もういちど</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 問題文の囲いの下：3ライフ表示 -->
+        <div class="flex justify-center my-0.5 shrink-0 z-20">
+          <div class="bg-white/95 border-2 border-rose-400 px-4 py-1 rounded-full shadow-md flex items-center gap-2">
+            <span class="text-xs sm:text-sm font-black text-rose-600">ライフ</span>
+            <div class="step-life-hearts flex items-center gap-1 text-lg sm:text-xl leading-none">
+              <span>❤️</span><span>❤️</span><span>❤️</span>
+            </div>
+          </div>
         </div>
 
         <!-- 駐車場エリア（上部：駐車スペース3枠 ＋ 下部：車が走る通路レーン） -->
-        <div id="parking-arena" class="relative flex-1 bg-slate-700 rounded-3xl border-4 border-slate-500 p-2.5 sm:p-4 my-1.5 flex flex-col justify-between overflow-hidden shadow-inner">
-          <!-- 駐車スペース3択（看板エリアを車より前面のz-30にするため親のz-index固定を解除） -->
-          <div id="parking-lots" class="grid grid-cols-3 gap-2 sm:gap-4 items-stretch">
-            <!-- JSで駐車場ボタン（上部：番号看板エリア / 下部：車止め付き駐車スペース）を生成 -->
+        <div id="parking-arena" class="relative flex-1 bg-slate-700 rounded-3xl border-4 border-slate-500 p-2.5 sm:p-4 my-1 flex flex-col justify-between overflow-hidden shadow-inner">
+          <!-- 上部：3つの駐車スペース -->
+          <div id="parking-lots" class="grid grid-cols-3 gap-2 sm:gap-4 z-10">
+            <!-- JSで3つの駐車スペースを生成 -->
           </div>
 
-          <!-- 通路の白破線 -->
-          <div class="w-full border-b-2 border-dashed border-slate-400/70 my-auto pointer-events-none"></div>
-
-          <!-- 下部：発進して駐車枠へ移動するマイカー（トップビュー） -->
-          <div id="parking-drive-lane" class="relative w-full h-20 sm:h-24 z-20 pointer-events-none shrink-0">
+          <!-- 下部：マイカーが待機・走行する通路レーン -->
+          <div id="parking-drive-lane" class="relative w-full h-24 sm:h-28 z-20 pointer-events-none">
             <div id="step3-moving-car"
                  style="left: 50%; transform: translate(-50%, 0px) rotate(0deg); transition: left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);"
                  class="absolute bottom-1 w-20 h-24 sm:w-24 sm:h-28 flex items-center justify-center">
@@ -618,7 +874,7 @@
                 <h3 class="text-base sm:text-xl font-black text-sky-900 leading-tight">
                   ひらがな・カタカナ 50おんひょう
                 </h3>
-                <p class="text-[10px] sm:text-xs font-bold text-slate-500">
+                <p id="kana-chart-guide-text" class="text-[10px] sm:text-xs font-bold text-slate-500">
                   もじを タップすると こえで よむよ！
                 </p>
               </div>
@@ -2072,6 +2328,69 @@
         this.tone(329.63, now + 0.12, 0.22, 'triangle', 0.2);
       },
 
+      playHintChime() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        this.tone(587.33, now, 0.1, 'sine', 0.22);
+        this.tone(880.00, now + 0.1, 0.22, 'sine', 0.25);
+      },
+
+      playBlueTurbo() {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        // 爽快なジェット加速ノイズ＋上昇シンセ音
+        const bufferSize = this.ctx.sampleRate * 0.55;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufferSize) * Math.PI);
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(300, now);
+        filter.frequency.exponentialRampToValueAtTime(1800, now + 0.5);
+        filter.Q.setValueAtTime(2.5, now);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.32, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.54);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(now);
+        noise.stop(now + 0.55);
+
+        const osc = this.ctx.createOscillator();
+        const oscGain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(720, now + 0.48);
+        oscGain.gain.setValueAtTime(0.18, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.connect(oscGain);
+        oscGain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      },
+
+      playRainbowTurbo() {
+        this.init();
+        if (!this.ctx) return;
+        // ジェット音に加えてキラキラ輝く7色アルペジオチャイムを再生
+        this.playBlueTurbo();
+        const now = this.ctx.currentTime;
+        const sparkleNotes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00];
+        sparkleNotes.forEach((freq, i) => {
+          this.tone(freq, now + i * 0.065, 0.22, 'triangle', 0.26);
+        });
+      },
+
       playExplosion() {
         this.init();
         if (!this.ctx) return;
@@ -2125,6 +2444,32 @@
 
         // 着地時の「ドスン」
         this.tone(95, now + 0.65, 0.25, 'triangle', 0.35);
+      },
+
+      playTurbo(isRainbow = false) {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        // ジェット加速音
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(isRainbow ? 680 : 480, now + 0.45);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.48);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.48);
+
+        // レアな虹ターボ時はキラキラアルペジオ音を重ねる
+        if (isRainbow) {
+          const notes = [587.33, 783.99, 987.77, 1174.66, 1567.98];
+          notes.forEach((f, idx) => {
+            this.tone(f, now + idx * 0.07, 0.18, 'triangle', 0.22);
+          });
+        }
       },
 
       playFanfare() {
@@ -2198,7 +2543,7 @@
     };
 
     /* ============================================================================
-     * 3. アナログ時計SVGジェネレーター（赤＝短針、青＝長針でデジタル時計と完全リンク）
+     * 3. アナログ時計SVGジェネレーター（赤＝短針をさらに短く、青＝長針との差を明確化）
      * ============================================================================ */
     function createAnalogClockSVG(hour, minute) {
       // 短針は30分（:30）のとき次の数字との中間に進めるリアルかつ分かりやすい設計
@@ -2210,7 +2555,6 @@
         const rad = ((i * 30 - 90) * Math.PI) / 180;
         const x = 100 + 70 * Math.cos(rad);
         const y = 100 + 70 * Math.sin(rad);
-        // 対象の「時」の数字を少し強調
         const isTargetHour = (i === hour);
         numbersHTML += `
           <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central"
@@ -2229,28 +2573,56 @@
       }
 
       return `
-        <svg viewBox="0 0 200 200" class="w-full h-full max-w-[190px] max-h-[190px] drop-shadow">
+        <svg viewBox="0 0 200 200" class="w-full h-full max-w-[180px] max-h-[180px] drop-shadow">
           <!-- 時計の外枠 -->
           <circle cx="100" cy="100" r="95" fill="#ffffff" stroke="#334155" stroke-width="8"/>
           ${ticksHTML}
           ${numbersHTML}
 
-          <!-- 長針（青・分） -->
+          <!-- 長針（青・分）：文字盤の数字のすぐ近く（y=22）までしっかり伸びる長い針 -->
           <g transform="rotate(${minAngle} 100 100)">
-            <line x1="100" y1="100" x2="100" y2="30" stroke="#0284c7" stroke-width="8" stroke-linecap="round"/>
-            <polygon points="100,20 93,34 107,34" fill="#0284c7"/>
+            <line x1="100" y1="100" x2="100" y2="28" stroke="#0284c7" stroke-width="7" stroke-linecap="round"/>
+            <polygon points="100,18 93,32 107,32" fill="#0284c7"/>
           </g>
 
-          <!-- 短針（赤・時） -->
+          <!-- 短針（赤・時）：長針の約半分の長さ（y=64、先端y=54）に短く・太くしてひと目で区別可能に -->
           <g transform="rotate(${hourAngle} 100 100)">
-            <line x1="100" y1="100" x2="100" y2="48" stroke="#e11d48" stroke-width="11" stroke-linecap="round"/>
-            <polygon points="100,38 91,52 109,52" fill="#e11d48"/>
+            <line x1="100" y1="100" x2="100" y2="64" stroke="#e11d48" stroke-width="12" stroke-linecap="round"/>
+            <polygon points="100,52 89,66 111,66" fill="#e11d48"/>
           </g>
 
           <!-- 中心の留め具 -->
-          <circle cx="100" cy="100" r="8" fill="#facc15" stroke="#1e293b" stroke-width="3"/>
+          <circle cx="100" cy="100" r="8.5" fill="#facc15" stroke="#1e293b" stroke-width="3"/>
         </svg>
       `;
+    }
+
+    // STEP②のターボ炎SVG（青ターボ / レア虹色ターボ）
+    function getTurboFlameSVG(isRainbow) {
+      if (isRainbow) {
+        return `<svg viewBox="0 0 80 110" class="w-full h-full overflow-visible">
+          <!-- 7色レインボーツインジェット＆星屑パーティクル -->
+          <polygon points="18,0 62,0 74,55 40,108 6,55" fill="#f43f5e" opacity="0.9"/>
+          <polygon points="22,0 58,0 68,48 40,96 12,48" fill="#fb923c"/>
+          <polygon points="26,0 54,0 62,42 40,84 18,42" fill="#facc15"/>
+          <polygon points="30,0 50,0 56,36 40,70 24,36" fill="#4ade80"/>
+          <polygon points="33,0 47,0 50,28 40,56 30,28" fill="#38bdf8"/>
+          <polygon points="36,0 44,0 46,20 40,42 34,20" fill="#ffffff"/>
+          <circle cx="14" cy="36" r="5" fill="#fde047"/>
+          <circle cx="66" cy="40" r="4.5" fill="#38bdf8"/>
+          <circle cx="22" cy="74" r="4" fill="#f472b6"/>
+          <circle cx="60" cy="70" r="5" fill="#4ade80"/>
+        </svg>`;
+      }
+      return `<svg viewBox="0 0 80 100" class="w-full h-full overflow-visible">
+        <!-- 青いツインジェットターボ -->
+        <polygon points="20,0 38,0 42,46 28,86 14,46" fill="#0284c7" opacity="0.92"/>
+        <polygon points="42,0 60,0 66,46 52,86 38,46" fill="#0284c7" opacity="0.92"/>
+        <polygon points="23,0 35,0 38,38 28,68 18,38" fill="#38bdf8"/>
+        <polygon points="45,0 57,0 62,38 52,68 42,38" fill="#38bdf8"/>
+        <polygon points="25,0 33,0 34,24 28,44 22,24" fill="#e0f2fe"/>
+        <polygon points="47,0 55,0 58,24 52,44 46,24" fill="#e0f2fe"/>
+      </svg>`;
     }
 
     /* ============================================================================
@@ -2268,6 +2640,14 @@
         resetStreakOnMistake: true, // ミス時に連続スタンプを0に戻すか（標準: true）
         unlockedCars: ['patrol'],   // 初期解放は「パトカー」のみ
         selectedCarId: 'patrol',
+
+        // 3ライフ制（1回のドライブにつき3ライフ）
+        lives: 3,
+
+        // 難易度ボタンの長押しタイマー管理
+        holdTimer: null,
+        holdStartTime: 0,
+        holdToastTimer: null,
 
         // 現在の問題データ
         step1: null,
@@ -2456,6 +2836,61 @@
         }
       },
 
+      /* ----------------------------------------------------------------
+       * 難易度ボタンの長押し（1.2秒）切り替え（プレイ中の誤タップ防止）
+       * ---------------------------------------------------------------- */
+      startDifficultyHold(mode, event) {
+        if (event && event.button && event.button !== 0) return;
+        Sound.init();
+        if (this.state.difficulty === mode) return;
+
+        this.cancelDifficultyHold();
+        const barId = mode === 'easy' ? 'hold-bar-easy' : 'hold-bar-hard';
+        const barEl = document.getElementById(barId);
+        if (barEl) {
+          barEl.style.transition = 'width 1.2s linear';
+          barEl.style.width = '100%';
+        }
+
+        this.state.holdStartTime = Date.now();
+        this.state.holdTimer = setTimeout(() => {
+          this.state.holdTimer = null;
+          if (barEl) {
+            barEl.style.transition = 'none';
+            barEl.style.width = '0%';
+          }
+          const toast = document.getElementById('hold-guide-toast');
+          if (toast) toast.classList.add('hidden');
+          this.setDifficulty(mode);
+        }, 1200);
+      },
+
+      cancelDifficultyHold() {
+        const elapsed = Date.now() - (this.state.holdStartTime || 0);
+        if (this.state.holdTimer) {
+          clearTimeout(this.state.holdTimer);
+          this.state.holdTimer = null;
+          // 短押しだった場合は「ながおしで きりかえ」のガイドトーストを表示
+          if (elapsed > 15 && elapsed < 1150) {
+            const toast = document.getElementById('hold-guide-toast');
+            if (toast) {
+              toast.classList.remove('hidden');
+              if (this.state.holdToastTimer) clearTimeout(this.state.holdToastTimer);
+              this.state.holdToastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+              }, 2000);
+            }
+          }
+        }
+        ['hold-bar-easy', 'hold-bar-hard'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.style.transition = 'none';
+            el.style.width = '0%';
+          }
+        });
+      },
+
       setDifficulty(mode) {
         Sound.init();
         this.state.difficulty = mode;
@@ -2477,17 +2912,64 @@
       },
 
       updateHeaderUI() {
-        document.getElementById('star-count').textContent = this.state.stars;
-        document.getElementById('garage-count-badge').textContent = `${this.state.unlockedCars.length}/${CarCatalog.length}`;
+        const starEl = document.getElementById('star-count');
+        if (starEl) starEl.textContent = this.state.stars;
+        const badgeEl = document.getElementById('garage-count-badge');
+        if (badgeEl) badgeEl.textContent = `${this.state.unlockedCars.length}/${CarCatalog.length}`;
 
         const btnEasy = document.getElementById('mode-easy');
         const btnHard = document.getElementById('mode-hard');
         if (this.state.difficulty === 'easy') {
-          btnEasy.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow';
-          btnHard.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
+          btnEasy.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow';
+          btnHard.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
         } else {
-          btnHard.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-rose-500 text-white shadow';
-          btnEasy.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
+          btnHard.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-rose-500 text-white shadow';
+          btnEasy.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
+        }
+      },
+
+      updateLifeUI() {
+        let html = '';
+        for (let i = 0; i < 3; i++) {
+          html += `<span class="transition-transform duration-300 ${i < this.state.lives ? 'scale-100' : 'scale-90 opacity-60'}">${i < this.state.lives ? '❤️' : '🤍'}</span>`;
+        }
+        document.querySelectorAll('.step-life-hearts').forEach(el => {
+          el.innerHTML = html;
+        });
+      },
+
+      /* ----------------------------------------------------------------
+       * 手動「💡ヒント」ボタン（30秒待たなくても自分の意思でヒントを出せる）
+       * ---------------------------------------------------------------- */
+      triggerManualHint(stepNumber) {
+        Sound.init();
+        if (this.state.isBusy) return;
+        Sound.playCorrect();
+
+        if (stepNumber === 1 && this.state.step1) {
+          const correctIdx = this.state.step1.choices.findIndex(c => c.isCorrect);
+          const btn = document.getElementById(`clock-btn-${correctIdx}`);
+          if (btn) btn.classList.add('hint-active');
+          document.getElementById('step1-feedback').textContent = '💡 ヒント！ キラキラ ゆれている とけい を みてみよう！';
+        } else if (stepNumber === 2 && this.state.step2) {
+          this.state.step2.currentChoices.forEach((c, idx) => {
+            const hintSpan = document.getElementById(`lane-hint-${idx}`);
+            if (hintSpan) hintSpan.classList.remove('opacity-0');
+            if (c.isCorrect) {
+              const btn = document.getElementById(`lane-btn-${idx}`);
+              if (btn) btn.classList.add('hint-active');
+            }
+          });
+        } else if (stepNumber === 3 && this.state.step3) {
+          this.state.step3.choices.forEach((c, idx) => {
+            const kanaHint = document.getElementById(`park-kana-hint-${idx}`);
+            if (kanaHint) kanaHint.classList.remove('hidden');
+            if (c.isCorrect) {
+              const btn = document.getElementById(`park-btn-${idx}`);
+              if (btn) btn.classList.add('hint-active');
+            }
+          });
+          document.getElementById('step3-feedback').textContent = '💡 ヒント！ すうじ の した の ひらがな を みてみよう！';
         }
       },
 
@@ -2541,7 +3023,7 @@
       },
 
       /* ----------------------------------------------------------------
-       * ひらがな・カタカナ 50音表モーダル
+       * ひらがな・カタカナ 50音表モーダル（STEP②では探している文字の「行」をハイライト）
        * ---------------------------------------------------------------- */
       openKanaChart() {
         Sound.init();
@@ -2583,6 +3065,20 @@
           tabBasic.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300';
         }
 
+        // STEP②プレイ中なら、今探しているカタカナ文字を取得して該当する縦の列（行）をハイライトする
+        let targetKata = null;
+        if (!document.getElementById('screen-step2').classList.contains('hidden') && this.state.step2) {
+          const activeIdx = this.state.step2.targetIndices[this.state.step2.stepCursor];
+          targetKata = this.state.step2.kataChars[activeIdx];
+        }
+
+        const guideTextEl = document.getElementById('kana-chart-guide-text');
+        if (guideTextEl) {
+          guideTextEl.innerHTML = targetKata
+            ? '<span class="text-rose-600 font-black">💡 きいろく ひかっている ならび から さがしてみよう！</span>'
+            : 'もじを タップすると こえで よむよ！';
+        }
+
         const body = document.getElementById('kana-chart-body');
         body.innerHTML = '';
 
@@ -2593,20 +3089,32 @@
         grid.className = `grid ${gridColsClass} gap-1 sm:gap-1.5 w-full h-full items-stretch`;
 
         columns.forEach(col => {
+          const isTargetColumn = targetKata && col.cells.some(c => c && c[1] === targetKata);
           const colDiv = document.createElement('div');
-          colDiv.className = 'grid grid-rows-5 gap-1 sm:gap-1.5 h-full';
+          colDiv.className = `relative grid grid-rows-5 gap-1 sm:gap-1.5 h-full rounded-2xl transition-all ${
+            isTargetColumn ? 'ring-4 ring-amber-400 bg-yellow-100/90 p-0.5 kana-col-target z-10' : ''
+          }`;
+
+          if (isTargetColumn) {
+            const badge = document.createElement('div');
+            badge.className = 'absolute -top-2.5 left-1/2 -translate-x-1/2 bg-rose-600 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-full shadow whitespace-nowrap z-20 pointer-events-none';
+            badge.textContent = '💡このならび';
+            colDiv.appendChild(badge);
+          }
 
           col.cells.forEach(cell => {
             if (!cell) {
               const empty = document.createElement('div');
-              empty.className = 'rounded-xl bg-slate-50 border border-dashed border-slate-200';
+              empty.className = 'rounded-xl bg-slate-50/70 border border-dashed border-slate-200';
               colDiv.appendChild(empty);
               return;
             }
 
             const [hira, kata, customSpeech] = cell;
             const btn = document.createElement('button');
-            btn.className = `rounded-xl border-2 ${col.color} flex flex-col items-center justify-center p-0.5 shadow-sm active:scale-90 transition-transform hover:brightness-95`;
+            btn.className = `rounded-xl border-2 ${
+              isTargetColumn ? 'bg-yellow-50 border-amber-400 text-slate-900' : col.color
+            } flex flex-col items-center justify-center p-0.5 shadow-sm active:scale-90 transition-transform hover:brightness-95`;
             btn.innerHTML = `
               <span class="text-[11px] sm:text-sm font-extrabold opacity-85 leading-none">${hira}</span>
               <span class="text-base sm:text-2xl font-black text-slate-900 leading-tight mt-0.5">${kata}</span>
@@ -2683,9 +3191,14 @@
         });
 
         const stepInd = document.getElementById('step-indicator');
+        const lifeInd = document.getElementById('life-indicator');
         if (activeStep >= 1 && activeStep <= 3) {
           stepInd.classList.remove('hidden');
           stepInd.classList.add('flex');
+          if (lifeInd) {
+            lifeInd.classList.remove('hidden');
+            lifeInd.classList.add('flex');
+          }
           for (let i = 1; i <= 3; i++) {
             const el = document.getElementById(`ind-${i}`);
             if (i === activeStep) {
@@ -2699,6 +3212,10 @@
         } else {
           stepInd.classList.add('hidden');
           stepInd.classList.remove('flex');
+          if (lifeInd) {
+            lifeInd.classList.add('hidden');
+            lifeInd.classList.remove('flex');
+          }
         }
       },
 
@@ -2851,25 +3368,138 @@
       },
 
       /* ----------------------------------------------------------------
-       * ミッション開始 ➔ ステップ①（時計）
+       * ミッション開始 ➔ ステップ①（時計：案Aスタートゲート＋案Bランダム時間帯・ヘッドライト）
        * ---------------------------------------------------------------- */
       startMission() {
         Sound.init();
+        this.state.lives = 3;
+        this.updateLifeUI();
         const car = this.getSelectedCar();
         Sound.playCarSound(car.soundType);
         this.setupStep1();
       },
 
+      // 時間帯（hour 1..12 とランダムな午前/午後 isPM）から空テーマを決定
+      getStep1SkyTheme(hour, isPM) {
+        const h24 = isPM ? (hour === 12 ? 12 : hour + 12) : (hour === 12 ? 0 : hour);
+        if (h24 >= 6 && h24 <= 9) {
+          return {
+            key: 'morning',
+            icon: '☀️',
+            label: 'あさ',
+            speechPrefix: 'あさの ',
+            bgClass: 'bg-gradient-to-b from-sky-300 via-amber-100 to-emerald-100',
+            headlight: false,
+            decorHTML: `
+              <div class="absolute top-3 left-28 text-3xl sm:text-4xl opacity-90">☀️</div>
+              <div class="absolute top-5 left-1/2 text-2xl sm:text-3xl opacity-80">☁️</div>
+            `
+          };
+        } else if (h24 >= 10 && h24 <= 15) {
+          return {
+            key: 'day',
+            icon: '☀️',
+            label: 'おひる',
+            speechPrefix: 'おひるの ',
+            bgClass: 'bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-100',
+            headlight: false,
+            decorHTML: `
+              <div class="absolute top-2 left-32 text-3xl sm:text-4xl">☀️</div>
+              <div class="absolute top-4 left-16 text-2xl sm:text-3xl opacity-85">☁️</div>
+              <div class="absolute top-6 left-1/2 text-2xl sm:text-3xl opacity-85">☁️</div>
+            `
+          };
+        } else if ((h24 >= 16 && h24 <= 18) || h24 === 5) {
+          return {
+            key: 'evening',
+            icon: '🌇',
+            label: 'ゆうがた',
+            speechPrefix: 'ゆうがたの ',
+            bgClass: 'bg-gradient-to-b from-indigo-500 via-rose-400 to-amber-200',
+            headlight: true,
+            decorHTML: `
+              <div class="absolute top-6 left-32 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-b from-amber-300 to-rose-500 shadow-[0_0_20px_#f97316] opacity-90"></div>
+              <div class="absolute top-3 left-1/2 text-xl text-amber-100 opacity-75">☁️</div>
+            `
+          };
+        } else {
+          return {
+            key: 'night',
+            icon: '🌙',
+            label: 'よる',
+            speechPrefix: 'よるの ',
+            bgClass: 'bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-800',
+            headlight: true,
+            decorHTML: `
+              <div class="absolute top-3 left-28 text-2xl sm:text-3xl drop-shadow-[0_0_8px_#fde047]">🌙</div>
+              <div class="absolute top-3 left-44 text-xs text-yellow-200 animate-pulse">✨</div>
+              <div class="absolute top-8 left-20 text-xs text-yellow-200 animate-pulse">⭐</div>
+              <div class="absolute top-4 left-[48%] text-xs text-yellow-100 animate-pulse">✨</div>
+            `
+          };
+        }
+      },
+
+      resetStep1SceneActors() {
+        const gateArm = document.getElementById('step1-gate-arm');
+        if (gateArm) gateArm.classList.remove('open');
+
+        const redLight = document.getElementById('step1-light-red');
+        const greenLight = document.getElementById('step1-light-green');
+        if (redLight) redLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e] transition-all';
+        if (greenLight) greenLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-950 transition-all';
+
+        const brakeBadge = document.getElementById('step1-brake-badge');
+        if (brakeBadge) brakeBadge.classList.add('hidden');
+
+        const carActor = document.getElementById('step1-car-actor');
+        if (carActor) {
+          carActor.style.transition = 'none';
+          carActor.style.transform = 'translateX(0px) rotate(0deg)';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              carActor.style.transition = 'transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            });
+          });
+        }
+      },
+
       setupStep1() {
         this.state.isBusy = false;
         this.showScreen('screen-step1', 1);
+        this.updateLifeUI();
 
         const car = this.getSelectedCar();
         document.getElementById('step1-car-preview').innerHTML = getCarSideSVG(car.id);
-        document.getElementById('step1-feedback').textContent = 'あかい みじかい はり の すうじ を みてみよう！';
+        this.resetStep1SceneActors();
 
         const targetHour = Math.floor(Math.random() * 12) + 1;
         const targetMin = (this.state.difficulty === 'hard' && Math.random() < 0.5) ? 30 : 0;
+        // 同じ8:00でも「あさ」と「よる」の両方がランダムで出るよう午前/午後をランダム決定
+        const isPM = Math.random() < 0.5;
+        const skyTheme = this.getStep1SkyTheme(targetHour, isPM);
+
+        // 空テーマとヘッドライトの反映
+        const sceneEl = document.getElementById('step1-scene');
+        if (sceneEl) {
+          sceneEl.className = `relative w-full h-36 sm:h-44 rounded-3xl border-4 border-sky-400 shadow-lg overflow-hidden my-1 shrink-0 transition-colors duration-500 ${skyTheme.bgClass}`;
+        }
+        const skyDecorEl = document.getElementById('step1-sky-decor');
+        if (skyDecorEl) skyDecorEl.innerHTML = skyTheme.decorHTML;
+
+        const badgeEl = document.getElementById('step1-time-badge');
+        if (badgeEl) {
+          badgeEl.innerHTML = `<span>${skyTheme.icon}</span><span>${skyTheme.label}</span>`;
+        }
+
+        const beamEl = document.getElementById('step1-headlight-beam');
+        if (beamEl) {
+          beamEl.classList.toggle('hidden', !skyTheme.headlight);
+        }
+
+        document.getElementById('step1-feedback').textContent = skyTheme.headlight
+          ? `${skyTheme.icon} ${skyTheme.label}の ドライブ！ ライトを つけて しゅっぱつ しよう！`
+          : 'あかい みじかい はり と あおい ながい はり を みてね！';
 
         // 3択のアナログ時計を生成
         const choiceCount = 3;
@@ -2888,13 +3518,13 @@
         }
         choices.sort(() => Math.random() - 0.5);
 
-        this.state.step1 = { targetHour, targetMin, choices };
+        this.state.step1 = { targetHour, targetMin, isPM, skyTheme, choices };
 
         document.getElementById('digital-hour').textContent = targetHour;
         document.getElementById('digital-min').textContent = targetMin === 0 ? '00' : '30';
 
         const timeText = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
-        document.getElementById('step1-question-text').textContent = `「 ${timeText} 」に しゅっぱつ！ おなじ とけい は どれかな？`;
+        document.getElementById('step1-question-text').textContent = `${skyTheme.icon} ${skyTheme.label}の「 ${timeText} 」に しゅっぱつ！ おなじ とけい は どれ？`;
 
         const container = document.getElementById('clock-choices');
         container.innerHTML = '';
@@ -2902,7 +3532,7 @@
         choices.forEach((c, idx) => {
           const btn = document.createElement('button');
           btn.id = `clock-btn-${idx}`;
-          btn.className = 'btn-3d flex-1 max-w-[210px] bg-white rounded-3xl p-2.5 sm:p-4 border-4 border-b-8 border-sky-400 shadow-xl flex flex-col items-center justify-center aspect-square';
+          btn.className = 'btn-3d flex-1 max-w-[195px] h-full max-h-[195px] bg-white rounded-3xl p-2 sm:p-3 border-4 border-b-8 border-sky-400 shadow-xl flex flex-col items-center justify-center aspect-square';
           btn.innerHTML = createAnalogClockSVG(c.hour, c.min);
           btn.onclick = () => this.answerStep1(idx);
           container.appendChild(btn);
@@ -2915,9 +3545,10 @@
       speakStep1Prompt() {
         if (!this.state.step1) return;
         Sound.init();
-        const { targetHour, targetMin } = this.state.step1;
+        const { targetHour, targetMin, skyTheme } = this.state.step1;
         const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ 30ぷん`;
-        Sound.speak(`${timeSpeech} に しゅっぱつ！ おなじ とけい は どれかな？`);
+        const prefix = skyTheme ? skyTheme.speechPrefix : '';
+        Sound.speak(`${prefix}${timeSpeech} に しゅっぱつ！ おなじ とけい は どれかな？`);
       },
 
       startStep1HintTimer() {
@@ -2943,27 +3574,86 @@
           btn.classList.replace('border-sky-400', 'border-emerald-500');
           btn.classList.add('bg-emerald-50', 'scale-105');
 
-          // 正解時はチャイム音（ピンポーン）と車の音のみ再生（読み上げなし）
+          // 信号が青（🟢）になり、道路を塞いでいた遮断機がパカッと開く！
+          const redLight = document.getElementById('step1-light-red');
+          const greenLight = document.getElementById('step1-light-green');
+          if (redLight) redLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-950 transition-all';
+          if (greenLight) greenLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-400 shadow-[0_0_12px_#34d399] transition-all';
+
+          const gateArm = document.getElementById('step1-gate-arm');
+          if (gateArm) gateArm.classList.add('open');
+
+          // チャイム音と車の音のみ再生（正解後の読み上げなし）
           Sound.playCorrect();
           const car = this.getSelectedCar();
-          setTimeout(() => Sound.playCarSound(car.soundType), 250);
+          setTimeout(() => Sound.playCarSound(car.soundType), 200);
+
+          // ゲートが開いた直後にマイカーが右端へブォーン！と発進
+          const carActor = document.getElementById('step1-car-actor');
+          const sceneEl = document.getElementById('step1-scene');
+          setTimeout(() => {
+            if (carActor) {
+              const dist = sceneEl ? sceneEl.clientWidth + 120 : 520;
+              carActor.style.transform = `translateX(${dist}px) rotate(-2deg)`;
+            }
+          }, 220);
 
           const { targetHour, targetMin } = this.state.step1;
           const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
-          document.getElementById('step1-feedback').textContent = `ピンポーン！ ${timeSpeech} しゅっぱつ しんこう！`;
+          document.getElementById('step1-feedback').textContent = `🟢 ゲートオープン！ ${timeSpeech} しゅっぱつ しんこう！`;
 
           setTimeout(() => {
             this.setupStep2();
-          }, 1200);
+          }, 1250);
         } else {
-          // 間違えた場合は正解をメッセージで伝えてホーム画面へ戻る
-          const { targetHour, targetMin } = this.state.step1;
-          const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
-          const minAdvice = targetMin === 0 ? 'ながい はり が「12」' : 'ながい はり が「6」';
-          this.handleMistake(
-            `せいかいは <span class="text-rose-600">あかい みじかい はり が「${targetHour}」</span>、<br><span class="text-sky-600">${minAdvice}</span> の とけい だよ！`,
-            `せいかいは、みじかい はり が ${targetHour} の、${timeSpeech} の とけい だよ！`
-          );
+          // 不正解時：ゲートは閉まったまま、車がゲート手前まで進んで急ブレーキ！
+          this.state.isBusy = true;
+          this.clearHintTimer();
+          Sound.playGentleTryAgain();
+
+          if (btn) {
+            btn.classList.replace('border-sky-400', 'border-rose-500');
+            btn.classList.add('bg-rose-50');
+          }
+
+          const carActor = document.getElementById('step1-car-actor');
+          const brakeBadge = document.getElementById('step1-brake-badge');
+          if (carActor) {
+            carActor.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            carActor.style.transform = 'translateX(65px) rotate(7deg)';
+          }
+          if (brakeBadge) brakeBadge.classList.remove('hidden');
+
+          // 3ライフ制の判定
+          this.state.lives = Math.max(0, this.state.lives - 1);
+          this.updateLifeUI();
+
+          if (this.state.lives > 0) {
+            // ライフが残っている場合：車をスタート位置に戻してその場で再チャレンジ！
+            document.getElementById('step1-feedback').textContent = `💪 あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`;
+            Sound.speak(`あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`);
+
+            setTimeout(() => {
+              if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-40', 'pointer-events-none');
+              }
+              this.resetStep1SceneActors();
+              this.state.isBusy = false;
+              this.startStep1HintTimer();
+            }, 1100);
+          } else {
+            // ライフが0になった場合：正解をメッセージで伝えてホーム画面へ戻る
+            const { targetHour, targetMin } = this.state.step1;
+            const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
+            const minAdvice = targetMin === 0 ? 'ながい はり が「12」' : 'ながい はり が「6」';
+            setTimeout(() => {
+              this.handleMistake(
+                `せいかいは <span class="text-rose-600">あかい みじかい はり が「${targetHour}」</span>、<br><span class="text-sky-600">${minAdvice}</span> の とけい だよ！`,
+                `せいかいは、みじかい はり が ${targetHour} の、${timeSpeech} の とけい だよ！`
+              );
+            }, 950);
+          }
         }
       },
 
@@ -2974,6 +3664,7 @@
         this.state.isBusy = false;
         this.state.currentLane = 1;
         this.showScreen('screen-step2', 2);
+        this.updateLifeUI(false);
 
         // 自分の車を上から見た絵（getCarTopSVG）で中央車線の下部スタート位置に配置
         const car = this.getSelectedCar();
@@ -3107,26 +3798,91 @@
         this.clearHintTimer();
         // 30秒間操作がなければ、全選択肢の下にひらがなヒントが浮かび上がり、正解がキラキラ揺れる
         this.state.hintTimer = setTimeout(() => {
-          if (!this.state.step2 || this.state.isBusy) return;
-          this.state.step2.currentChoices.forEach((c, idx) => {
-            const hintSpan = document.getElementById(`lane-hint-${idx}`);
-            if (hintSpan) hintSpan.classList.remove('opacity-0');
-            if (c.isCorrect) {
-              const btn = document.getElementById(`lane-btn-${idx}`);
-              if (btn) btn.classList.add('hint-active');
-            }
-          });
+          this.triggerStep2Hint(false);
         }, 30000);
+      },
+
+      triggerStep2Hint(isManual = false) {
+        if (!this.state.step2 || this.state.isBusy) return;
+        this.clearHintTimer();
+        if (isManual) Sound.playHintChime();
+        this.state.step2.currentChoices.forEach((c, idx) => {
+          const hintSpan = document.getElementById(`lane-hint-${idx}`);
+          if (hintSpan) hintSpan.classList.remove('opacity-0');
+          if (c.isCorrect) {
+            const btn = document.getElementById(`lane-btn-${idx}`);
+            if (btn) btn.classList.add('hint-active');
+          }
+        });
+      },
+
+      // STEP② 正解時のターボジェットSVG生成（'blue': 青ターボ / 'rainbow': 豪華なキラキラ虹色ターボ）
+      getTurboEffectHTML(turboType) {
+        if (turboType === 'rainbow') {
+          return `
+            <div class="relative w-full h-full flex flex-col items-center">
+              <svg viewBox="0 0 120 110" class="w-24 h-22 turbo-flame-anim drop-shadow-lg">
+                <defs>
+                  <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#f43f5e"/>
+                    <stop offset="20%" stop-color="#fb923c"/>
+                    <stop offset="40%" stop-color="#facc15"/>
+                    <stop offset="60%" stop-color="#4ade80"/>
+                    <stop offset="80%" stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#a855f7"/>
+                  </linearGradient>
+                </defs>
+                <!-- 豪華な7色ワイドジェット噴射 -->
+                <polygon points="22,2 98,2 112,72 86,54 74,98 60,68 46,98 34,54 8,72" fill="url(#rainbowGrad)" stroke="#fef08a" stroke-width="3" stroke-linejoin="round"/>
+                <polygon points="36,4 84,4 92,58 72,44 60,82 48,44 28,58" fill="#fef9c3" opacity="0.9"/>
+              </svg>
+              <!-- キラキラ星＆虹パーティクル -->
+              <span class="absolute -left-3 top-2 text-lg sm:text-xl sparkle-particle">✨</span>
+              <span class="absolute -right-3 top-4 text-lg sm:text-xl sparkle-particle" style="animation-delay:0.12s">🌟</span>
+              <span class="absolute left-1 bottom-0 text-base sm:text-lg sparkle-particle" style="animation-delay:0.22s">🌈</span>
+              <span class="absolute right-1 bottom-1 text-base sm:text-lg sparkle-particle" style="animation-delay:0.18s">✨</span>
+            </div>
+          `;
+        }
+        // 基本の青いツインジェットターボ炎
+        return `
+          <div class="relative w-full h-full flex flex-col items-center">
+            <svg viewBox="0 0 100 95" class="w-20 h-18 turbo-flame-anim">
+              <!-- 左側ブルーバーナー -->
+              <polygon points="22,2 46,2 42,76 34,56 24,84 18,48" fill="#0284c7" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round"/>
+              <polygon points="26,4 42,4 36,56 30,44 26,60" fill="#bae6fd"/>
+              <!-- 右側ブルーバーナー -->
+              <polygon points="54,2 78,2 82,48 76,84 66,56 58,76" fill="#0284c7" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round"/>
+              <polygon points="58,4 74,4 74,60 70,44 64,56" fill="#bae6fd"/>
+              <!-- 中央コアプラズマ -->
+              <polygon points="40,4 60,4 50,88" fill="#38bdf8" opacity="0.9"/>
+              <polygon points="45,4 55,4 50,62" fill="#ffffff"/>
+            </svg>
+          </div>
+        `;
       },
 
       resetStep2CarPosition(laneIdx = 1) {
         this.state.currentLane = laneIdx;
         const wrapper = document.getElementById('player-car-wrapper');
         const playerCarEl = document.getElementById('player-car-svg');
+        const playerActorEl = document.getElementById('player-car-actor');
+        const turboFxEl = document.getElementById('step2-turbo-fx');
+        const rainbowBannerEl = document.getElementById('step2-rainbow-banner');
         const explosionEl = document.getElementById('step2-explosion');
         if (explosionEl) {
           explosionEl.classList.add('hidden');
           explosionEl.classList.remove('boom-active');
+        }
+        if (turboFxEl) {
+          turboFxEl.classList.add('hidden');
+          turboFxEl.innerHTML = '';
+        }
+        if (rainbowBannerEl) {
+          rainbowBannerEl.classList.add('hidden');
+        }
+        if (playerActorEl) {
+          playerActorEl.classList.remove('rainbow-car-aura');
         }
         if (playerCarEl) {
           playerCarEl.style.transform = 'translateY(0px) scale(1)';
@@ -3176,7 +3932,24 @@
             btn.classList.add('bg-emerald-100', 'scale-105');
           }
 
+          // 青ターボ（80%）またはレアなキラキラ虹色ターボ（20%）を発動！
+          // ターボ炎は #player-car-actor 内の left:50% に固定されているため車線移動してもズレない
+          const isRainbow = Math.random() < 0.22;
+          const turboFxEl = document.getElementById('step2-turbo-fx');
+          const playerActorEl = document.getElementById('player-car-actor');
+          const rainbowBannerEl = document.getElementById('step2-rainbow-banner');
+
+          if (turboFxEl) {
+            turboFxEl.innerHTML = getTurboFlameSVG(isRainbow);
+            turboFxEl.classList.remove('hidden');
+          }
+          if (isRainbow) {
+            if (playerActorEl) playerActorEl.classList.add('rainbow-car-aura');
+            if (rainbowBannerEl) rainbowBannerEl.classList.remove('hidden');
+          }
+
           Sound.playCorrect();
+          Sound.playTurbo(isRainbow);
           const readChar = choice.hira === 'ー' ? 'のばす おと' : choice.hira;
           Sound.speak(`${readChar}！`);
 
@@ -3225,6 +3998,10 @@
           const targetHira = this.state.step2.hiraChars[activeIdx];
           const readHira = targetHira === 'ー' ? 'のばす おと' : targetHira;
 
+          // 2ライフ制の減算
+          this.state.lives = Math.max(0, this.state.lives - 1);
+          this.updateLifeUI();
+
           if (wrapper) {
             const tiltDeg = laneIdx < prevLane ? -12 : laneIdx > prevLane ? 12 : 0;
             wrapper.style.transform = `translateX(-50%) rotate(${tiltDeg}deg)`;
@@ -3266,13 +4043,28 @@
             }, 520);
           }
 
-          // 爆発アニメーションのあとに従来のホームに戻るメッセージを表示
-          setTimeout(() => {
-            this.handleMistake(
-              `「 ${targetHira} 」の カタカナ は <span class="text-3xl text-rose-600 mx-1">「 ${targetKata} 」</span> だよ！`,
-              `${readHira} の カタカナ は、${readHira} だよ！`
-            );
-          }, 1550);
+          if (this.state.lives > 0) {
+            // ライフが残っている場合：爆発のあと車が復活して、その場で選び直せる！
+            setTimeout(() => {
+              if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-40', 'pointer-events-none');
+              }
+              document.getElementById('step2-guide-badge').textContent = `💪 あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`;
+              Sound.speak(`あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`);
+              this.resetStep2CarPosition(1);
+              this.state.isBusy = false;
+              this.startStep2HintTimer();
+            }, 1450);
+          } else {
+            // ライフが0になった場合：爆発アニメーションのあとに従来のホームに戻るメッセージを表示
+            setTimeout(() => {
+              this.handleMistake(
+                `「 ${targetHira} 」の カタカナ は <span class="text-3xl text-rose-600 mx-1">「 ${targetKata} 」</span> だよ！`,
+                `${readHira} の カタカナ は、${readHira} だよ！`
+              );
+            }, 1550);
+          }
         }
       },
 
@@ -3326,6 +4118,7 @@
       setupStep3() {
         this.state.isBusy = false;
         this.showScreen('screen-step3', 3);
+        this.updateLifeUI(false);
 
         const car = this.getSelectedCar();
         document.getElementById('step3-car-svg').innerHTML = getCarSideSVG(car.id);
@@ -3411,16 +4204,22 @@
         this.clearHintTimer();
         // 30秒間操作がなければ番号看板にひらがな読みを表示し、正解の駐車場がキラキラ揺れてヒントを出す
         this.state.hintTimer = setTimeout(() => {
-          if (!this.state.step3 || this.state.isBusy) return;
-          this.state.step3.choices.forEach((c, idx) => {
-            const kanaHint = document.getElementById(`park-kana-hint-${idx}`);
-            if (kanaHint) kanaHint.classList.remove('hidden');
-            if (c.isCorrect) {
-              const btn = document.getElementById(`park-btn-${idx}`);
-              if (btn) btn.classList.add('hint-active');
-            }
-          });
+          this.triggerStep3Hint(false);
         }, 30000);
+      },
+
+      triggerStep3Hint(isManual = false) {
+        if (!this.state.step3 || this.state.isBusy) return;
+        this.clearHintTimer();
+        if (isManual) Sound.playHintChime();
+        this.state.step3.choices.forEach((c, idx) => {
+          const kanaHint = document.getElementById(`park-kana-hint-${idx}`);
+          if (kanaHint) kanaHint.classList.remove('hidden');
+          if (c.isCorrect) {
+            const btn = document.getElementById(`park-btn-${idx}`);
+            if (btn) btn.classList.add('hint-active');
+          }
+        });
       },
 
       // 駐車スペース（下部 #park-bay-idx）の車止めライン手前にピタッと停まるY移動量を算出
@@ -3507,9 +4306,9 @@
                 if (topCarSvg) topCarSvg.classList.remove('car-idle');
                 if (statusBanner) {
                   statusBanner.className = 'relative z-30 w-full mt-1 py-0.5 px-1 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 border-2 border-amber-500 flex items-center justify-center text-[11px] sm:text-xs font-black text-slate-900 shadow-lg scale-105 shrink-0 transition-all duration-300';
-                  statusBanner.innerHTML = '<span>✨駐車完了！✨</span>';
+                  statusBanner.innerHTML = '<span>✨バッチリ！✨</span>';
                 }
-                document.getElementById('step3-feedback').textContent = `やったー！「${choice.num}」ばん に ちゅうしゃ かんりょう！`;
+                document.getElementById('step3-feedback').textContent = `やったー！「${choice.num}」ばん に バッチリ とめられたね！`;
                 Sound.playFanfare();
               }, 480);
             }, 380);
@@ -3522,6 +4321,10 @@
           // 間違えた場合：選んだ駐車スペース（看板の下）まで移動したら落とし穴に落ちるアニメーション！
           this.state.isBusy = true;
           this.clearHintTimer();
+
+          // 2ライフ制の減算
+          this.state.lives = Math.max(0, this.state.lives - 1);
+          this.updateLifeUI();
 
           const movingCar = document.getElementById('step3-moving-car');
           const topCarSvg = document.getElementById('step3-car-top-svg');
@@ -3559,13 +4362,39 @@
             }, 340);
           }
 
-          // 落とし穴アニメーションのあとに従来のホームに戻るメッセージを表示
-          setTimeout(() => {
-            this.handleMistake(
-              `「 ${kana} 」ばん は <span class="text-3xl text-rose-600 mx-1">「 ${num} 」</span> だよ！`,
-              `せいかいは、${kana} ばん だよ！`
-            );
-          }, 1680);
+          if (this.state.lives > 0) {
+            // ライフが残っている場合：落とし穴から復活してその場で再チャレンジ！
+            setTimeout(() => {
+              if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-45', 'pointer-events-none');
+              }
+              if (movingCar) {
+                movingCar.style.transition = 'none';
+                movingCar.style.left = '50%';
+                movingCar.style.opacity = '1';
+                movingCar.style.transform = 'translate(-50%, 0px) rotate(0deg) scale(1)';
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    movingCar.style.transition = 'left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease';
+                  });
+                });
+              }
+              if (topCarSvg) topCarSvg.classList.add('car-idle');
+              document.getElementById('step3-feedback').textContent = `💪 あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`;
+              Sound.speak(`あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`);
+              this.state.isBusy = false;
+              this.startStep3HintTimer();
+            }, 1550);
+          } else {
+            // ライフが0になった場合：落とし穴アニメーションのあとに従来のホームに戻るメッセージを表示
+            setTimeout(() => {
+              this.handleMistake(
+                `「 ${kana} 」ばん は <span class="text-3xl text-rose-600 mx-1">「 ${num} 」</span> だよ！`,
+                `せいかいは、${kana} ばん だよ！`
+              );
+            }, 1680);
+          }
         }
       },
 
