@@ -176,14 +176,6 @@
     }
 
     /* STEP② ターボジェット炎＆虹色キラキラ演出 */
-    @keyframes turboFlameFlicker {
-      0%, 100% { transform: translateX(-50%) scaleY(1) scaleX(1); opacity: 0.95; }
-      50% { transform: translateX(-50%) scaleY(1.28) scaleX(1.12); opacity: 1; }
-    }
-    .turbo-flame-anim {
-      animation: turboFlameFlicker 0.1s ease-in-out infinite;
-      transform-origin: top center;
-    }
     @keyframes rainbowCarGlow {
       0% { filter: drop-shadow(0 0 12px #f43f5e) drop-shadow(0 0 22px #facc15); }
       33% { filter: drop-shadow(0 0 12px #4ade80) drop-shadow(0 0 22px #38bdf8); }
@@ -202,10 +194,6 @@
     }
 
     /* 50音表の対象行（縦列）ハイライト */
-    @keyframes colHighlightPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.75); }
-      50% { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0); }
-    }
     .kana-col-highlight {
       background: linear-gradient(to bottom, #fef08a, #fef9c3);
       border: 3px solid #f59e0b;
@@ -449,24 +437,13 @@
         </div>
 
         <!-- 中央上部：案A＋案B アウトドア・スタートゲート＆道路シーン -->
-        <div id="step1-scene" class="relative w-full h-32 sm:h-40 rounded-3xl border-4 border-sky-400 shadow-lg overflow-hidden my-1 shrink-0 transition-colors duration-500 bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200">
+        <div id="step1-scene" class="relative w-full h-28 sm:h-36 rounded-3xl border-4 border-sky-400 shadow-lg overflow-hidden my-0.5 shrink-0 transition-colors duration-500 bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200">
           <!-- 空の太陽・月・星・雲レイヤー（JSで時間帯に応じて動的描画） -->
           <div id="step1-sky-decor" class="absolute inset-0 pointer-events-none"></div>
 
           <!-- 左上：時間帯バッジ（☀️あさ / ☀️おひる / 🌇ゆうがた / 🌙よる） -->
           <div id="step1-time-badge" class="absolute top-2.5 left-3 z-20 bg-white/90 backdrop-blur px-3 py-1 rounded-full border-2 border-sky-400 shadow-sm text-xs sm:text-sm font-black text-slate-800 flex items-center gap-1">
             <span>☀️</span><span>あさ</span>
-          </div>
-
-          <!-- 右上：道路デジタル時計ゲート看板（赤＝時、青＝分） -->
-          <div class="absolute top-2 right-3 z-20 bg-slate-900 px-3.5 py-1.5 rounded-2xl border-4 border-slate-300 shadow-xl flex items-center gap-1">
-            <div class="flex flex-col items-center mr-1">
-              <span class="text-[9px] font-black text-amber-300 leading-none">しゅっぱつ</span>
-              <span class="text-[9px] font-bold text-slate-400 leading-none mt-0.5">デジタル</span>
-            </div>
-            <span id="digital-hour" class="text-2xl sm:text-4xl font-black text-rose-400 tracking-wider leading-none">3</span>
-            <span class="text-xl sm:text-3xl font-black text-white leading-none pb-0.5">:</span>
-            <span id="digital-min" class="text-2xl sm:text-4xl font-black text-sky-400 tracking-wider leading-none">00</span>
           </div>
 
           <!-- 遠くの緑の丘・木々 -->
@@ -549,6 +526,21 @@
           </div>
         </div>
 
+        <!-- 風景と3つのアナログ時計の間：出発デジタル時計ボード（赤＝時、青＝分） -->
+        <div class="w-full flex justify-center my-0.5 shrink-0 z-20">
+          <div class="bg-slate-900 px-4 sm:px-6 py-1 sm:py-1.5 rounded-2xl border-4 border-slate-300 shadow-lg flex items-center gap-2.5">
+            <div class="flex flex-col items-center">
+              <span class="text-[10px] sm:text-xs font-black text-amber-300 leading-none">しゅっぱつ</span>
+              <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 leading-none mt-0.5">デジタルどけい</span>
+            </div>
+            <div class="bg-slate-950 px-3 sm:px-4 py-0.5 rounded-xl border border-slate-700 flex items-center gap-1 shadow-inner">
+              <span id="digital-hour" class="text-2xl sm:text-4xl font-black text-rose-400 tracking-wider leading-none">3</span>
+              <span class="text-xl sm:text-3xl font-black text-white leading-none pb-0.5">:</span>
+              <span id="digital-min" class="text-2xl sm:text-4xl font-black text-sky-400 tracking-wider leading-none">00</span>
+            </div>
+          </div>
+        </div>
+
         <!-- アナログ時計の選択肢（3択：小さなスマホ画面でも3つ横並びで縮小表示されるグリッド構造） -->
         <div id="clock-choices" class="flex-1 w-full grid grid-cols-3 gap-2 sm:gap-4 items-center justify-items-center px-1 my-0.5 min-h-0 overflow-hidden">
           <!-- JSでアナログ時計ボタンを生成 -->
@@ -558,94 +550,80 @@
       <!-- ==========================================
            4. ステップ②：カタカナ・ドライブ（3車線ことば集め）
            ========================================== -->
-      <section id="screen-step2" class="hidden flex-1 flex flex-col justify-between bg-emerald-600 relative overflow-hidden">
-        <!-- 上部：ターゲット単語ボード＆直下のコメント欄 -->
-        <div class="bg-white/95 backdrop-blur border-b-4 border-emerald-800 p-2 sm:p-3 z-20 shadow-lg flex flex-col gap-1.5 shrink-0">
+      <section id="screen-step2" class="hidden flex-1 flex flex-col justify-between bg-emerald-600 overflow-hidden">
+        <!-- 上部：問題ボード＆直下のコメント欄＆ライフ表示 -->
+        <div class="w-full bg-white/95 border-b-4 border-emerald-800 px-2.5 sm:px-4 py-1.5 sm:py-2 flex flex-col gap-1 z-20 shadow-md shrink-0">
           <div class="flex items-center justify-between gap-1.5">
             <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <button onclick="Game.speakStep2Prompt()" class="btn-3d bg-amber-400 text-slate-900 w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-b-4 border-amber-600 flex items-center justify-center text-lg sm:text-xl shadow shrink-0">
+              <button onclick="Game.speakStep2Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-8 h-8 sm:w-10 sm:h-10 rounded-xl border-b-4 border-amber-600 flex items-center justify-center text-base sm:text-xl shrink-0 shadow">
                 🔊
               </button>
-              <span class="text-xs sm:text-sm font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300 truncate">
-                ステップ② カタカナ・ドライブ
-              </span>
+              <!-- 対象ワードのイラストアイコン -->
+              <div id="step2-target-icon" class="w-12 h-9 sm:w-16 sm:h-11 bg-sky-50 rounded-xl border-2 border-sky-300 p-0.5 flex items-center justify-center shrink-0 transition-transform duration-300"></div>
+              <div class="min-w-0">
+                <div class="text-[10px] sm:text-xs font-black text-emerald-700 leading-none">ステップ② カタカナ・ドライブ</div>
+                <div class="text-xs sm:text-base font-black text-slate-800 truncate mt-0.5">
+                  「？」に はいる カタカナの みち を えらぼう！
+                </div>
+              </div>
             </div>
 
-            <div class="flex items-center gap-1.5 shrink-0">
-              <!-- 手動ヒントボタン（2段階式） -->
-              <button id="btn-hint-step2" onclick="Game.triggerManualHint(2)" class="btn-3d bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-black px-2.5 py-1.5 rounded-xl border-b-4 border-yellow-500 text-xs sm:text-sm flex items-center gap-1 shadow">
-                <span>💡</span>
-                <span id="btn-hint-step2-label">ヒント</span>
+            <!-- 右側：50音表ボタン＆ヒントボタン -->
+            <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <button onclick="Game.openKanaChart()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-2 sm:px-3 py-1.5 rounded-xl border-b-4 border-sky-700 text-[11px] sm:text-xs flex items-center gap-1 shadow">
+                <span>📖</span><span class="hidden sm:inline">50おんひょう</span><span class="sm:hidden">50おん</span>
               </button>
-              <!-- いつでも開ける50音表ボタン -->
-              <button onclick="Game.openKanaChart()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-2.5 sm:px-3 py-1.5 rounded-xl border-b-4 border-sky-700 text-xs sm:text-sm flex items-center gap-1 shadow">
-                <span>📖</span>
-                <span>50おんひょう</span>
+              <button onclick="Game.triggerManualHint(2)" class="btn-3d bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-black px-2 sm:px-3 py-1.5 rounded-xl border-b-4 border-yellow-500 text-[11px] sm:text-xs flex items-center gap-1 shadow">
+                <span>💡</span><span id="btn-hint-step2-label">ヒント</span>
               </button>
             </div>
           </div>
 
-          <!-- ターゲットイラスト＆文字スロット -->
-          <div class="flex items-center justify-center gap-3 sm:gap-5 bg-sky-50 rounded-2xl p-1.5 sm:p-2 border-2 border-sky-200">
-            <div id="step2-target-icon" class="w-18 h-11 sm:w-24 sm:h-14 bg-white rounded-xl border-2 border-sky-300 flex items-center justify-center p-1 shadow-sm shrink-0">
-              <!-- ターゲットの絵 -->
-            </div>
-            <div id="step2-word-slots" class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center">
-              <!-- JSで [ひらがな + カタカナ枠] を生成 -->
-            </div>
+          <!-- ことばスロット（ひらがなガイド＋カタカナ穴埋め枠） -->
+          <div id="step2-word-slots" class="flex items-center justify-center gap-1 sm:gap-2 py-0.5 flex-wrap">
+            <!-- JSで文字スロットを生成 -->
           </div>
 
-          <!-- 問題文の直下：ガイドコメント欄（ステップ①・③と共通デザイン） -->
-          <div class="bg-slate-800 rounded-xl py-1.5 px-3 flex items-center gap-2 text-white border-b-2 border-slate-950 shadow-sm">
-            <span class="text-sm sm:text-base shrink-0">🚗</span>
+          <!-- 問題文の直下：ガイドコメント欄 -->
+          <div class="bg-slate-800 rounded-xl py-1 px-3 flex items-center gap-2 text-white border-b-2 border-slate-950 shadow-sm">
+            <span class="text-sm sm:text-base shrink-0">🛣️</span>
             <span id="step2-feedback" class="text-[11px] sm:text-sm font-black text-amber-300 leading-tight">
-              ひらがな と おなじ カタカナ の みち を えらぼう！
+              おなじ カタカナの みち を タップ してね！
             </span>
           </div>
-        </div>
 
-        <!-- 3ライフ表示 -->
-        <div class="w-full flex justify-center py-1 bg-emerald-700/60 z-20 shrink-0">
-          <div class="bg-white/95 border-2 border-rose-400 px-3.5 py-0.5 rounded-full shadow-md flex items-center gap-2">
-            <span class="text-[11px] sm:text-xs font-black text-rose-600">ライフ</span>
-            <div class="step-life-hearts flex items-center gap-1 text-base sm:text-lg leading-none">
-              <span>❤️</span><span>❤️</span><span>❤️</span>
+          <!-- 3ライフ表示 -->
+          <div class="flex justify-center">
+            <div class="bg-white border-2 border-rose-400 px-3.5 py-0.5 rounded-full shadow-sm flex items-center gap-2">
+              <span class="text-[11px] sm:text-xs font-black text-rose-600">ライフ</span>
+              <div class="step-life-hearts flex items-center gap-1 text-base sm:text-lg leading-none">
+                <span>❤️</span><span>❤️</span><span>❤️</span>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- 中央〜下部：3車線道路エリア -->
-        <div class="relative flex-1 w-full max-w-lg mx-auto bg-slate-700 border-x-8 border-amber-400 flex flex-col justify-between overflow-hidden shadow-2xl">
+        <div id="step2-road-arena" class="relative flex-1 w-full max-w-lg mx-auto bg-slate-700 border-x-8 border-amber-400 flex flex-col justify-between overflow-hidden shadow-2xl min-h-0">
           <!-- 車線の白破線（3車線＝2本の境界線） -->
           <div class="absolute inset-y-0 left-1/3 w-2 -ml-1 road-lines pointer-events-none opacity-80"></div>
           <div class="absolute inset-y-0 left-2/3 w-2 -ml-1 road-lines pointer-events-none opacity-80"></div>
 
           <!-- 3車線のカタカナ標識ボタン（各車線の中央に整列） -->
-          <div id="step2-lanes" class="relative z-10 grid grid-cols-3 gap-2 sm:gap-4 p-3 sm:p-5 pt-5 sm:pt-7 items-start justify-items-center">
+          <div id="step2-lanes" class="relative z-10 grid grid-cols-3 gap-2 sm:gap-4 p-2.5 sm:p-4 pt-3 sm:pt-5 items-start justify-items-center">
             <!-- JSで3つの車線の標識ボタンを生成 -->
           </div>
 
-          <!-- レア！にじいろターボ発動時の豪華バナー -->
-          <div id="step2-rainbow-badge" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none">
-            <div class="bg-gradient-to-r from-rose-500 via-amber-400 via-emerald-400 via-sky-500 to-purple-500 p-1 rounded-3xl shadow-2xl pop-in">
-              <div class="bg-white/95 px-4 py-1.5 rounded-2xl flex items-center gap-1.5 whitespace-nowrap">
-                <span class="text-xl sm:text-2xl">🌈</span>
-                <span class="text-sm sm:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-600 via-amber-600 to-purple-700">レア！ にじいろターボ！！</span>
-                <span class="text-xl sm:text-2xl">✨</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 下部：3車線を移動・走行するマイカー（各車線の真ん中にピタッと配置） -->
-          <div class="relative w-full h-28 sm:h-32 z-10 pointer-events-none mb-2">
+          <!-- 道路全体（下端から上端まで）を移動・走行するマイカーレイヤー -->
+          <div class="absolute inset-0 z-20 pointer-events-none overflow-hidden">
             <!-- レア虹ターボ発動時のキラキラバナー -->
-            <div id="step2-rainbow-banner" class="hidden absolute -top-8 left-1/2 -translate-x-1/2 z-40 bg-gradient-to-r from-rose-500 via-amber-400 to-sky-500 text-white text-xs sm:text-sm font-black px-4 py-1 rounded-full border-2 border-white shadow-xl whitespace-nowrap pop-in">
+            <div id="step2-rainbow-banner" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 bg-gradient-to-r from-rose-500 via-amber-400 to-sky-500 text-white text-xs sm:text-base font-black px-4 py-1.5 rounded-full border-2 border-white shadow-2xl whitespace-nowrap pop-in">
               🌈 レア！ にじいろターボ！！ ✨
             </div>
 
             <div id="player-car-wrapper"
-                 style="left: 50%; bottom: 8px; opacity: 1; transform: translateX(-50%) rotate(0deg); transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.65s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, transform 0.3s ease;"
-                 class="absolute bottom-2 w-24 sm:w-28 flex flex-col items-center justify-center">
+                 style="left: 50%; bottom: 10px; opacity: 1; transform: translateX(-50%) rotate(0deg); transition: left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.68s cubic-bezier(0.35, 0, 0.2, 1), opacity 0.22s ease, transform 0.28s ease;"
+                 class="absolute w-24 sm:w-28 flex flex-col items-center justify-center">
               <!-- 車体＋後部バンパー直結のターボ炎ラッパー -->
               <div id="player-car-actor" class="relative w-16 h-20 sm:w-20 sm:h-24 flex items-center justify-center">
                 <div id="player-car-svg" class="w-full h-full car-idle filter drop-shadow-xl transition-transform duration-300 relative z-10"></div>
@@ -683,15 +661,15 @@
       <section id="screen-step3" class="hidden flex-1 flex flex-col justify-between p-2 sm:p-4 bg-gradient-to-b from-amber-50 to-orange-100 overflow-hidden">
         <!-- 上部：問題ヘッダー＆直下のコメント欄＆ライフ表示 -->
         <div class="flex flex-col gap-1 shrink-0 z-20">
-          <div class="bg-white rounded-2xl border-4 border-amber-400 px-3 py-1.5 sm:py-2.5 shadow-md flex items-center justify-between gap-2">
+          <div class="bg-white rounded-2xl border-4 border-amber-400 px-3 py-1.5 sm:py-2 shadow-md flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
-              <button onclick="Game.speakStep3Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-9 h-9 sm:w-11 sm:h-11 rounded-xl border-b-4 border-amber-600 flex items-center justify-center text-lg sm:text-2xl shrink-0 shadow">
+              <button onclick="Game.speakStep3Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-b-4 border-amber-600 flex items-center justify-center text-lg sm:text-xl shrink-0 shadow">
                 🔊
               </button>
               <div class="min-w-0">
                 <div class="text-[10px] sm:text-xs font-black text-amber-700 leading-none">ステップ③ ゴールちゅうしゃじょう</div>
-                <div class="text-xs sm:text-xl font-black text-slate-800 truncate mt-0.5">
-                  <span id="step3-kana-number" class="text-rose-600 text-base sm:text-2xl underline decoration-wavy decoration-amber-400">「 にじゅうご 」ばん</span> に とめよう！
+                <div class="text-xs sm:text-lg font-black text-slate-800 truncate mt-0.5">
+                  <span id="step3-kana-number" class="text-rose-600 text-base sm:text-xl underline decoration-wavy decoration-amber-400">「 にじゅうご 」ばん</span> に とめよう！
                 </div>
               </div>
             </div>
@@ -713,7 +691,7 @@
                 ばんごう を よく みて タップ してね！
               </span>
             </div>
-            <div id="step3-car-svg" class="w-12 h-7 sm:w-14 sm:h-8 shrink-0"></div>
+            <div id="step3-car-svg" class="w-11 h-6 sm:w-14 sm:h-8 shrink-0"></div>
           </div>
 
           <!-- 3ライフ表示 -->
@@ -727,19 +705,19 @@
           </div>
         </div>
 
-        <!-- 駐車場エリア（上部：駐車スペース3枠 ＋ 下部：車が走る通路レーン） -->
-        <div id="parking-arena" class="relative flex-1 bg-slate-700 rounded-3xl border-4 border-slate-500 p-2 sm:p-4 mt-1 flex flex-col justify-between overflow-hidden shadow-inner min-h-0">
-          <!-- 上部：3つの駐車スペース -->
-          <div id="parking-lots" class="grid grid-cols-3 gap-2 sm:gap-4 z-10">
+        <!-- 駐車場エリア（上部：駐車スペース3枠[flex-1] ＋ 下部：車が走る通路レーン[shrink-0] で途切れず全体を表示） -->
+        <div id="parking-arena" class="relative flex-1 bg-slate-700 rounded-3xl border-4 border-slate-500 p-2 sm:p-3 mt-1 flex flex-col justify-between overflow-hidden shadow-inner min-h-0">
+          <!-- 上部：3つの駐車スペース（看板のz-30が車レーンのz-20より前面に効くよう親のz-indexを解除） -->
+          <div id="parking-lots" class="flex-1 min-h-0 grid grid-cols-3 gap-2 sm:gap-4 items-stretch">
             <!-- JSで3つの駐車スペースを生成 -->
           </div>
 
           <!-- 下部：マイカーが待機・走行する通路レーン -->
-          <div id="parking-drive-lane" class="relative w-full h-24 sm:h-28 z-20 pointer-events-none">
+          <div id="parking-drive-lane" class="relative w-full h-20 sm:h-24 shrink-0 z-20 pointer-events-none mt-1">
             <div id="step3-moving-car"
                  style="left: 50%; transform: translate(-50%, 0px) rotate(0deg); transition: left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);"
-                 class="absolute bottom-1 w-20 h-24 sm:w-24 sm:h-28 flex items-center justify-center">
-              <div id="step3-car-top-svg" class="w-16 h-20 sm:w-20 sm:h-24 car-idle filter drop-shadow-xl"></div>
+                 class="absolute bottom-0.5 w-16 h-20 sm:w-20 sm:h-24 flex items-center justify-center">
+              <div id="step3-car-top-svg" class="w-14 h-18 sm:w-18 sm:h-22 car-idle filter drop-shadow-xl"></div>
             </div>
           </div>
         </div>
@@ -1998,7 +1976,7 @@
     };
 
     const SimilarKatakana = {
-      'ア': ['マ', 'ヤ', 'ム', 'te' === 'te' ? 'テ' : 'ラ'],
+      'ア': ['マ', 'ヤ', 'ム', 'テ'],
       'イ': ['ト', 'ナ', 'リ', 'テ'],
       'ウ': ['ワ', 'ラ', 'フ', 'ク'],
       'エ': ['ユ', 'ヨ', 'コ', 'ロ'],
@@ -2300,7 +2278,6 @@
           window._audioUnlocked = true;
           const audioEl = document.getElementById('tts-cloud-audio');
           if (audioEl) {
-            // 無音の極小WAVで再生権限をアンロック（以降のステップ遷移時の自動読み上げを許可させる）
             audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
             const p = audioEl.play();
             if (p !== undefined) {
@@ -2555,88 +2532,101 @@
      * 3. アナログ時計SVGジェネレーター（赤＝短針をさらに短く、青＝長針との差を明確化）
      * ============================================================================ */
     function createAnalogClockSVG(hour, minute) {
-      // 短針は30分（:30）のとき次の数字との中間に進めるリアルかつ分かりやすい設計
-      const hourAngle = ((hour % 12) + minute / 60) * 30;
+      // 5歳児の入門段階として、30分（:30）のときも短針が次の数字との中間まで進みすぎず、対象の数字の少し先（+6度）を指す見やすい設計
+      const hourAngle = (hour % 12) * 30 + (minute === 30 ? 6 : (minute / 60) * 30);
       const minAngle = minute * 6;
 
       let numbersHTML = '';
       for (let i = 1; i <= 12; i++) {
         const rad = ((i * 30 - 90) * Math.PI) / 180;
-        const x = 100 + 70 * Math.cos(rad);
-        const y = 100 + 70 * Math.sin(rad);
-        numbersHTML += `
-          <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central"
-                font-size="19" font-weight="900"
-                fill="#1e293b">${i}</text>
-        `;
+        const r = 68;
+        const x = 100 + r * Math.cos(rad);
+        const y = 100 + r * Math.sin(rad) + 7;
+        numbersHTML += `<text x="${x}" y="${y}" text-anchor="middle" font-size="21" font-weight="900" fill="#1e293b">${i}</text>`;
       }
 
-      // 目盛りドット
       let ticksHTML = '';
       for (let i = 0; i < 12; i++) {
-        const rad = ((i * 30) * Math.PI) / 180;
-        const x1 = 100 + 86 * Math.cos(rad);
-        const y1 = 100 + 86 * Math.sin(rad);
-        ticksHTML += `<circle cx="${x1}" cy="${y1}" r="2.5" fill="#94a3b8"/>`;
+        const deg = i * 30;
+        ticksHTML += `<line x1="100" y1="14" x2="100" y2="21" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" transform="rotate(${deg} 100 100)"/>`;
       }
 
       return `
-        <svg viewBox="0 0 200 200" class="w-full h-full max-w-full max-h-full drop-shadow">
-          <!-- 時計の外枠 -->
-          <circle cx="100" cy="100" r="95" fill="#ffffff" stroke="#334155" stroke-width="8"/>
-          <circle cx="100" cy="100" r="88" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+        <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow">
+          <circle cx="100" cy="100" r="92" fill="#ffffff" stroke="#38bdf8" stroke-width="8"/>
           ${ticksHTML}
           ${numbersHTML}
-          <!-- 長い針（分：青色） -->
+          <!-- 長い針（分：青色・外周の目盛り近くまでしっかり伸びる） -->
           <g transform="rotate(${minAngle} 100 100)">
-            <line x1="100" y1="100" x2="100" y2="32" stroke="#0284c7" stroke-width="7" stroke-linecap="round"/>
-            <polygon points="100,22 93,36 107,36" fill="#0284c7"/>
+            <line x1="100" y1="100" x2="100" y2="24" stroke="#0284c7" stroke-width="7" stroke-linecap="round"/>
+            <polygon points="100,15 93,28 107,28" fill="#0284c7"/>
           </g>
-          <!-- 短い針（時：赤色・長針との差がひと目でわかるよう短く太めに設計） -->
+          <!-- 短い針（時：赤色・長針の約半分の長さに短く＆太くして差を明確化） -->
           <g transform="rotate(${hourAngle} 100 100)">
-            <line x1="100" y1="100" x2="100" y2="62" stroke="#ef4444" stroke-width="11" stroke-linecap="round"/>
-            <polygon points="100,50 91,65 109,65" fill="#ef4444"/>
+            <line x1="100" y1="100" x2="100" y2="62" stroke="#e11d48" stroke-width="11" stroke-linecap="round"/>
+            <polygon points="100,50 90,66 110,66" fill="#e11d48"/>
           </g>
-          <!-- 中心の留め具 -->
           <circle cx="100" cy="100" r="8" fill="#1e293b" stroke="#facc15" stroke-width="3"/>
         </svg>
       `;
     }
 
-    // STEP②の車体後部バンパー直下に表示するターボジェット炎SVG（青ターボ / レア虹色ターボ）
-    function getTurboFlameSVG(isRainbow) {
-      if (isRainbow) {
-        return `
-          <svg viewBox="0 0 80 100" class="w-full h-full overflow-visible drop-shadow-lg">
-            <defs>
-              <linearGradient id="rainbowFlameGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#ffffff"/>
-                <stop offset="20%" stop-color="#fde047"/>
-                <stop offset="45%" stop-color="#f43f5e"/>
-                <stop offset="70%" stop-color="#a855f7"/>
-                <stop offset="100%" stop-color="#38bdf8"/>
-              </linearGradient>
-            </defs>
-            <polygon points="16,0 64,0 74,58 56,44 48,92 40,62 32,92 24,44 6,58" fill="url(#rainbowFlameGrad)" stroke="#fef08a" stroke-width="2.5" stroke-linejoin="round"/>
-            <polygon points="26,2 54,2 58,48 40,76 22,48" fill="#fef9c3" opacity="0.85"/>
-            <text x="4" y="38" font-size="16">✨</text>
-            <text x="58" y="42" font-size="16">🌟</text>
-            <text x="30" y="96" font-size="15">🌈</text>
-          </svg>
-        `;
+    /* ============================================================================
+     * 4. 紙吹雪エフェクト
+     * ============================================================================ */
+    const Confetti = {
+      animId: null,
+      fire() {
+        const canvas = document.getElementById('confetti-canvas');
+        if (!canvas) return;
+        canvas.classList.remove('hidden');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const colors = ['#f43f5e', '#facc15', '#38bdf8', '#4ade80', '#a855f7', '#fb923c'];
+        const particles = Array.from({ length: 85 }, () => ({
+          x: Math.random() * canvas.width,
+          y: Math.random() * -canvas.height * 0.5 - 20,
+          w: Math.random() * 12 + 8,
+          h: Math.random() * 8 + 6,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vy: Math.random() * 4 + 3,
+          vx: (Math.random() - 0.5) * 3,
+          rot: Math.random() * Math.PI * 2,
+          vrot: (Math.random() - 0.5) * 0.15
+        }));
+
+        const start = performance.now();
+        const loop = (now) => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rot += p.vrot;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+          });
+          if (now - start < 2700) {
+            this.animId = requestAnimationFrame(loop);
+          } else {
+            canvas.classList.add('hidden');
+          }
+        };
+        if (this.animId) cancelAnimationFrame(this.animId);
+        this.animId = requestAnimationFrame(loop);
       }
-      return `
-        <svg viewBox="0 0 80 100" class="w-full h-full overflow-visible drop-shadow">
-          <polygon points="20,0 60,0 66,50 52,38 40,86 28,38 14,50" fill="#0284c7" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round"/>
-          <polygon points="28,2 52,2 54,40 40,68 26,40" fill="#7dd3fc"/>
-          <polygon points="33,2 47,2 40,48" fill="#ffffff"/>
-        </svg>
-      `;
-    }
+    };
 
     /* ============================================================================
-     * 4. ゲーム状態・進行管理オブジェクト
+     * 5. ゲームメインロジック・状態管理
      * ============================================================================ */
+    const STORAGE_KEY = 'kids_drive_garage_save_v3';
+
     const Game = {
       state: {
         difficulty: 'easy',
@@ -2645,85 +2635,120 @@
         streakHard: 0,
         resetStreakOnMistake: true,
         voiceMode: 'auto',
-        unlockedCars: ['patrol'],
         selectedCarId: 'patrol',
+        unlockedCars: ['patrol'],
         garageTab: 'easy',
         kanaChartTab: 'basic',
         lives: 3,
-        currentLane: 1,
+        maxLives: 3,
         isBusy: false,
-        hintTimer: null,
         holdTimer: null,
+        lastStep1Key: null,
+        lastStep2Word: null,
+        lastStep3Num: null,
         step1: null,
         step2: null,
         step3: null
       },
 
       init() {
-        this.loadData();
-        this.setupPWA();
-        this.updateParentSettingsUI();
+        this.loadState();
+        this.setupPWAAssets();
+        this.updateHeaderUI();
         this.renderTitleScreen();
-        this.showScreen('screen-title', 0);
       },
 
-      // ホーム画面追加時にアドレスバーを消して全画面アプリ起動させるPWAマニフェスト＆アイコン自動設定
-      setupPWA() {
+      setupPWAAssets() {
         try {
           const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
             <rect width="180" height="180" rx="40" fill="#38bdf8"/>
-            <rect x="0" y="130" width="180" height="50" fill="#334155"/>
-            <g transform="translate(0, 35)">${getCarSideSVG('patrol').replace(/<svg[^>]*>|<\/svg>/g, '')}</g>
+            <rect x="0" y="126" width="180" height="54" rx="16" fill="#334155"/>
+            <line x1="12" y1="152" x2="168" y2="152" stroke="#ffffff" stroke-width="6" stroke-dasharray="18 14"/>
+            <g transform="translate(0, 32)">
+              <rect x="78" y="10" width="24" height="10" rx="4" fill="#ef4444" stroke="#1e293b" stroke-width="3"/>
+              <path d="M40 48 L58 20 L122 20 L142 48 Z" fill="#ffffff" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
+              <path d="M62 25 L86 25 L86 45 L48 45 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+              <path d="M94 25 L118 25 L132 45 L94 45 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="3"/>
+              <rect x="16" y="46" width="148" height="32" rx="12" fill="#ffffff" stroke="#1e293b" stroke-width="4"/>
+              <path d="M18 62 L162 62 L162 68 C162 74 157 78 151 78 L29 78 C23 78 18 74 18 68 Z" fill="#1e293b"/>
+              <circle cx="90" cy="62" r="7" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
+              <circle cx="48" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+              <circle cx="48" cy="78" r="7" fill="#cbd5e1"/>
+              <circle cx="132" cy="78" r="16" fill="#0f172a" stroke="#475569" stroke-width="3"/>
+              <circle cx="132" cy="78" r="7" fill="#cbd5e1"/>
+            </g>
           </svg>`;
-          const iconUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
+          const iconDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
           const touchIcon = document.getElementById('app-touch-icon');
           const favIcon = document.getElementById('app-favicon');
-          if (touchIcon) touchIcon.href = iconUrl;
-          if (favIcon) favIcon.href = iconUrl;
+          if (touchIcon) touchIcon.href = iconDataUrl;
+          if (favIcon) favIcon.href = iconDataUrl;
 
-          const manifest = {
+          const manifestObj = {
             name: 'カスタムガレージ＆おでかけドライブ',
             short_name: 'おでかけドライブ',
+            description: '5さいからの とけい・カタカナ・すうじ ドライブゲーム',
+            start_url: './index.html',
             display: 'standalone',
             orientation: 'portrait',
             background_color: '#1e293b',
             theme_color: '#38bdf8',
-            start_url: './',
-            icons: [{ src: iconUrl, sizes: '180x180', type: 'image/svg+xml', purpose: 'any maskable' }]
+            icons: [
+              { src: iconDataUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+              { src: iconDataUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+            ]
           };
-          const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-          const manifestEl = document.getElementById('app-manifest');
-          if (manifestEl) manifestEl.href = URL.createObjectURL(manifestBlob);
+          const manifestLink = document.getElementById('app-manifest');
+          if (manifestLink) {
+            manifestLink.href = 'data:application/manifest+json;utf8,' + encodeURIComponent(JSON.stringify(manifestObj));
+          }
         } catch (e) {
           console.warn('PWA setup warning:', e);
         }
+
+        const updateFsBtn = () => {
+          const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+          const hBtn = document.getElementById('btn-fullscreen-header');
+          const sBtn = document.getElementById('btn-fullscreen-settings');
+          if (hBtn) hBtn.innerHTML = isFs ? '<span>✕</span><span class="hidden md:inline">もとにもどす</span>' : '<span>⛶</span><span class="hidden md:inline">ぜんがめん</span>';
+          if (sBtn) sBtn.textContent = isFs ? '✕ 全画面を終了' : '⛶ ぜんがめん';
+        };
+        document.addEventListener('fullscreenchange', updateFsBtn);
+        document.addEventListener('webkitfullscreenchange', updateFsBtn);
       },
 
       toggleFullScreen() {
         Sound.init();
         const doc = window.document;
         const docEl = doc.documentElement;
-        const requestFull = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-        const exitFull = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
-        const isFull = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+        const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        const exitFs = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
 
-        if (!isFull && requestFull) {
-          requestFull.call(docEl).catch(() => {});
-        } else if (isFull && exitFull) {
-          exitFull.call(doc).catch(() => {});
+        if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
+          if (requestFs) {
+            requestFs.call(docEl).catch(() => {
+              Sound.speak('ブラウザの メニュー から、ホームがめん に ついか すると、ぜんがめん に なるよ！');
+            });
+          } else {
+            Sound.speak('サファリの 共有ボタン から、ホームがめん に ついか すると、ぜんがめん に なるよ！');
+          }
+        } else {
+          if (exitFs) exitFs.call(doc);
         }
       },
 
-      loadData() {
+      loadState() {
         try {
-          const raw = localStorage.getItem('kids_drive_game_v3');
+          const raw = localStorage.getItem(STORAGE_KEY);
           if (raw) {
             const parsed = JSON.parse(raw);
             if (typeof parsed.stars === 'number') this.state.stars = parsed.stars;
             if (typeof parsed.streakEasy === 'number') this.state.streakEasy = parsed.streakEasy;
             if (typeof parsed.streakHard === 'number') this.state.streakHard = parsed.streakHard;
             if (typeof parsed.resetStreakOnMistake === 'boolean') this.state.resetStreakOnMistake = parsed.resetStreakOnMistake;
-            if (parsed.voiceMode) this.state.voiceMode = parsed.voiceMode;
+            if (parsed.voiceMode === 'auto' || parsed.voiceMode === 'cloud' || parsed.voiceMode === 'native') {
+              this.state.voiceMode = parsed.voiceMode;
+            }
             if (Array.isArray(parsed.unlockedCars) && parsed.unlockedCars.length > 0) {
               this.state.unlockedCars = parsed.unlockedCars;
             }
@@ -2735,24 +2760,24 @@
             }
           }
         } catch (e) {
-          console.warn('Load data warning:', e);
+          console.warn('Save data load skipped:', e);
         }
       },
 
-      saveData() {
+      saveState() {
         try {
-          localStorage.setItem('kids_drive_game_v3', JSON.stringify({
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
             stars: this.state.stars,
             streakEasy: this.state.streakEasy,
             streakHard: this.state.streakHard,
             resetStreakOnMistake: this.state.resetStreakOnMistake,
             voiceMode: this.state.voiceMode,
-            unlockedCars: this.state.unlockedCars,
             selectedCarId: this.state.selectedCarId,
+            unlockedCars: this.state.unlockedCars,
             difficulty: this.state.difficulty
           }));
         } catch (e) {
-          console.warn('Save data warning:', e);
+          console.warn('Save data write skipped:', e);
         }
       },
 
@@ -2772,37 +2797,35 @@
         }
       },
 
-      // 難易度ボタンの1.2秒長押し切り替え
-      startDifficultyHold(targetMode, event) {
+      startDifficultyHold(mode, event) {
         if (event && event.cancelable) event.preventDefault();
+        if (this.state.difficulty === mode) return;
         Sound.init();
-        if (this.state.difficulty === targetMode) return;
-
         this.cancelDifficultyHold();
-        this._holdStartTime = Date.now();
-        this._holdTargetMode = targetMode;
 
-        const barId = targetMode === 'easy' ? 'hold-bar-easy' : 'hold-bar-hard';
+        const barId = mode === 'easy' ? 'hold-bar-easy' : 'hold-bar-hard';
         const barEl = document.getElementById(barId);
         if (barEl) {
           barEl.style.transition = 'width 1.2s linear';
           barEl.style.width = '100%';
         }
 
+        const toast = document.getElementById('hold-guide-toast');
+        if (toast) toast.classList.remove('hidden');
+
+        this.state.holdCompleted = false;
         this.state.holdTimer = setTimeout(() => {
-          this.state.holdTimer = null;
-          if (barEl) {
-            barEl.style.transition = 'none';
-            barEl.style.width = '0%';
-          }
-          this.setDifficulty(targetMode);
+          this.state.holdCompleted = true;
+          this.cancelDifficultyHold(true);
+          this.setDifficulty(mode);
         }, 1200);
       },
 
-      cancelDifficultyHold() {
-        const elapsed = this._holdStartTime ? (Date.now() - this._holdStartTime) : 0;
-        this._holdStartTime = null;
-
+      cancelDifficultyHold(completed = false) {
+        if (this.state.holdTimer) {
+          clearTimeout(this.state.holdTimer);
+          this.state.holdTimer = null;
+        }
         ['hold-bar-easy', 'hold-bar-hard'].forEach(id => {
           const el = document.getElementById(id);
           if (el) {
@@ -2810,35 +2833,29 @@
             el.style.width = '0%';
           }
         });
-
-        if (this.state.holdTimer) {
-          clearTimeout(this.state.holdTimer);
-          this.state.holdTimer = null;
-          // 短押しだった場合は「ながおしで きりかえ」のガイドを表示
-          if (elapsed > 20 && elapsed < 1150) {
+        if (!completed) {
+          setTimeout(() => {
             const toast = document.getElementById('hold-guide-toast');
-            if (toast) {
-              toast.classList.remove('hidden');
-              clearTimeout(this._holdToastTimer);
-              this._holdToastTimer = setTimeout(() => toast.classList.add('hidden'), 1800);
-            }
-          }
+            if (toast) toast.classList.add('hidden');
+          }, 1400);
+        } else {
+          const toast = document.getElementById('hold-guide-toast');
+          if (toast) toast.classList.add('hidden');
         }
       },
 
       setDifficulty(mode) {
+        Sound.init();
         this.state.difficulty = mode;
-        this.saveData();
-        Sound.playCorrect();
-        const modeSpeech = mode === 'easy' ? 'かんたんモード に したよ！' : 'しっかりモード に したよ！';
-        Sound.speak(modeSpeech);
+        this.state.garageTab = mode;
+        this.saveState();
         this.updateHeaderUI();
 
-        // プレイ中のステップがあれば新しい難易度で再セットアップ、ホームやガレージなら表示更新
         if (!document.getElementById('screen-title').classList.contains('hidden')) {
           this.renderTitleScreen();
+          Sound.speak(mode === 'easy' ? 'かんたん モード！' : 'しっかり モード！ デラックスの くるま を めざそう！');
         } else if (!document.getElementById('screen-garage').classList.contains('hidden')) {
-          this.switchGarageTab(mode);
+          this.renderGarage();
         } else if (!document.getElementById('screen-step1').classList.contains('hidden')) {
           this.setupStep1();
         } else if (!document.getElementById('screen-step2').classList.contains('hidden')) {
@@ -2849,217 +2866,139 @@
       },
 
       updateHeaderUI() {
-        const starEl = document.getElementById('star-count');
-        if (starEl) starEl.textContent = this.state.stars;
+        const starCountEl = document.getElementById('star-count');
+        if (starCountEl) starCountEl.textContent = this.state.stars;
 
-        const badgeEl = document.getElementById('garage-count-badge');
-        if (badgeEl) {
-          badgeEl.textContent = `${this.state.unlockedCars.length}/${CarCatalog.length}`;
-        }
+        const garageBadgeEl = document.getElementById('garage-count-badge');
+        if (garageBadgeEl) garageBadgeEl.textContent = `${this.state.unlockedCars.length}/${CarCatalog.length}`;
 
-        const btnEasy = document.getElementById('mode-easy');
-        const btnHard = document.getElementById('mode-hard');
-        if (btnEasy && btnHard) {
+        const easyBtn = document.getElementById('mode-easy');
+        const hardBtn = document.getElementById('mode-hard');
+        if (easyBtn && hardBtn) {
           if (this.state.difficulty === 'easy') {
-            btnEasy.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow';
-            btnHard.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
+            easyBtn.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow';
+            hardBtn.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
           } else {
-            btnHard.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-rose-500 text-white shadow';
-            btnEasy.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
+            hardBtn.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-rose-500 text-white shadow';
+            easyBtn.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
           }
         }
+        this.updateLifeUI();
       },
 
       updateLifeUI() {
         const containers = document.querySelectorAll('.step-life-hearts');
-        containers.forEach(container => {
-          let html = '';
-          for (let i = 1; i <= 3; i++) {
-            html += `<span class="transition-transform duration-300 ${i <= this.state.lives ? 'scale-100' : 'scale-90 opacity-40'}">${i <= this.state.lives ? '❤️' : '🤍'}</span>`;
-          }
-          container.innerHTML = html;
-        });
-      },
-
-      clearHintTimer() {
-        if (this.state.hintTimer) {
-          clearTimeout(this.state.hintTimer);
-          this.state.hintTimer = null;
-        }
-      },
-
-      /* ----------------------------------------------------------------
-       * 考える余地を残す手動「💡ヒント」機能（ステップ①・②・③）
-       * ---------------------------------------------------------------- */
-      triggerManualHint(stepNumber) {
-        if (this.state.isBusy) return;
-        Sound.init();
-        Sound.playHintChime();
-
-        // 【ステップ①】2択に絞った上で、時計自体は変えずに文字と声で針の見方をガイドする
-        if (stepNumber === 1 && this.state.step1) {
-          const { targetHour, targetMin, choices } = this.state.step1;
-          const activeWrongClocks = choices
-            .map((c, idx) => ({ c, idx, btn: document.getElementById(`clock-btn-${idx}`) }))
-            .filter(item => !item.c.isCorrect && item.btn && !item.btn.disabled);
-
-          if (activeWrongClocks.length >= 2) {
-            const pick = activeWrongClocks[Math.floor(Math.random() * activeWrongClocks.length)];
-            pick.btn.disabled = true;
-            pick.btn.classList.add('opacity-30', 'pointer-events-none', 'scale-95');
-          }
-
-          const minTargetNum = targetMin === 0 ? 12 : 6;
-          const guideMsg = `💡 あかい みじかい はり が「${targetHour}」、あおい ながい はり が「${minTargetNum}」を さしているのは どれかな？`;
-          const fb = document.getElementById('step1-feedback');
-          if (fb) fb.textContent = guideMsg;
-          Sound.speak(`あかい みじかい はり が ${targetHour}、あおい ながい はり が ${minTargetNum} を さしているのは どれかな？`);
-
-        // 【ステップ②】案2-B：2段階ヒント（1回目＝ハズレを1つ消して2択にする / 2回目＝残りの下にひらがなを表示）
-        } else if (stepNumber === 2 && this.state.step2) {
-          const s2 = this.state.step2;
-          const activeIdx = s2.targetIndices[s2.stepCursor];
-          const targetHira = s2.hiraChars[activeIdx] || '';
-          const readHira = targetHira === 'ー' ? 'のばす おと' : targetHira;
-
-          const activeWrongLanes = s2.currentChoices
-            .map((c, idx) => ({ c, idx, btn: document.getElementById(`lane-btn-${idx}`) }))
-            .filter(item => !item.c.isCorrect && item.btn && !item.btn.disabled);
-
-          if (s2.hintStage === 0 && activeWrongLanes.length >= 2) {
-            // 1段階目：ハズレの道を1つ通行止め（🚧）にして2択に絞る
-            s2.hintStage = 1;
-            const pick = activeWrongLanes[Math.floor(Math.random() * activeWrongLanes.length)];
-            pick.btn.disabled = true;
-            pick.btn.classList.add('opacity-40', 'pointer-events-none', 'scale-95');
-            const topBadge = pick.btn.querySelector('span');
-            if (topBadge) {
-              topBadge.textContent = '🚧 ちがうよ';
-              topBadge.className = 'text-xs font-black text-white bg-rose-500 px-2.5 py-0.5 rounded-full mb-1';
-            }
-
-            const hintLabel = document.getElementById('btn-hint-step2-label');
-            if (hintLabel) hintLabel.textContent = 'ヒント②';
-
-            const feedbackEl = document.getElementById('step2-feedback');
-            if (feedbackEl) {
-              feedbackEl.textContent = '💡 2つに しぼったよ！ もういちど ヒント で ひらがな が でるよ！';
-            }
-            Sound.speak('ちがう みち を ひとつ とめたよ！ のこり ふたつ から さがしてみよう！');
+        if (!containers.length) return;
+        let html = '';
+        for (let i = 0; i < this.state.maxLives; i++) {
+          if (i < this.state.lives) {
+            html += `<span class="transition-transform duration-300 scale-100">❤️</span>`;
           } else {
-            // 2段階目：残っている選択肢の下にひらがなを表示する（正解の枠は光らせない）
-            s2.hintStage = 2;
-            s2.currentChoices.forEach((c, idx) => {
-              const btn = document.getElementById(`lane-btn-${idx}`);
-              const hintSpan = document.getElementById(`lane-hint-${idx}`);
-              if (hintSpan && btn && !btn.disabled) {
-                hintSpan.classList.remove('opacity-0');
-              }
-            });
-
-            const hintLabel = document.getElementById('btn-hint-step2-label');
-            if (hintLabel) hintLabel.textContent = 'ヒント';
-
-            const feedbackEl = document.getElementById('step2-feedback');
-            if (feedbackEl) {
-              feedbackEl.textContent = `💡 したの ひらがな を みて、「 ${targetHira} 」と おなじ みち を えらぼう！`;
-            }
-            Sound.speak(`カタカナの したに ひらがな を だしたよ！ ${readHira} は どっちかな？`);
+            html += `<span class="transition-transform duration-300 scale-90 opacity-45">🤍</span>`;
           }
+        }
+        containers.forEach(el => { el.innerHTML = html; });
+      },
 
-        // 【ステップ③】案3-A：2択に絞った上で、最初の数字・位取りに着目させる文字＆声のガイド
-        } else if (stepNumber === 3 && this.state.step3) {
-          const { q, choices } = this.state.step3;
-          const activeWrongLots = choices
-            .map((c, idx) => ({ c, idx, btn: document.getElementById(`park-btn-${idx}`) }))
-            .filter(item => !item.c.isCorrect && item.btn && !item.btn.disabled);
-
-          // まだ3択ならハズレの駐車場を1つ消して2択にする
-          if (activeWrongLots.length >= 2) {
-            const pick = activeWrongLots[Math.floor(Math.random() * activeWrongLots.length)];
-            pick.btn.disabled = true;
-            pick.btn.classList.add('opacity-35', 'pointer-events-none', 'scale-95');
-            const statusBanner = document.getElementById(`park-status-${pick.idx}`);
-            if (statusBanner) {
-              statusBanner.innerHTML = '<span>🚧 ちがうよ</span>';
-            }
-          }
-
-          const digits = String(q.num).split('');
-          let hintText = '';
-          let hintSpeech = '';
-
-          if (digits.length === 2) {
-            if (digits[1] === '0') {
-              hintText = `💡「${q.kana}」は、ひだりの すうじ が「 ${digits[0]} 」で、みぎが「 0 」だよ！`;
-              hintSpeech = `${q.kana} は、ひだりの すうじ が ${digits[0]} で、みぎが ゼロ だよ！ どっちかな？`;
-            } else if (digits[0] === '1') {
-              hintText = `💡「${q.kana}」は、ひだりの すうじ が「 1 」で、みぎが「 ${digits[1]} 」だよ！`;
-              hintSpeech = `${q.kana} は、ひだりの すうじ が 1 で、みぎが ${digits[1]} だよ！ どっちかな？`;
-            } else {
-              hintText = `💡「${q.kana}」は、ひだりの すうじ が「 ${digits[0]} 」から はじまるよ！`;
-              hintSpeech = `${q.kana} は、ひだりの すうじ が ${digits[0]} から はじまるよ！ どっちかな？`;
-            }
-          } else if (digits.length === 3) {
-            if (digits[1] === '0' && digits[2] === '0') {
-              hintText = `💡「${q.kana}」は、すうじが 3つ！ ひだりが「 ${digits[0]} 」で、「 0 」が 2つ ならぶよ！`;
-              hintSpeech = `${q.kana} は、すうじが 3つ ならんでいて、ひだりが ${digits[0]}、そのあとに ゼロ が ふたつ ならぶよ！`;
-            } else if (digits[1] === '0') {
-              hintText = `💡「${q.kana}」は、すうじが 3つ！ まんなかが「 0 」で、さいごが「 ${digits[2]} 」だよ！`;
-              hintSpeech = `${q.kana} は、すうじが 3つ ならんでいて、まんなかが ゼロ、さいごが ${digits[2]} だよ！`;
-            } else if (digits[2] === '0') {
-              hintText = `💡「${q.kana}」は、すうじが 3つ！ ひだりが「 ${digits[0]} 」、まんなかが「 ${digits[1]} 」、さいごが「 0 」だよ！`;
-              hintSpeech = `${q.kana} は、すうじが 3つ ならんでいて、ひだりが ${digits[0]}、まんなかが ${digits[1]}、さいごが ゼロ だよ！`;
-            } else {
-              hintText = `💡「${q.kana}」は、すうじが 3つ！ ひだりが「 ${digits[0]} 」で、さいごが「 ${digits[2]} 」だよ！`;
-              hintSpeech = `${q.kana} は、すうじが 3つ ならんでいて、ひだりが ${digits[0]} で、さいごが ${digits[2]} だよ！`;
-            }
-          }
-
-          document.getElementById('step3-feedback').textContent = hintText;
-          Sound.speak(hintSpeech);
+      showRecoveryToast(stepNum) {
+        // 浮遊トーストではなく、各ステップの問題文直下にあるコメント欄へメッセージを表示する
+        const msg = `💪 あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！ もういちど えらんでね！`;
+        const feedbackId = stepNum === 1 ? 'step1-feedback' : stepNum === 2 ? 'step2-feedback' : 'step3-feedback';
+        const fbEl = document.getElementById(feedbackId);
+        if (fbEl) {
+          fbEl.textContent = msg;
         }
       },
 
-      /* ----------------------------------------------------------------
-       * 解答ミス時の共通処理（メッセージモーダルを表示してホーム画面へ戻る）
-       * ---------------------------------------------------------------- */
-      handleMistake(correctDescriptionText, speechMessage) {
-        this.state.isBusy = true;
-        this.clearHintTimer();
-        Sound.playGentleTryAgain();
+      showScreen(screenId, stepNum = 0) {
+        const screens = ['screen-title', 'screen-garage', 'screen-step1', 'screen-step2', 'screen-step3', 'screen-reward'];
+        screens.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.toggle('hidden', id !== screenId);
+        });
 
-        if (this.state.resetStreakOnMistake) {
-          this.setCurrentStreak(0);
-          this.saveData();
+        const indicator = document.getElementById('step-indicator');
+        if (stepNum >= 1 && stepNum <= 3) {
+          indicator.classList.remove('hidden');
+          indicator.classList.add('flex');
+          [1, 2, 3].forEach(n => {
+            const el = document.getElementById(`ind-${n}`);
+            if (n === stepNum) {
+              el.className = 'px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-500 text-white shadow';
+            } else if (n < stepNum) {
+              el.className = 'px-2 py-0.5 rounded-full text-xs font-black bg-emerald-500 text-white';
+            } else {
+              el.className = 'px-2 py-0.5 rounded-full text-xs font-black text-slate-400';
+            }
+          });
+        } else {
+          indicator.classList.add('hidden');
+          indicator.classList.remove('flex');
         }
-
-        const box = document.getElementById('mistake-correct-box');
-        if (box) box.innerHTML = correctDescriptionText;
-
-        const note = document.getElementById('mistake-streak-note');
-        if (note) {
-          note.textContent = this.state.resetStreakOnMistake
-            ? 'れんぞくスタンプ は 0 に もどるよ。つぎは 5かい れんぞくクリア を めざそう！'
-            : 'スタンプ は そのまま のこっているよ！ もういちど ちょうせん しよう！';
-        }
-
-        const modal = document.getElementById('modal-mistake');
-        if (modal) modal.classList.remove('hidden');
-
-        Sound.speak(`あれれ？ まちがえちゃった！ ${speechMessage} ホームに もどって もういちど ちょうせん しよう！`);
       },
 
-      closeMistakeModalAndGoHome() {
+      renderTitleScreen() {
+        const car = this.getSelectedCar();
+        document.getElementById('title-car-svg').innerHTML = getCarSideSVG(car.id);
+        document.getElementById('title-car-name').textContent = car.name;
+
+        const badge = document.getElementById('title-car-badge');
+        if (car.tier === 'hard') {
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+
+        const isEasy = this.state.difficulty === 'easy';
+        const streak = this.getCurrentStreak();
+        const tierCars = CarCatalog.filter(c => c.tier === this.state.difficulty);
+        const lockedInTier = tierCars.filter(c => !this.state.unlockedCars.includes(c.id));
+
+        const labelEl = document.getElementById('title-streak-label');
+        const remainEl = document.getElementById('title-streak-remain');
+        labelEl.textContent = isEasy ? '🌱 かんたん れんぞくスタンプ' : '👑 しっかり デラックススタンプ';
+        labelEl.className = isEasy ? 'text-emerald-700 font-black' : 'text-rose-700 font-black';
+
+        const remain = Math.max(1, 5 - (streak % 5));
+        if (lockedInTier.length > 0) {
+          remainEl.textContent = `あと ${remain}かい で ${isEasy ? '新車' : 'デラックス車'}ゲット！`;
+        } else {
+          remainEl.textContent = `あと ${remain}かい で ボーナス⭐ゲット！`;
+        }
+
+        const starsContainer = document.getElementById('title-streak-stars');
+        const filledCount = streak % 5;
+        let starsHTML = '';
+        for (let i = 1; i <= 5; i++) {
+          const isFilled = i <= filledCount;
+          starsHTML += `
+            <div class="flex-1 py-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${
+              isFilled
+                ? 'bg-amber-300 border-amber-500 text-amber-950 scale-105 shadow'
+                : 'bg-slate-100 border-slate-300 text-slate-400'
+            }">
+              <span class="text-lg sm:text-xl leading-none">${isFilled ? '⭐' : '☆'}</span>
+              <span class="text-[10px] font-black mt-0.5">${i}かい</span>
+            </div>
+          `;
+        }
+        starsContainer.innerHTML = starsHTML;
+        this.updateHeaderUI();
+      },
+
+      goTitle() {
         Sound.init();
-        const modal = document.getElementById('modal-mistake');
-        if (modal) modal.classList.add('hidden');
-        this.goTitle();
+        this.state.isBusy = false;
+        this.renderTitleScreen();
+        this.showScreen('screen-title', 0);
       },
 
-      /* ----------------------------------------------------------------
-       * おうちのひと設定モーダル
-       * ---------------------------------------------------------------- */
+      honkSelectedCar() {
+        const car = this.getSelectedCar();
+        Sound.playCarSound(car.soundType);
+        Sound.speak(car.kana);
+      },
+
       openParentSettings() {
         Sound.init();
         this.updateParentSettingsUI();
@@ -3070,14 +3009,54 @@
         document.getElementById('modal-parent-settings').classList.add('hidden');
       },
 
-      /* ----------------------------------------------------------------
-       * ひらがな・カタカナ 50音表モーダル（STEP②では探している文字の「行」をハイライト）
-       * ---------------------------------------------------------------- */
+      setPenaltyMode(resetOnMistake) {
+        this.state.resetStreakOnMistake = resetOnMistake;
+        this.saveState();
+        this.updateParentSettingsUI();
+      },
+
+      setVoiceMode(mode) {
+        this.state.voiceMode = mode;
+        if (mode === 'native') {
+          window._webViewSilenceDetected = false;
+        }
+        this.saveState();
+        this.updateParentSettingsUI();
+        Sound.speak('こえの せっていを かえたよ！');
+      },
+
+      testVoiceOutput() {
+        Sound.init();
+        Sound.playCorrect();
+        Sound.speak('こんにちは！ おでかけドライブへ ようこそ！');
+      },
+
+      updateParentSettingsUI() {
+        const onBtn = document.getElementById('setting-reset-on');
+        const offBtn = document.getElementById('setting-reset-off');
+        if (this.state.resetStreakOnMistake) {
+          onBtn.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-rose-500 text-white border-rose-700 shadow';
+          offBtn.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
+        } else {
+          offBtn.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-emerald-500 text-white border-emerald-700 shadow';
+          onBtn.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
+        }
+
+        const vAuto = document.getElementById('voice-mode-auto');
+        const vCloud = document.getElementById('voice-mode-cloud');
+        const vNative = document.getElementById('voice-mode-native');
+        if (vAuto && vCloud && vNative) {
+          const activeCls = 'py-2 px-2 rounded-xl font-black text-xs border-2 bg-sky-500 text-white border-sky-700 shadow';
+          const inactiveCls = 'py-2 px-2 rounded-xl font-black text-xs border-2 bg-white text-slate-600 border-slate-300';
+          vAuto.className = this.state.voiceMode === 'auto' ? activeCls : inactiveCls;
+          vCloud.className = this.state.voiceMode === 'cloud' ? activeCls : inactiveCls;
+          vNative.className = this.state.voiceMode === 'native' ? activeCls : inactiveCls;
+        }
+      },
+
       openKanaChart() {
         Sound.init();
-        // ステップ②プレイ中に開いた場合、探している文字があれば該当するタブを自動で選択
         if (!document.getElementById('screen-step2').classList.contains('hidden') && this.state.step2) {
-          this.clearHintTimer();
           const activeIdx = this.state.step2.targetIndices[this.state.step2.stepCursor];
           const targetKata = this.state.step2.kataChars[activeIdx];
           const isExtra = KanaExtraColumns.some(col => col.cells.some(c => c && c[1] === targetKata));
@@ -3088,12 +3067,7 @@
       },
 
       closeKanaChart() {
-        Sound.init();
         document.getElementById('modal-kana-chart').classList.add('hidden');
-        // ステップ②プレイ中ならヒントタイマーを再開
-        if (!document.getElementById('screen-step2').classList.contains('hidden') && !this.state.isBusy) {
-          this.startStep2HintTimer();
-        }
       },
 
       switchKanaChartTab(tab) {
@@ -3103,27 +3077,32 @@
       },
 
       renderKanaChart() {
-        const tabBasic = document.getElementById('kana-tab-basic');
-        const tabExtra = document.getElementById('kana-tab-extra');
+        const basicBtn = document.getElementById('kana-tab-basic');
+        const extraBtn = document.getElementById('kana-tab-extra');
+
         if (this.state.kanaChartTab === 'basic') {
-          tabBasic.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-sky-500 text-white border-sky-700 shadow';
-          tabExtra.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300';
+          basicBtn.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-sky-500 text-white border-sky-700 shadow';
+          extraBtn.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300';
         } else {
-          tabExtra.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-rose-500 text-white border-rose-700 shadow';
-          tabBasic.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300';
+          extraBtn.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-amber-400 text-slate-900 border-amber-600 shadow';
+          basicBtn.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-base border-b-4 flex items-center justify-center gap-1.5 bg-white text-slate-600 border-slate-300';
         }
 
-        // STEP②プレイ中なら、今探しているカタカナ文字を取得して該当する縦の列（行）をハイライトする
+        // STEP②プレイ中なら、今探しているカタカナ文字とひらがなを取得して該当する縦の列（行）をハイライトする
         let targetKata = null;
+        let targetHira = null;
+        let targetWordHira = null;
         if (!document.getElementById('screen-step2').classList.contains('hidden') && this.state.step2) {
           const activeIdx = this.state.step2.targetIndices[this.state.step2.stepCursor];
           targetKata = this.state.step2.kataChars[activeIdx];
+          targetHira = this.state.step2.hiraChars[activeIdx];
+          targetWordHira = this.state.step2.wordObj ? this.state.step2.wordObj.hiragana : '';
         }
 
         const guideTextEl = document.getElementById('kana-chart-guide-text');
         if (guideTextEl) {
           guideTextEl.innerHTML = targetKata
-            ? '<span class="text-rose-600 font-black">💡 きいろく ひかっている ならび から さがしてみよう！</span>'
+            ? `<span class="inline-flex items-center gap-1 bg-amber-100 border-2 border-amber-400 text-rose-600 font-black px-2.5 py-0.5 rounded-full text-xs sm:text-sm shadow-sm">🔍 いま さがしている もじ：【 ${targetHira} 】（${targetWordHira}）</span>`
             : 'もじを タップすると こえで よむよ！';
         }
 
@@ -3134,18 +3113,16 @@
         const gridColsClass = this.state.kanaChartTab === 'basic' ? 'grid-cols-10' : 'grid-cols-6';
 
         const grid = document.createElement('div');
-        grid.className = `grid ${gridColsClass} gap-1 sm:gap-1.5 w-full h-full items-stretch`;
+        grid.className = `w-full h-full grid ${gridColsClass} gap-1 sm:gap-1.5 items-stretch`;
 
         columns.forEach(col => {
-          const isTargetColumn = targetKata && col.cells.some(c => c && c[1] === targetKata);
+          const isTargetCol = targetKata && col.cells.some(c => c && c[1] === targetKata);
           const colDiv = document.createElement('div');
-          colDiv.className = `relative grid grid-rows-5 gap-1 sm:gap-1.5 h-full rounded-2xl transition-all ${
-            isTargetColumn ? 'ring-4 ring-amber-400 bg-yellow-100/90 p-0.5 kana-col-target z-10' : ''
-          }`;
+          colDiv.className = `flex flex-col gap-1 sm:gap-1.5 h-full relative ${isTargetCol ? 'kana-col-highlight' : ''}`;
 
-          if (isTargetColumn) {
+          if (isTargetCol) {
             const badge = document.createElement('div');
-            badge.className = 'absolute -top-2.5 left-1/2 -translate-x-1/2 bg-rose-600 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-full shadow whitespace-nowrap z-20 pointer-events-none';
+            badge.className = 'bg-amber-500 text-white text-[9px] sm:text-[10px] font-black text-center rounded-md py-0.5 leading-none shadow-sm shrink-0';
             badge.textContent = '💡このならび';
             colDiv.appendChild(badge);
           }
@@ -3153,19 +3130,16 @@
           col.cells.forEach(cell => {
             if (!cell) {
               const empty = document.createElement('div');
-              empty.className = 'rounded-xl bg-slate-50/70 border border-dashed border-slate-200';
+              empty.className = 'flex-1 rounded-xl bg-slate-50/60 border border-dashed border-slate-200';
               colDiv.appendChild(empty);
               return;
             }
-
             const [hira, kata, customSpeech] = cell;
             const btn = document.createElement('button');
-            btn.className = `rounded-xl border-2 ${
-              isTargetColumn ? 'bg-yellow-50 border-amber-400 text-slate-900' : col.color
-            } flex flex-col items-center justify-center p-0.5 shadow-sm active:scale-90 transition-transform hover:brightness-95`;
+            btn.className = `btn-3d flex-1 rounded-xl border-2 border-b-4 flex flex-col items-center justify-center p-0.5 shadow-sm transition-transform active:scale-95 ${col.color}`;
             btn.innerHTML = `
-              <span class="text-[11px] sm:text-sm font-extrabold opacity-85 leading-none">${hira}</span>
-              <span class="text-base sm:text-2xl font-black text-slate-900 leading-tight mt-0.5">${kata}</span>
+              <span class="text-[11px] sm:text-sm font-black opacity-85 leading-none">${hira}</span>
+              <span class="text-base sm:text-2xl font-black leading-tight mt-0.5">${kata}</span>
             `;
             btn.onclick = () => {
               Sound.playCorrect();
@@ -3180,171 +3154,21 @@
         body.appendChild(grid);
       },
 
-      setPenaltyMode(resetOnMistake) {
+      openGarage() {
         Sound.init();
-        this.state.resetStreakOnMistake = resetOnMistake;
-        this.saveData();
-        this.updateParentSettingsUI();
-        Sound.playCorrect();
-      },
-
-      setVoiceMode(mode) {
-        Sound.init();
-        this.state.voiceMode = mode;
-        if (mode === 'native') {
-          window._webViewSilenceDetected = false;
-        }
-        this.saveData();
-        this.updateParentSettingsUI();
-        Sound.playCorrect();
-        Sound.speak('こえの モードを きりかえたよ！');
-      },
-
-      testVoiceOutput() {
-        Sound.init();
-        Sound.playCorrect();
-        Sound.speak('こんにちは！ くるま で おでかけ しよう！');
-      },
-
-      updateParentSettingsUI() {
-        const btnOn = document.getElementById('setting-reset-on');
-        const btnOff = document.getElementById('setting-reset-off');
-        if (this.state.resetStreakOnMistake) {
-          btnOn.className = 'py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-rose-500 text-white border-rose-700 shadow';
-          btnOff.className = 'py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
-        } else {
-          btnOff.className = 'py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-emerald-500 text-white border-emerald-700 shadow';
-          btnOn.className = 'py-2.5 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
-        }
-
-        // 音声モードボタンのハイライト更新
-        const modes = ['auto', 'cloud', 'native'];
-        modes.forEach(m => {
-          const el = document.getElementById(`voice-mode-${m}`);
-          if (!el) return;
-          if (this.state.voiceMode === m) {
-            el.className = 'py-2 px-2 rounded-xl font-black text-xs border-2 bg-sky-500 text-white border-sky-700 shadow';
-          } else {
-            el.className = 'py-2 px-2 rounded-xl font-black text-xs border-2 bg-white text-slate-600 border-slate-300';
-          }
-        });
-      },
-
-      showScreen(screenId, activeStep = 0) {
-        this.clearHintTimer();
-        Confetti.stop();
-        const screens = ['screen-title', 'screen-garage', 'screen-step1', 'screen-step2', 'screen-step3', 'screen-reward'];
-        screens.forEach(id => {
-          document.getElementById(id).classList.toggle('hidden', id !== screenId);
-        });
-
-        const stepInd = document.getElementById('step-indicator');
-        const lifeInd = document.getElementById('life-indicator');
-        if (activeStep >= 1 && activeStep <= 3) {
-          stepInd.classList.remove('hidden');
-          stepInd.classList.add('flex');
-          if (lifeInd) {
-            lifeInd.classList.remove('hidden');
-            lifeInd.classList.add('flex');
-          }
-          for (let i = 1; i <= 3; i++) {
-            const el = document.getElementById(`ind-${i}`);
-            if (i === activeStep) {
-              el.className = 'px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-500 text-white shadow';
-            } else if (i < activeStep) {
-              el.className = 'px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-500 text-white';
-            } else {
-              el.className = 'px-2.5 py-0.5 rounded-full text-xs font-black text-slate-400';
-            }
-          }
-        } else {
-          stepInd.classList.add('hidden');
-          stepInd.classList.remove('flex');
-          if (lifeInd) {
-            lifeInd.classList.add('hidden');
-            lifeInd.classList.remove('flex');
-          }
-        }
-      },
-
-      /* ----------------------------------------------------------------
-       * タイトル＆マイガレージ
-       * ---------------------------------------------------------------- */
-      goTitle() {
-        Sound.init();
-        this.renderTitleScreen();
-        this.showScreen('screen-title', 0);
-      },
-
-      renderTitleScreen() {
-        const car = this.getSelectedCar();
-        document.getElementById('title-car-svg').innerHTML = getCarSideSVG(car.id);
-        document.getElementById('title-car-name').textContent = car.name;
-
-        const dxBadge = document.getElementById('title-car-badge');
-        if (dxBadge) {
-          dxBadge.classList.toggle('hidden', car.tier !== 'hard');
-        }
-
-        // 5回連続クリアスタンプゲージの描画
-        const streak = this.getCurrentStreak();
-        const isEasy = this.state.difficulty === 'easy';
-        const tierCars = CarCatalog.filter(c => c.tier === this.state.difficulty);
-        const remainingCars = tierCars.filter(c => !this.state.unlockedCars.includes(c.id));
-
-        const labelEl = document.getElementById('title-streak-label');
-        const remainEl = document.getElementById('title-streak-remain');
-        if (labelEl) {
-          labelEl.textContent = isEasy ? '🌱 かんたん れんぞくスタンプ' : '🔥 しっかり れんぞくスタンプ';
-          labelEl.className = isEasy ? 'text-emerald-700 font-black' : 'text-rose-600 font-black';
-        }
-        if (remainEl) {
-          if (remainingCars.length === 0) {
-            remainEl.textContent = '✨ コンプリート！ ✨';
-          } else {
-            remainEl.textContent = `あと ${5 - streak}かい で 新車ゲット！`;
-          }
-        }
-
-        const starsContainer = document.getElementById('title-streak-stars');
-        if (starsContainer) {
-          starsContainer.innerHTML = '';
-          for (let i = 1; i <= 5; i++) {
-            const filled = i <= streak;
-            const span = document.createElement('div');
-            span.className = `w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center text-lg sm:text-xl font-black transition-all ${
-              filled
-                ? 'bg-amber-400 border-amber-600 text-white shadow scale-105'
-                : 'bg-slate-100 border-slate-300 text-slate-300'
-            }`;
-            span.textContent = filled ? '★' : i;
-            starsContainer.appendChild(span);
-          }
-        }
-
-        this.updateHeaderUI();
-      },
-
-      honkSelectedCar() {
-        const car = this.getSelectedCar();
-        Sound.playCarSound(car.soundType);
-        Sound.speak(car.kana);
+        this.state.isBusy = false;
+        this.state.garageTab = this.state.difficulty;
+        this.renderGarage();
+        this.showScreen('screen-garage', 0);
       },
 
       switchGarageTab(tab) {
         Sound.init();
         this.state.garageTab = tab;
-        this.renderGarageGrid();
+        this.renderGarage();
       },
 
-      openGarage() {
-        Sound.init();
-        this.state.garageTab = this.state.difficulty;
-        this.renderGarageGrid();
-        this.showScreen('screen-garage', 0);
-      },
-
-      renderGarageGrid() {
+      renderGarage() {
         const easyCars = CarCatalog.filter(c => c.tier === 'easy');
         const hardCars = CarCatalog.filter(c => c.tier === 'hard');
         const unlockedEasy = easyCars.filter(c => this.state.unlockedCars.includes(c.id)).length;
@@ -3353,61 +3177,64 @@
         document.getElementById('garage-easy-count').textContent = `${unlockedEasy}/${easyCars.length}`;
         document.getElementById('garage-hard-count').textContent = `${unlockedHard}/${hardCars.length}`;
 
-        const tabEasy = document.getElementById('garage-tab-easy');
-        const tabHard = document.getElementById('garage-tab-hard');
+        const tabEasyBtn = document.getElementById('garage-tab-easy');
+        const tabHardBtn = document.getElementById('garage-tab-hard');
         if (this.state.garageTab === 'easy') {
-          tabEasy.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-emerald-500 text-white border-emerald-700 shadow';
-          tabHard.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-slate-700 text-slate-300 border-slate-900';
+          tabEasyBtn.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-emerald-500 text-white border-emerald-700 shadow';
+          tabHardBtn.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-slate-700 text-slate-300 border-slate-900';
         } else {
-          tabHard.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-rose-500 text-white border-rose-800 shadow';
-          tabEasy.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-slate-700 text-slate-300 border-slate-900';
+          tabHardBtn.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 border-amber-700 shadow';
+          tabEasyBtn.className = 'btn-3d py-2 px-3 rounded-2xl font-black text-xs sm:text-sm border-b-4 flex items-center justify-center gap-1.5 bg-slate-700 text-slate-300 border-slate-900';
         }
 
         const grid = document.getElementById('garage-grid');
         grid.innerHTML = '';
 
-        const list = CarCatalog.filter(c => c.tier === this.state.garageTab);
+        const list = this.state.garageTab === 'easy' ? easyCars : hardCars;
         list.forEach(car => {
           const isUnlocked = this.state.unlockedCars.includes(car.id);
-          const isSelected = (this.state.selectedCarId === car.id);
+          const isSelected = this.state.selectedCarId === car.id;
 
           const card = document.createElement('button');
-          card.className = `btn-3d relative rounded-2xl p-2 flex flex-col items-center justify-between border-4 transition-all ${
+          card.className = `btn-3d rounded-2xl p-2 flex flex-col items-center justify-between border-4 transition-all ${
             isSelected
               ? 'bg-amber-100 border-amber-400 text-slate-900 shadow-lg scale-[1.02]'
               : isUnlocked
-              ? (car.tier === 'hard' ? 'bg-gradient-to-b from-slate-700 to-indigo-950 border-amber-400/80 text-white' : 'bg-slate-700 border-slate-500 text-white hover:border-sky-400')
-              : 'bg-slate-900/70 border-slate-700 text-slate-500 opacity-75'
+              ? 'bg-slate-700 border-slate-500 text-white hover:bg-slate-600'
+              : 'bg-slate-900/90 border-slate-700 text-slate-500 opacity-75'
           }`;
 
           if (isUnlocked) {
             card.innerHTML = `
-              ${isSelected ? '<span class="absolute top-1 right-1 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">のってるよ</span>' : ''}
-              ${car.tier === 'hard' ? '<span class="absolute top-1 left-1 text-xs">👑</span>' : ''}
-              <div class="w-20 h-11 sm:w-26 sm:h-14 my-auto">${getCarSideSVG(car.id)}</div>
-              <div class="text-[11px] sm:text-xs font-black tracking-tight mt-1 leading-tight">${car.name}</div>
+              <div class="w-full flex items-center justify-between text-[10px] font-black px-1">
+                <span class="${isSelected ? 'text-amber-800' : 'text-sky-300'}">${car.type}</span>
+                ${isSelected ? '<span class="bg-rose-500 text-white px-1.5 py-0.5 rounded-full">のってる</span>' : ''}
+              </div>
+              <div class="w-20 h-11 sm:w-24 sm:h-12 my-0.5 flex items-center justify-center">
+                ${getCarSideSVG(car.id)}
+              </div>
+              <div class="text-xs sm:text-sm font-black truncate w-full text-center">${car.name}</div>
             `;
             card.onclick = () => {
               this.state.selectedCarId = car.id;
-              this.saveData();
+              this.saveState();
               Sound.playCarSound(car.soundType);
-              Sound.speak(`${car.kana} に のるよ！`);
-              this.renderGarageGrid();
+              Sound.speak(car.kana);
+              this.renderGarage();
             };
           } else {
-            const modeLabel = car.tier === 'easy' ? '🌱かんたん5回' : '🔥しっかり5回';
             card.innerHTML = `
-              <div class="w-20 h-11 sm:w-26 sm:h-14 my-auto opacity-15 grayscale">${getCarSideSVG(car.id)}</div>
-              <div class="absolute inset-0 flex flex-col items-center justify-center">
-                <span class="text-xl sm:text-2xl">🔒</span>
-                <span class="text-[10px] font-black text-amber-400 mt-0.5">${modeLabel}</span>
+              <div class="w-full text-left text-[10px] font-bold text-slate-500 px-1">？？？</div>
+              <div class="w-16 h-11 sm:w-20 sm:h-12 my-0.5 flex items-center justify-center text-2xl sm:text-3xl">
+                🔒
               </div>
-              <div class="text-[11px] sm:text-xs font-black">？？？</div>
+              <div class="text-[11px] font-black text-slate-400">5れんぞくクリア</div>
             `;
             card.onclick = () => {
               Sound.playGentleTryAgain();
-              const modeSpeech = car.tier === 'easy' ? 'かんたんモード' : 'しっかりモード';
-              Sound.speak(`${modeSpeech} を 5かい れんぞく で クリア すると のれるように なるよ！`);
+              Sound.speak(car.tier === 'hard'
+                ? 'しっかりモードで 5かい れんぞく クリアすると のれるよ！'
+                : 'かんたんモードで 5かい れんぞく クリアすると のれるよ！');
             };
           }
 
@@ -3415,101 +3242,217 @@
         });
       },
 
-      /* ----------------------------------------------------------------
-       * ミッション開始 ➔ ステップ①（時計：案Aスタートゲート＋案Bランダム時間帯・ヘッドライト）
-       * ---------------------------------------------------------------- */
+      triggerManualHint(stepNum) {
+        Sound.init();
+        if (this.state.isBusy) return;
+        Sound.playHintChime();
+        this.applyHintForStep(stepNum);
+      },
+
+      applyHintForStep(stepNum) {
+        if (stepNum === 1 && this.state.step1) {
+          const { targetHour, targetMin, choices } = this.state.step1;
+          const wrongIndices = choices
+            .map((c, idx) => ({ c, idx }))
+            .filter(item => !item.c.isCorrect && !item.c.eliminated);
+          if (wrongIndices.length > 1) {
+            const pick = wrongIndices[Math.floor(Math.random() * wrongIndices.length)];
+            pick.c.eliminated = true;
+            const btn = document.getElementById(`clock-btn-${pick.idx}`);
+            if (btn) {
+              btn.disabled = true;
+              btn.classList.add('opacity-25', 'scale-90', 'pointer-events-none');
+            }
+          }
+          const longTarget = targetMin === 30 ? '6' : '12';
+          const msg = `あかい みじかい はり が「${targetHour}」、あおい ながい はり が「${longTarget}」を さしているのは どれかな？`;
+          const fbEl = document.getElementById('step1-feedback');
+          if (fbEl) fbEl.textContent = `💡 ${msg}`;
+          Sound.speak(msg);
+        } else if (stepNum === 2 && this.state.step2) {
+          this.state.step2.hintStage = (this.state.step2.hintStage || 0) + 1;
+          const { laneChoices } = this.state.step2;
+          const fbEl = document.getElementById('step2-feedback');
+
+          if (this.state.step2.hintStage === 1) {
+            const wrongLanes = laneChoices
+              .map((c, idx) => ({ c, idx }))
+              .filter(item => !item.c.isCorrect && !item.c.eliminated);
+            if (wrongLanes.length > 1) {
+              const pick = wrongLanes[Math.floor(Math.random() * wrongLanes.length)];
+              pick.c.eliminated = true;
+              const btn = document.getElementById(`lane-btn-${pick.idx}`);
+              if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-35', 'scale-90', 'pointer-events-none');
+                btn.innerHTML = `<span class="text-xl sm:text-2xl">🚧</span><span class="text-[10px] font-black text-slate-500 mt-0.5">ちがうよ</span>`;
+              }
+            }
+            const labelEl = document.getElementById('btn-hint-step2-label');
+            if (labelEl) labelEl.textContent = 'ヒント②';
+
+            const msg = '1つ みちが へったよ！ もういちど 💡ヒント を おすと、ひらがな が でるよ！';
+            if (fbEl) fbEl.textContent = `💡 ${msg}`;
+            Sound.speak('ひとつ みちが へったよ！ もういちど ヒントを おすと、ひらがなが でるよ！');
+          } else {
+            laneChoices.forEach((c, idx) => {
+              if (!c.eliminated) {
+                const sub = document.getElementById(`lane-sub-${idx}`);
+                if (sub) {
+                  sub.textContent = `（${KataToHira[c.char] || c.char}）`;
+                  sub.className = 'text-xs sm:text-sm font-black text-rose-600 bg-yellow-100 px-2 py-0.5 rounded-full mt-0.5';
+                }
+              }
+            });
+            const msg = 'カタカナの したに ひらがな が でたよ！ うえの もじ と くらべてみよう！';
+            if (fbEl) fbEl.textContent = `💡 ${msg}`;
+            Sound.speak(msg);
+          }
+        } else if (stepNum === 3 && this.state.step3) {
+          const { q, choices } = this.state.step3;
+          const wrongLots = choices
+            .map((c, idx) => ({ c, idx }))
+            .filter(item => !item.c.isCorrect && !item.c.eliminated);
+          if (wrongLots.length > 1) {
+            const pick = wrongLots[Math.floor(Math.random() * wrongLots.length)];
+            pick.c.eliminated = true;
+            const btn = document.getElementById(`park-btn-${pick.idx}`);
+            if (btn) {
+              btn.disabled = true;
+              btn.classList.add('opacity-25', 'scale-95', 'pointer-events-none');
+            }
+          }
+          const digits = String(q.num).split('');
+          let msg = '';
+          if (digits.length === 2) {
+            msg = `「${q.kana}」は、ひだりの すうじ が「 ${digits[0]} 」から はじまるよ！`;
+          } else if (digits.length === 3) {
+            msg = `「${q.kana}」は、すうじが 3つ ならんでいて、まんなかが「 ${digits[1]} 」で、さいごが「 ${digits[2]} 」だよ！`;
+          } else {
+            msg = `「${q.kana}」は、「 ${digits[0]} 」から はじまるよ！`;
+          }
+          const fbEl = document.getElementById('step3-feedback');
+          if (fbEl) fbEl.textContent = `💡 ${msg}`;
+          Sound.speak(msg);
+        }
+      },
+
+      showMistakeModal(correctHintHTML, speechText) {
+        this.state.isBusy = true;
+        Sound.playGentleTryAgain();
+
+        if (this.state.resetStreakOnMistake) {
+          this.setCurrentStreak(0);
+          this.saveState();
+          document.getElementById('mistake-streak-note').textContent =
+            'れんぞくスタンプは 0 に もどっちゃったけど、つぎは きっと できるよ！';
+        } else {
+          document.getElementById('mistake-streak-note').textContent =
+            'スタンプは そのまま のこっているよ！ もういちど ちょうせん しよう！';
+        }
+
+        document.getElementById('mistake-correct-box').innerHTML = correctHintHTML;
+        document.getElementById('modal-mistake').classList.remove('hidden');
+        Sound.speak(speechText);
+      },
+
+      closeMistakeModalAndGoHome() {
+        document.getElementById('modal-mistake').classList.add('hidden');
+        this.goTitle();
+      },
+
       startMission() {
         Sound.init();
-        this.state.lives = 3;
+        this.state.lives = this.state.maxLives;
         this.updateLifeUI();
         const car = this.getSelectedCar();
         Sound.playCarSound(car.soundType);
         this.setupStep1();
       },
 
-      // 時間帯（hour 1..12 とランダムな午前/午後 isPM）から空テーマを決定
+      /* ----------------------------------------------------------------
+       * ステップ①：出発タイマー（案A：ゲート＆信号＋案B：時間帯の空＆ヘッドライト）
+       * ---------------------------------------------------------------- */
       getStep1SkyTheme(hour, isPM) {
-        const h24 = isPM ? (hour === 12 ? 12 : hour + 12) : (hour === 12 ? 0 : hour);
-        if (h24 >= 6 && h24 <= 9) {
+        if (!isPM && hour >= 6 && hour <= 10) {
           return {
-            key: 'morning',
-            icon: '☀️',
-            label: 'あさ',
-            speechPrefix: 'あさの ',
-            bgClass: 'bg-gradient-to-b from-sky-300 via-amber-100 to-emerald-100',
+            periodLabel: '☀️ あさの',
+            badgeIcon: '☀️',
+            badgeText: 'あさ',
+            bgClass: 'bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200',
             headlight: false,
             decorHTML: `
-              <div class="absolute top-3 left-28 text-3xl sm:text-4xl opacity-90">☀️</div>
-              <div class="absolute top-5 left-1/2 text-2xl sm:text-3xl opacity-80">☁️</div>
-            `
-          };
-        } else if (h24 >= 10 && h24 <= 15) {
-          return {
-            key: 'day',
-            icon: '☀️',
-            label: 'おひる',
-            speechPrefix: 'おひるの ',
-            bgClass: 'bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-100',
-            headlight: false,
-            decorHTML: `
-              <div class="absolute top-2 left-32 text-3xl sm:text-4xl">☀️</div>
-              <div class="absolute top-4 left-16 text-2xl sm:text-3xl opacity-85">☁️</div>
-              <div class="absolute top-6 left-1/2 text-2xl sm:text-3xl opacity-85">☁️</div>
-            `
-          };
-        } else if ((h24 >= 16 && h24 <= 18) || h24 === 5) {
-          return {
-            key: 'evening',
-            icon: '🌇',
-            label: 'ゆうがた',
-            speechPrefix: 'ゆうがたの ',
-            bgClass: 'bg-gradient-to-b from-indigo-500 via-rose-400 to-amber-200',
-            headlight: true,
-            decorHTML: `
-              <div class="absolute top-6 left-32 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-b from-amber-300 to-rose-500 shadow-[0_0_20px_#f97316] opacity-90"></div>
-              <div class="absolute top-3 left-1/2 text-xl text-amber-100 opacity-75">☁️</div>
-            `
-          };
-        } else {
-          return {
-            key: 'night',
-            icon: '🌙',
-            label: 'よる',
-            speechPrefix: 'よるの ',
-            bgClass: 'bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-800',
-            headlight: true,
-            decorHTML: `
-              <div class="absolute top-3 left-28 text-2xl sm:text-3xl drop-shadow-[0_0_8px_#fde047]">🌙</div>
-              <div class="absolute top-3 left-44 text-xs text-yellow-200 animate-pulse">✨</div>
-              <div class="absolute top-8 left-20 text-xs text-yellow-200 animate-pulse">⭐</div>
-              <div class="absolute top-4 left-[48%] text-xs text-yellow-100 animate-pulse">✨</div>
+              <div class="absolute top-2 right-6 text-3xl sm:text-4xl">☀️</div>
+              <div class="absolute top-4 left-28 text-2xl opacity-85">☁️</div>
+              <div class="absolute top-2 right-28 text-xl opacity-75">☁️</div>
             `
           };
         }
+        if ((!isPM && hour === 11) || (isPM && (hour === 12 || (hour >= 1 && hour <= 3)))) {
+          return {
+            periodLabel: '☀️ おひるの',
+            badgeIcon: '☀️',
+            badgeText: 'おひる',
+            bgClass: 'bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-100',
+            headlight: false,
+            decorHTML: `
+              <div class="absolute top-1.5 right-8 text-3xl sm:text-4xl">🌞</div>
+              <div class="absolute top-3 left-28 text-2xl opacity-90">☁️</div>
+              <div class="absolute top-5 right-32 text-2xl opacity-85">☁️</div>
+            `
+          };
+        }
+        if (isPM && hour >= 4 && hour <= 6) {
+          return {
+            periodLabel: '🌇 ゆうがたの',
+            badgeIcon: '🌇',
+            badgeText: 'ゆうがた',
+            bgClass: 'bg-gradient-to-b from-orange-400 via-amber-200 to-rose-200',
+            headlight: true,
+            decorHTML: `
+              <div class="absolute top-3 right-8 text-3xl sm:text-4xl">🌇</div>
+              <div class="absolute top-3 left-28 text-xl opacity-80">☁️</div>
+              <div class="absolute top-2 right-28 text-lg">🐦</div>
+            `
+          };
+        }
+        return {
+          periodLabel: '🌙 よるの',
+          badgeIcon: '🌙',
+          badgeText: 'よる',
+          bgClass: 'bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-800',
+          headlight: true,
+          decorHTML: `
+            <div class="absolute top-2 right-7 text-2xl sm:text-3xl">🌙</div>
+            <div class="absolute top-3 left-28 text-sm text-yellow-200">⭐</div>
+            <div class="absolute top-7 left-44 text-xs text-yellow-100">✨</div>
+            <div class="absolute top-2 right-28 text-sm text-yellow-200">🌟</div>
+            <div class="absolute top-6 right-44 text-xs text-yellow-100">⭐</div>
+          `
+        };
       },
 
       resetStep1SceneActors() {
+        const carActor = document.getElementById('step1-car-actor');
+        if (carActor) {
+          carActor.style.transition = 'none';
+          carActor.style.left = '12%';
+          carActor.style.transform = 'translateX(0px) rotate(0deg)';
+          void carActor.offsetWidth;
+          carActor.style.transition = 'transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.65s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
         const gateArm = document.getElementById('step1-gate-arm');
         if (gateArm) gateArm.classList.remove('open');
-
-        const redLight = document.getElementById('step1-light-red');
-        const greenLight = document.getElementById('step1-light-green');
-        if (redLight) redLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e] transition-all';
-        if (greenLight) greenLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-950 transition-all';
 
         const brakeBadge = document.getElementById('step1-brake-badge');
         if (brakeBadge) brakeBadge.classList.add('hidden');
 
-        const carActor = document.getElementById('step1-car-actor');
-        if (carActor) {
-          carActor.style.transition = 'none';
-          carActor.style.transform = 'translateX(0px) rotate(0deg)';
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              carActor.style.transition = 'transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1)';
-            });
-          });
-        }
+        const redLight = document.getElementById('step1-light-red');
+        const yellowLight = document.getElementById('step1-light-yellow');
+        const greenLight = document.getElementById('step1-light-green');
+        if (redLight) redLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e] transition-all';
+        if (yellowLight) yellowLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-950 transition-all';
+        if (greenLight) greenLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-950 transition-all';
       },
 
       setupStep1() {
@@ -3521,23 +3464,28 @@
         document.getElementById('step1-car-preview').innerHTML = getCarSideSVG(car.id);
         this.resetStep1SceneActors();
 
-        const targetHour = Math.floor(Math.random() * 12) + 1;
-        const targetMin = (this.state.difficulty === 'hard' && Math.random() < 0.5) ? 30 : 0;
-        // 同じ8:00でも「あさ」と「よる」の両方がランダムで出るよう午前/午後をランダム決定
+        let targetHour = Math.floor(Math.random() * 12) + 1;
+        let targetMin = (this.state.difficulty === 'hard' && Math.random() < 0.5) ? 30 : 0;
+        for (let retry = 0; retry < 10; retry++) {
+          if (`${targetHour}:${targetMin}` !== this.state.lastStep1Key) break;
+          targetHour = Math.floor(Math.random() * 12) + 1;
+          targetMin = (this.state.difficulty === 'hard' && Math.random() < 0.5) ? 30 : 0;
+        }
+        this.state.lastStep1Key = `${targetHour}:${targetMin}`;
+
         const isPM = Math.random() < 0.5;
         const skyTheme = this.getStep1SkyTheme(targetHour, isPM);
 
-        // 空テーマとヘッドライトの反映
         const sceneEl = document.getElementById('step1-scene');
         if (sceneEl) {
-          sceneEl.className = `relative w-full h-36 sm:h-44 rounded-3xl border-4 border-sky-400 shadow-lg overflow-hidden my-1 shrink-0 transition-colors duration-500 ${skyTheme.bgClass}`;
+          sceneEl.className = `relative w-full h-28 sm:h-36 rounded-3xl border-4 border-sky-400 shadow-lg overflow-hidden my-0.5 shrink-0 transition-colors duration-500 ${skyTheme.bgClass}`;
         }
         const skyDecorEl = document.getElementById('step1-sky-decor');
         if (skyDecorEl) skyDecorEl.innerHTML = skyTheme.decorHTML;
 
-        const badgeEl = document.getElementById('step1-time-badge');
-        if (badgeEl) {
-          badgeEl.innerHTML = `<span>${skyTheme.icon}</span><span>${skyTheme.label}</span>`;
+        const timeBadgeEl = document.getElementById('step1-time-badge');
+        if (timeBadgeEl) {
+          timeBadgeEl.innerHTML = `<span>${skyTheme.badgeIcon}</span><span>${skyTheme.badgeText}</span>`;
         }
 
         const beamEl = document.getElementById('step1-headlight-beam');
@@ -3545,34 +3493,26 @@
           beamEl.classList.toggle('hidden', !skyTheme.headlight);
         }
 
-        document.getElementById('step1-feedback').textContent = skyTheme.headlight
-          ? `${skyTheme.icon} ${skyTheme.label}の ドライブ！ ライトを つけて しゅっぱつ しよう！`
-          : 'あかい みじかい はり と あおい ながい はり を みてね！';
-
-        // 3択のアナログ時計を生成
-        const choiceCount = 3;
-        const choices = [{ hour: targetHour, min: targetMin, isCorrect: true }];
-
-        while (choices.length < choiceCount) {
-          let h = Math.floor(Math.random() * 12) + 1;
-          let m = targetMin;
-          if (this.state.difficulty === 'hard' && choices.length === 2) {
-            h = targetHour;
-            m = targetMin === 0 ? 30 : 0;
-          }
-          if (!choices.some(c => c.hour === h && c.min === m)) {
-            choices.push({ hour: h, min: m, isCorrect: false });
-          }
-        }
-        choices.sort(() => Math.random() - 0.5);
-
-        this.state.step1 = { targetHour, targetMin, isPM, skyTheme, choices };
-
         document.getElementById('digital-hour').textContent = targetHour;
         document.getElementById('digital-min').textContent = targetMin === 0 ? '00' : '30';
 
         const timeText = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
-        document.getElementById('step1-question-text').textContent = `${skyTheme.icon} ${skyTheme.label}の「 ${timeText} 」に しゅっぱつ！ おなじ とけい は どれ？`;
+        document.getElementById('step1-question-text').textContent =
+          `${skyTheme.periodLabel}「 ${timeText} 」に しゅっぱつ！ おなじ とけい は どれかな？`;
+        document.getElementById('step1-feedback').textContent =
+          'あかい みじかい はり と あおい ながい はり を みてね！';
+
+        const wrong1Hour = (targetHour % 12) + 1;
+        const wrong2Hour = ((targetHour + 9) % 12) + 1;
+        const wrong2Min = this.state.difficulty === 'hard' ? (targetMin === 0 ? 30 : 0) : 0;
+
+        const choices = [
+          { hour: targetHour, min: targetMin, isCorrect: true },
+          { hour: wrong1Hour, min: targetMin, isCorrect: false },
+          { hour: wrong2Hour, min: wrong2Min, isCorrect: false }
+        ].sort(() => Math.random() - 0.5);
+
+        this.state.step1 = { targetHour, targetMin, timeText, skyTheme, choices };
 
         const container = document.getElementById('clock-choices');
         container.innerHTML = '';
@@ -3580,28 +3520,19 @@
         choices.forEach((c, idx) => {
           const btn = document.createElement('button');
           btn.id = `clock-btn-${idx}`;
-          btn.className = 'btn-3d w-full max-w-[165px] max-h-full aspect-square bg-white rounded-2xl sm:rounded-3xl p-1.5 sm:p-3 border-4 border-b-8 border-sky-400 shadow-xl flex items-center justify-center overflow-hidden';
-          btn.innerHTML = createAnalogClockSVG(c.hour, c.min);
+          btn.className = 'btn-3d bg-white hover:bg-sky-50 border-4 border-sky-300 border-b-8 rounded-2xl sm:rounded-3xl p-1.5 sm:p-3 w-full max-w-[190px] aspect-square flex flex-col items-center justify-center shadow-lg transition-all';
+          btn.innerHTML = `<div class="w-full h-full flex items-center justify-center">${createAnalogClockSVG(c.hour, c.min)}</div>`;
           btn.onclick = () => this.answerStep1(idx);
           container.appendChild(btn);
         });
 
         this.speakStep1Prompt();
-        this.startStep1HintTimer();
       },
 
       speakStep1Prompt() {
         if (!this.state.step1) return;
-        Sound.init();
-        const { targetHour, targetMin, skyTheme } = this.state.step1;
-        const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ 30ぷん`;
-        const prefix = skyTheme ? skyTheme.speechPrefix : '';
-        Sound.speak(`${prefix}${timeSpeech} に しゅっぱつ！ おなじ とけい は どれかな？`);
-      },
-
-      startStep1HintTimer() {
-        // 30秒の自動ヒントタイマーは廃止（手動の「💡ヒント」ボタンのみ使用）
-        this.clearHintTimer();
+        const { timeText, skyTheme } = this.state.step1;
+        Sound.speak(`${skyTheme.badgeText}の、${timeText} に しゅっぱつ！ おなじ とけい は どれかな？`);
       },
 
       answerStep1(idx) {
@@ -3611,133 +3542,124 @@
 
         if (choice.isCorrect) {
           this.state.isBusy = true;
-          this.clearHintTimer();
-          btn.classList.remove('hint-active');
-          btn.classList.replace('border-sky-400', 'border-emerald-500');
-          btn.classList.add('bg-emerald-50', 'scale-105');
+          btn.classList.add('bg-emerald-100', 'border-emerald-500', 'scale-105');
+          Sound.playCorrect();
+          const car = this.getSelectedCar();
+          Sound.playCarSound(car.soundType);
 
-          // 信号が青（🟢）になり、道路を塞いでいた遮断機がパカッと開く！
           const redLight = document.getElementById('step1-light-red');
           const greenLight = document.getElementById('step1-light-green');
           if (redLight) redLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-950 transition-all';
-          if (greenLight) greenLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-400 shadow-[0_0_12px_#34d399] transition-all';
+          if (greenLight) greenLight.className = 'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-400 shadow-[0_0_12px_#4ade80] transition-all';
 
           const gateArm = document.getElementById('step1-gate-arm');
           if (gateArm) gateArm.classList.add('open');
 
-          // チャイム音と車の音のみ再生（正解後の読み上げなし）
-          Sound.playCorrect();
-          const car = this.getSelectedCar();
-          setTimeout(() => Sound.playCarSound(car.soundType), 200);
-
-          // ゲートが開いた直後にマイカーが右端へブォーン！と発進
           const carActor = document.getElementById('step1-car-actor');
-          const sceneEl = document.getElementById('step1-scene');
-          setTimeout(() => {
-            if (carActor) {
-              const dist = sceneEl ? sceneEl.clientWidth + 120 : 520;
-              carActor.style.transform = `translateX(${dist}px) rotate(-2deg)`;
-            }
-          }, 220);
-
-          const { targetHour, targetMin } = this.state.step1;
-          const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
-          document.getElementById('step1-feedback').textContent = `🟢 ゲートオープン！ ${timeSpeech} しゅっぱつ しんこう！`;
-
-          setTimeout(() => {
-            this.setupStep2();
-          }, 1250);
-        } else {
-          // 不正解時：ゲートは閉まったまま、車がゲート手前まで進んで急ブレーキ！
-          this.state.isBusy = true;
-          this.clearHintTimer();
-          Sound.playGentleTryAgain();
-
-          if (btn) {
-            btn.classList.replace('border-sky-400', 'border-rose-500');
-            btn.classList.add('bg-rose-50');
+          if (carActor) {
+            setTimeout(() => {
+              carActor.style.left = '108%';
+              carActor.style.transform = 'translateX(0px) rotate(-3deg)';
+            }, 150);
           }
+
+          document.getElementById('step1-feedback').textContent =
+            `せいかい！「 ${this.state.step1.timeText} 」しゅっぱつ しんこう！`;
+
+          setTimeout(() => this.setupStep2(), 1150);
+        } else {
+          this.state.isBusy = true;
+          this.state.lives = Math.max(0, this.state.lives - 1);
+          this.updateLifeUI();
+          Sound.playGentleTryAgain();
 
           const carActor = document.getElementById('step1-car-actor');
           const brakeBadge = document.getElementById('step1-brake-badge');
           if (carActor) {
-            carActor.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            carActor.style.transform = 'translateX(65px) rotate(7deg)';
+            carActor.style.left = '30%';
+            carActor.style.transform = 'translateX(0px) rotate(7deg)';
           }
           if (brakeBadge) brakeBadge.classList.remove('hidden');
 
-          // 3ライフ制の判定
-          this.state.lives = Math.max(0, this.state.lives - 1);
-          this.updateLifeUI();
-
           if (this.state.lives > 0) {
-            // ライフが残っている場合：車をスタート位置に戻してその場で再チャレンジ！
-            document.getElementById('step1-feedback').textContent = `💪 あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`;
-            Sound.speak(`あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`);
-
+            btn.disabled = true;
+            btn.classList.add('opacity-35', 'scale-95', 'pointer-events-none');
+            this.showRecoveryToast(1);
             setTimeout(() => {
-              if (btn) {
-                btn.disabled = true;
-                btn.classList.add('opacity-40', 'pointer-events-none');
+              if (carActor) {
+                carActor.style.left = '12%';
+                carActor.style.transform = 'translateX(0px) rotate(0deg)';
               }
-              this.resetStep1SceneActors();
+              if (brakeBadge) brakeBadge.classList.add('hidden');
               this.state.isBusy = false;
-              this.startStep1HintTimer();
-            }, 1100);
+            }, 900);
           } else {
-            // ライフが0になった場合：正解をメッセージで伝えてホーム画面へ戻る
-            const { targetHour, targetMin } = this.state.step1;
-            const timeSpeech = targetMin === 0 ? `${targetHour}じ` : `${targetHour}じ はん`;
-            const minAdvice = targetMin === 0 ? 'ながい はり が「12」' : 'ながい はり が「6」';
+            const { targetHour, targetMin, timeText } = this.state.step1;
+            const hintHTML = targetMin === 0
+              ? `「 ${timeText} 」は、あかい みじかい はり が「 ${targetHour} 」、あおい ながい はり が「 12 」だよ！`
+              : `「 ${timeText} 」は、あかい みじかい はり が「 ${targetHour} 」、あおい ながい はり が「 6 」だよ！`;
             setTimeout(() => {
-              this.handleMistake(
-                `せいかいは <span class="text-rose-600">あかい みじかい はり が「${targetHour}」</span>、<br><span class="text-sky-600">${minAdvice}</span> の とけい だよ！`,
-                `せいかいは、みじかい はり が ${targetHour} の、${timeSpeech} の とけい だよ！`
-              );
-            }, 950);
+              this.showMistakeModal(hintHTML, `ざんねん！ ${hintHTML}`);
+            }, 700);
           }
         }
       },
 
       /* ----------------------------------------------------------------
-       * ステップ②：カタカナ・ドライブ（ひらがな➔カタカナ＆言葉の認識）
+       * ステップ②：カタカナ・ドライブ（3車線ことば集め）
        * ---------------------------------------------------------------- */
       setupStep2() {
         this.state.isBusy = false;
-        this.state.currentLane = 1;
         this.showScreen('screen-step2', 2);
-        this.updateLifeUI(false);
 
-        // 自分の車を上から見た絵（getCarTopSVG）で中央車線の下部スタート位置に配置
         const car = this.getSelectedCar();
-        const playerCarEl = document.getElementById('player-car-svg');
-        if (playerCarEl) {
-          playerCarEl.innerHTML = getCarTopSVG(car.id);
-          playerCarEl.style.transform = 'translateY(0px)';
-        }
-        this.resetStep2CarPosition(1);
+        document.getElementById('player-car-svg').innerHTML = getCarTopSVG(car.id);
 
-        // 車の名前＋身近な言葉（リンゴ・バナナ・テレビ等）からランダムに出題
-        const wordObj = WordPool[Math.floor(Math.random() * WordPool.length)];
+        const carWrapper = document.getElementById('player-car-wrapper');
+        carWrapper.style.transition = 'none';
+        carWrapper.style.left = '50%';
+        carWrapper.style.bottom = '10px';
+        carWrapper.style.opacity = '1';
+        carWrapper.style.transform = 'translateX(-50%) rotate(0deg)';
+        void carWrapper.offsetWidth;
+        carWrapper.style.transition = 'left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.68s cubic-bezier(0.35, 0, 0.2, 1), opacity 0.22s ease, transform 0.28s ease';
+
+        const expEl = document.getElementById('step2-explosion');
+        if (expEl) expEl.className = 'hidden absolute -inset-8 flex flex-col items-center justify-center pointer-events-none z-30';
+
+        let wordObj = WordPool[Math.floor(Math.random() * WordPool.length)];
+        for (let retry = 0; retry < 10; retry++) {
+          if (wordObj.katakana !== this.state.lastStep2Word) break;
+          wordObj = WordPool[Math.floor(Math.random() * WordPool.length)];
+        }
+        this.state.lastStep2Word = wordObj.katakana;
+
         const kataChars = Array.from(wordObj.katakana);
         const hiraChars = Array.from(wordObj.hiragana);
 
-        // 上部のターゲットアイコンに言葉のイラスト（車は横向き絵、それ以外は専用イラストSVG）を表示
         const iconContainer = document.getElementById('step2-target-icon');
         if (iconContainer) {
           iconContainer.innerHTML = `<div class="w-full h-full">${getWordIllustrationSVG(wordObj)}</div>`;
         }
 
-        // 難易度による穴埋め位置の設定
-        // 🌱かんたん：1文字のみ穴埋め
-        // 🔥しっかり：先頭から1文字ずつすべて順番に集める
         let targetIndices = [];
         if (this.state.difficulty === 'easy') {
           const candidates = kataChars.map((ch, i) => ({ ch, i })).filter(x => x.ch !== 'ー' && x.ch !== 'ッ');
           const picked = candidates[Math.floor(Math.random() * candidates.length)] || { i: 0 };
           targetIndices = [picked.i];
         } else {
-          targetIndices = kataChars.map((_, i) => i);
+          if (kataChars.length <= 4) {
+            targetIndices = kataChars.map((_, i) => i);
+          } else {
+            const nonBar = kataChars.map((ch, i) => ({ ch, i })).filter(x => x.ch !== 'ー' && x.ch !== 'ッ');
+            const poolIndices = (nonBar.length >= 4 ? nonBar : kataChars.map((ch, i) => ({ ch, i }))).map(x => x.i);
+            const pickedSet = new Set([poolIndices[0]]);
+            while (pickedSet.size < Math.min(4, poolIndices.length)) {
+              const rndIdx = poolIndices[Math.floor(Math.random() * poolIndices.length)];
+              pickedSet.add(rndIdx);
+            }
+            targetIndices = Array.from(pickedSet).sort((a, b) => a - b);
+          }
         }
 
         this.state.step2 = {
@@ -3746,376 +3668,268 @@
           hiraChars,
           targetIndices,
           stepCursor: 0,
-          currentChoices: []
+          hintStage: 0,
+          laneChoices: []
         };
 
         this.renderStep2Question();
-        this.speakStep2Prompt();
-      },
-
-      speakStep2Prompt() {
-        if (!this.state.step2) return;
-        Sound.init();
-        const { wordObj, hiraChars, targetIndices, stepCursor } = this.state.step2;
-        const activeIdx = targetIndices[stepCursor];
-        const targetHira = hiraChars[activeIdx] || '';
-        const hiraRead = targetHira === 'ー' ? 'のばす おと' : targetHira;
-        Sound.speak(`${wordObj.hiragana}！ 「${hiraRead}」の カタカナ は どれかな？`);
       },
 
       renderStep2Question() {
-        if (!this.state.step2) return;
         const { kataChars, hiraChars, targetIndices, stepCursor } = this.state.step2;
-        const activeIdx = targetIndices[stepCursor];
-        const targetKata = kataChars[activeIdx];
-        const targetHira = hiraChars[activeIdx];
+        const activeCharIndex = targetIndices[stepCursor];
+        const targetKata = kataChars[activeCharIndex];
 
-        // 2段階ヒントのステージをリセット
         this.state.step2.hintStage = 0;
-        const hintLabel = document.getElementById('btn-hint-step2-label');
-        if (hintLabel) hintLabel.textContent = 'ヒント';
+        const hintLabelEl = document.getElementById('btn-hint-step2-label');
+        if (hintLabelEl) hintLabelEl.textContent = 'ヒント';
 
-        // 次の文字問題が始まる際に、マイカーを道路の下部スタート位置に再配置
-        this.resetStep2CarPosition(this.state.currentLane);
+        const step2FeedbackEl = document.getElementById('step2-feedback');
+        if (step2FeedbackEl) {
+          step2FeedbackEl.textContent = `「 ${hiraChars[activeCharIndex]} 」と おなじ カタカナ の みち を えらぼう！`;
+        }
 
-        // 上部の文字スロット描画（上にひらがな、下にカタカナ）
         const slotsEl = document.getElementById('step2-word-slots');
         slotsEl.innerHTML = '';
 
-        kataChars.forEach((ch, idx) => {
-          const isCompleted = !targetIndices.includes(idx) || targetIndices.indexOf(idx) < stepCursor;
-          const isCurrent = (idx === activeIdx);
+        kataChars.forEach((kChar, idx) => {
+          const hChar = hiraChars[idx];
+          const isSolved = !targetIndices.includes(idx) || targetIndices.indexOf(idx) < stepCursor;
+          const isCurrent = idx === activeCharIndex;
 
           const box = document.createElement('div');
           box.className = 'flex flex-col items-center';
           box.innerHTML = `
-            <span class="text-xs sm:text-sm font-black ${isCurrent ? 'text-rose-600 scale-110' : 'text-slate-500'} mb-0.5">
-              ${hiraChars[idx] || ''}
+            <span class="text-xs sm:text-base font-black ${isCurrent ? 'text-rose-600 scale-110' : 'text-slate-600'} mb-0.5">
+              ${hChar}
             </span>
-            <div class="w-9 h-11 sm:w-11 sm:h-13 rounded-xl border-4 flex items-center justify-center text-lg sm:text-2xl font-black shadow-sm transition-all ${
-              isCurrent
-                ? 'bg-amber-100 border-rose-500 text-rose-600 animate-bounce'
-                : isCompleted
-                ? 'bg-emerald-50 border-emerald-500 text-slate-900'
-                : 'bg-slate-100 border-slate-300 text-slate-400'
+            <div class="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-black text-lg sm:text-2xl border-4 transition-all ${
+              isSolved
+                ? 'bg-emerald-500 text-white border-emerald-700 shadow'
+                : isCurrent
+                ? 'bg-amber-100 text-rose-600 border-rose-500 animate-pulse shadow-md'
+                : 'bg-slate-200 text-slate-400 border-slate-300'
             }">
-              ${isCompleted ? ch : isCurrent ? '？' : '・'}
+              ${isSolved ? kChar : '？'}
             </div>
           `;
           slotsEl.appendChild(box);
         });
 
-        const step2FeedbackEl = document.getElementById('step2-feedback');
-        if (step2FeedbackEl) {
-          step2FeedbackEl.textContent = `「 ${targetHira} 」の カタカナ は どの みち かな？`;
-        }
+        const simPool = SimilarKatakana[targetKata] || ['ア', 'カ', 'サ', 'タ', 'ナ', 'ハ', 'マ', 'ラ'];
+        const shuffledSim = [...simPool].filter(ch => ch !== targetKata).sort(() => Math.random() - 0.5);
+        const d1 = shuffledSim[0] || 'ア';
+        const d2 = shuffledSim[1] || 'マ';
 
-        // 3車線の選択肢を生成
-        const pool = SimilarKatakana[targetKata] || ['ア', 'カ', 'サ', 'タ', 'ナ', 'ハ', 'マ', 'ラ'];
-        const choices = [{ kata: targetKata, hira: KataToHira[targetKata] || targetHira, isCorrect: true }];
+        const laneChoices = [
+          { char: targetKata, isCorrect: true },
+          { char: d1, isCorrect: false },
+          { char: d2, isCorrect: false }
+        ].sort(() => Math.random() - 0.5);
 
-        for (const cand of pool) {
-          if (choices.length >= 3) break;
-          if (!choices.some(c => c.kata === cand)) {
-            choices.push({ kata: cand, hira: KataToHira[cand] || '', isCorrect: false });
-          }
-        }
-        choices.sort(() => Math.random() - 0.5);
-        this.state.step2.currentChoices = choices;
+        this.state.step2.laneChoices = laneChoices;
 
         const lanesEl = document.getElementById('step2-lanes');
         lanesEl.innerHTML = '';
 
-        choices.forEach((c, laneIdx) => {
+        laneChoices.forEach((choice, laneIdx) => {
           const btn = document.createElement('button');
           btn.id = `lane-btn-${laneIdx}`;
-          btn.className = 'btn-3d w-full bg-white hover:bg-amber-50 rounded-3xl py-4 sm:py-6 px-2 border-4 border-b-8 border-sky-500 shadow-2xl flex flex-col items-center justify-center relative';
+          btn.className = 'btn-3d w-full max-w-[125px] bg-white hover:bg-sky-50 border-4 border-sky-500 border-b-8 rounded-3xl py-3 sm:py-4 px-2 flex flex-col items-center justify-center shadow-2xl transition-all';
           btn.innerHTML = `
-            <span class="text-xs font-black text-sky-600 bg-sky-100 px-2.5 py-0.5 rounded-full mb-1">タップ！</span>
-            <span class="text-4xl sm:text-5xl font-black text-slate-900 leading-none my-1">${c.kata}</span>
-            <span id="lane-hint-${laneIdx}" class="mt-1 text-base sm:text-lg font-black text-rose-600 bg-rose-100 px-3 py-0.5 rounded-full opacity-0 transition-opacity duration-300">
-              （${c.hira}）
-            </span>
+            <span class="text-xs font-black text-sky-600 bg-sky-100 px-2.5 py-0.5 rounded-full mb-1">みち ${laneIdx + 1}</span>
+            <span class="text-3xl sm:text-5xl font-black text-slate-800 leading-none my-1">${choice.char}</span>
+            <span id="lane-sub-${laneIdx}" class="text-xs font-black text-transparent h-4 select-none">.</span>
           `;
           btn.onclick = () => this.answerStep2(laneIdx);
           lanesEl.appendChild(btn);
         });
 
-        this.startStep2HintTimer();
+        this.speakStep2Prompt();
       },
 
-      startStep2HintTimer() {
-        // 30秒の自動ヒントタイマーは廃止（手動の「💡ヒント」ボタンのみ使用）
-        this.clearHintTimer();
-      },
-
-      // STEP② 正解時のターボジェットSVG生成（'blue': 青ターボ / 'rainbow': 豪華なキラキラ虹色ターボ）
-      getTurboEffectHTML(turboType) {
-        if (turboType === 'rainbow') {
-          return `
-            <div class="relative w-full h-full flex flex-col items-center">
-              <svg viewBox="0 0 120 110" class="w-24 h-22 turbo-flame-anim drop-shadow-lg">
-                <defs>
-                  <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#f43f5e"/>
-                    <stop offset="20%" stop-color="#fb923c"/>
-                    <stop offset="40%" stop-color="#facc15"/>
-                    <stop offset="60%" stop-color="#4ade80"/>
-                    <stop offset="80%" stop-color="#38bdf8"/>
-                    <stop offset="100%" stop-color="#a855f7"/>
-                  </linearGradient>
-                </defs>
-                <!-- 豪華な7色ワイドジェット噴射 -->
-                <polygon points="22,2 98,2 112,72 86,54 74,98 60,68 46,98 34,54 8,72" fill="url(#rainbowGrad)" stroke="#fef08a" stroke-width="3" stroke-linejoin="round"/>
-                <polygon points="36,4 84,4 92,58 72,44 60,82 48,44 28,58" fill="#fef9c3" opacity="0.9"/>
-              </svg>
-              <!-- キラキラ星＆虹パーティクル -->
-              <span class="absolute -left-3 top-2 text-lg sm:text-xl sparkle-particle">✨</span>
-              <span class="absolute -right-3 top-4 text-lg sm:text-xl sparkle-particle" style="animation-delay:0.12s">🌟</span>
-              <span class="absolute left-1 bottom-0 text-base sm:text-lg sparkle-particle" style="animation-delay:0.22s">🌈</span>
-              <span class="absolute right-1 bottom-1 text-base sm:text-lg sparkle-particle" style="animation-delay:0.18s">✨</span>
-            </div>
-          `;
-        }
-        // 基本の青いツインジェットターボ炎
-        return `
-          <div class="relative w-full h-full flex flex-col items-center">
-            <svg viewBox="0 0 100 95" class="w-20 h-18 turbo-flame-anim">
-              <!-- 左側ブルーバーナー -->
-              <polygon points="22,2 46,2 42,76 34,56 24,84 18,48" fill="#0284c7" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round"/>
-              <polygon points="26,4 42,4 36,56 30,44 26,60" fill="#bae6fd"/>
-              <!-- 右側ブルーバーナー -->
-              <polygon points="54,2 78,2 82,48 76,84 66,56 58,76" fill="#0284c7" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round"/>
-              <polygon points="58,4 74,4 74,60 70,44 64,56" fill="#bae6fd"/>
-              <!-- 中央コアプラズマ -->
-              <polygon points="40,4 60,4 50,88" fill="#38bdf8" opacity="0.9"/>
-              <polygon points="45,4 55,4 50,62" fill="#ffffff"/>
-            </svg>
-          </div>
-        `;
-      },
-
-      resetStep2CarPosition(laneIdx = 1) {
-        this.state.currentLane = laneIdx;
-        const wrapper = document.getElementById('player-car-wrapper');
-        const playerCarEl = document.getElementById('player-car-svg');
-        const playerActorEl = document.getElementById('player-car-actor');
-        const turboFxEl = document.getElementById('step2-turbo-fx');
-        const rainbowBannerEl = document.getElementById('step2-rainbow-banner');
-        const explosionEl = document.getElementById('step2-explosion');
-        if (explosionEl) {
-          explosionEl.classList.add('hidden');
-          explosionEl.classList.remove('boom-active');
-        }
-        if (turboFxEl) {
-          turboFxEl.classList.add('hidden');
-          turboFxEl.innerHTML = '';
-        }
-        if (rainbowBannerEl) {
-          rainbowBannerEl.classList.add('hidden');
-        }
-        if (playerActorEl) {
-          playerActorEl.classList.remove('rainbow-car-aura');
-        }
-        if (playerCarEl) {
-          playerCarEl.style.transform = 'translateY(0px) scale(1)';
-          playerCarEl.style.opacity = '1';
-        }
-        if (wrapper) {
-          const centerPercent = laneIdx * 33.3333 + 16.6667;
-          wrapper.style.transition = 'none';
-          wrapper.style.left = `${centerPercent}%`;
-          wrapper.style.bottom = '8px';
-          wrapper.style.opacity = '1';
-          wrapper.style.transform = 'translateX(-50%) rotate(0deg)';
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              wrapper.style.transition = 'left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.65s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, transform 0.28s ease';
-            });
-          });
-        }
-      },
-
-      moveCarToLane(laneIdx) {
-        this.state.currentLane = laneIdx;
-        const wrapper = document.getElementById('player-car-wrapper');
-        if (wrapper) {
-          // 3車線それぞれの中心（左: 16.6667%, 中央: 50%, 右: 83.3333%）に translateX(-50%) で正確にセンタリング
-          const centerPercent = laneIdx * 33.3333 + 16.6667;
-          wrapper.style.left = `${centerPercent}%`;
-          wrapper.style.transform = 'translateX(-50%) rotate(0deg)';
+      speakStep2Prompt() {
+        if (!this.state.step2) return;
+        const { wordObj, hiraChars, targetIndices, stepCursor } = this.state.step2;
+        const activeCharIndex = targetIndices[stepCursor];
+        const targetHira = hiraChars[activeCharIndex];
+        if (stepCursor === 0) {
+          Sound.speak(`${wordObj.hiragana} の、「${targetHira}」は どの みち かな？`);
+        } else {
+          Sound.speak(`つぎは、「${targetHira}」を さがそう！`);
         }
       },
 
       answerStep2(laneIdx) {
-        if (this.state.isBusy || !this.state.step2) return;
-        const prevLane = this.state.currentLane;
-        this.moveCarToLane(laneIdx);
-
-        const choice = this.state.step2.currentChoices[laneIdx];
+        if (this.state.isBusy) return;
+        const choice = this.state.step2.laneChoices[laneIdx];
         const btn = document.getElementById(`lane-btn-${laneIdx}`);
-        const wrapper = document.getElementById('player-car-wrapper');
 
-        if (choice && choice.isCorrect) {
+        const laneCenters = ['16.67%', '50%', '83.33%'];
+        const carWrapper = document.getElementById('player-car-wrapper');
+        carWrapper.style.left = laneCenters[laneIdx];
+
+        if (choice.isCorrect) {
           this.state.isBusy = true;
-          this.clearHintTimer();
-          if (btn) {
-            btn.classList.remove('hint-active');
-            btn.classList.replace('border-sky-500', 'border-emerald-500');
-            btn.classList.add('bg-emerald-100', 'scale-105');
-          }
 
-          // 青ターボ（80%）またはレアなキラキラ虹色ターボ（20%）を発動！
-          // ターボ炎は #player-car-actor 内の left:50% に固定されているため車線移動してもズレない
-          const isRainbow = Math.random() < 0.22;
-          const turboFxEl = document.getElementById('step2-turbo-fx');
-          const playerActorEl = document.getElementById('player-car-actor');
-          const rainbowBannerEl = document.getElementById('step2-rainbow-banner');
-
-          if (turboFxEl) {
-            turboFxEl.innerHTML = getTurboFlameSVG(isRainbow);
-            turboFxEl.classList.remove('hidden');
-          }
-          if (isRainbow) {
-            if (playerActorEl) playerActorEl.classList.add('rainbow-car-aura');
-            if (rainbowBannerEl) rainbowBannerEl.classList.remove('hidden');
-          }
-
+          btn.classList.add('bg-emerald-100', 'border-emerald-500', 'scale-105');
           Sound.playCorrect();
+
+          const { hiraChars, targetIndices, stepCursor } = this.state.step2;
+          const activeHira = hiraChars[targetIndices[stepCursor]];
+          Sound.speak(activeHira === 'ー' ? 'のばす おと！' : `${activeHira}！`);
+
+          const isRainbow = Math.random() < 0.22;
           Sound.playTurbo(isRainbow);
-          const readChar = choice.hira === 'ー' ? 'のばす おと' : choice.hira;
-          Sound.speak(`${readChar}！`);
 
-          // 1段階目：選んだ車線へステアリングを切る演出
-          if (wrapper) {
-            const tiltDeg = laneIdx < prevLane ? -12 : laneIdx > prevLane ? 12 : 0;
-            wrapper.style.transform = `translateX(-50%) rotate(${tiltDeg}deg)`;
+          const turboFx = document.getElementById('step2-turbo-fx');
+          const rainbowBanner = document.getElementById('step2-rainbow-banner');
+          const playerCarSvg = document.getElementById('player-car-svg');
 
-            // 2段階目：車体をまっすぐにして道路の上端まで一気に走り抜け、端でフェードアウトして消える
-            setTimeout(() => {
-              if (!wrapper) return;
-              const roadContainer = wrapper.parentElement ? wrapper.parentElement.parentElement : null;
-              const driveDistance = roadContainer ? roadContainer.clientHeight + 40 : 440;
-              wrapper.style.transform = 'translateX(-50%) rotate(0deg)';
-              wrapper.style.bottom = `${driveDistance}px`;
-            }, 180);
-
-            // 道の端（上部）に到達するタイミングで車をスッと消す
-            setTimeout(() => {
-              if (!wrapper) return;
-              wrapper.style.opacity = '0';
-            }, 640);
+          if (turboFx) {
+            if (isRainbow) {
+              turboFx.innerHTML = `
+                <svg viewBox="0 0 80 110" class="w-full h-full overflow-visible">
+                  <polygon points="10,0 24,0 17,95" fill="#f43f5e"/>
+                  <polygon points="22,0 34,0 28,105" fill="#facc15"/>
+                  <polygon points="34,0 46,0 40,110" fill="#4ade80"/>
+                  <polygon points="46,0 58,0 52,105" fill="#38bdf8"/>
+                  <polygon points="56,0 70,0 63,95" fill="#a855f7"/>
+                  <circle cx="16" cy="45" r="5" fill="#ffffff" class="sparkle-particle"/>
+                  <circle cx="64" cy="55" r="6" fill="#fde047" class="sparkle-particle"/>
+                  <circle cx="40" cy="75" r="6" fill="#ffffff" class="sparkle-particle"/>
+                </svg>
+              `;
+              if (rainbowBanner) rainbowBanner.classList.remove('hidden');
+              if (playerCarSvg) playerCarSvg.classList.add('rainbow-aura');
+            } else {
+              turboFx.innerHTML = `
+                <svg viewBox="0 0 70 95" class="w-full h-full overflow-visible">
+                  <polygon points="12,0 32,0 22,85" fill="#0284c7" opacity="0.9"/>
+                  <polygon points="16,0 28,0 22,62" fill="#7dd3fc"/>
+                  <polygon points="38,0 58,0 48,85" fill="#0284c7" opacity="0.9"/>
+                  <polygon points="42,0 54,0 48,62" fill="#7dd3fc"/>
+                  <polygon points="24,0 46,0 35,92" fill="#38bdf8"/>
+                  <polygon points="29,0 41,0 35,68" fill="#e0f2fe"/>
+                </svg>
+              `;
+            }
+            turboFx.classList.remove('hidden');
           }
+
+          // 道路の下端から上端（105%）まで一気に駆け抜ける
+          setTimeout(() => {
+            carWrapper.style.bottom = '105%';
+          }, 150);
 
           setTimeout(() => {
-            if (!this.state.step2) return;
+            carWrapper.style.opacity = '0';
+            if (turboFx) turboFx.classList.add('hidden');
+            if (rainbowBanner) rainbowBanner.classList.add('hidden');
+            if (playerCarSvg) playerCarSvg.classList.remove('rainbow-aura');
+          }, 760);
+
+          setTimeout(() => {
             this.state.step2.stepCursor++;
             if (this.state.step2.stepCursor >= this.state.step2.targetIndices.length) {
-              this.completeStep2Word();
+              this.finishStep2Word();
             } else {
+              carWrapper.style.transition = 'none';
+              carWrapper.style.left = '50%';
+              carWrapper.style.bottom = '10px';
+              carWrapper.style.opacity = '1';
+              carWrapper.style.transform = 'translateX(-50%) rotate(0deg)';
+              void carWrapper.offsetWidth;
+              carWrapper.style.transition = 'left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.68s cubic-bezier(0.35, 0, 0.2, 1), opacity 0.22s ease, transform 0.28s ease';
+
               this.state.isBusy = false;
               this.renderStep2Question();
             }
-          }, 980);
+          }, 960);
         } else {
-          // 間違えた場合：選んだ文字のところまで移動して車が爆発するアニメーション！
           this.state.isBusy = true;
-          this.clearHintTimer();
-
-          const playerCarEl = document.getElementById('player-car-svg');
-          const explosionEl = document.getElementById('step2-explosion');
-          const step2Screen = document.getElementById('screen-step2');
-
-          const activeIdx = this.state.step2.targetIndices[this.state.step2.stepCursor];
-          const targetKata = this.state.step2.kataChars[activeIdx];
-          const targetHira = this.state.step2.hiraChars[activeIdx];
-          const readHira = targetHira === 'ー' ? 'のばす おと' : targetHira;
-
-          // 2ライフ制の減算
           this.state.lives = Math.max(0, this.state.lives - 1);
           this.updateLifeUI();
+          btn.classList.add('bg-rose-100', 'border-rose-500');
 
-          if (wrapper) {
-            const tiltDeg = laneIdx < prevLane ? -12 : laneIdx > prevLane ? 12 : 0;
-            wrapper.style.transform = `translateX(-50%) rotate(${tiltDeg}deg)`;
-
-            // 標識（文字）の位置まで前進させる
-            setTimeout(() => {
-              if (!wrapper) return;
-              const roadContainer = wrapper.parentElement ? wrapper.parentElement.parentElement : null;
-              let crashBottom = 210;
-              if (roadContainer && btn) {
-                const roadRect = roadContainer.getBoundingClientRect();
-                const btnRect = btn.getBoundingClientRect();
-                crashBottom = Math.max(120, roadRect.bottom - btnRect.bottom - 10);
-              }
-              wrapper.style.transition = 'left 0.25s ease, bottom 0.38s cubic-bezier(0.55, 0.08, 0.68, 0.53), transform 0.25s ease';
-              wrapper.style.transform = 'translateX(-50%) rotate(0deg)';
-              wrapper.style.bottom = `${crashBottom}px`;
-            }, 140);
-
-            // 文字に到達した瞬間にドカーン！と爆発
-            setTimeout(() => {
-              Sound.playExplosion();
-              if (btn) {
-                btn.classList.replace('border-sky-500', 'border-rose-600');
-                btn.classList.add('bg-rose-100', 'scale-95');
-              }
-              if (step2Screen) {
-                step2Screen.classList.add('shake-active');
-                setTimeout(() => step2Screen.classList.remove('shake-active'), 500);
-              }
-              if (playerCarEl) {
-                playerCarEl.style.opacity = '0';
-                playerCarEl.style.transform = 'scale(0.3)';
-              }
-              if (explosionEl) {
-                explosionEl.classList.remove('hidden');
-                explosionEl.classList.add('boom-active');
-              }
-            }, 520);
+          // 道路上部のカタカナ標識の位置まで走ってから爆発する
+          const arenaEl = document.getElementById('step2-road-arena');
+          let crashBottomPx = '62%';
+          if (arenaEl && btn) {
+            const arenaRect = arenaEl.getBoundingClientRect();
+            const btnRect = btn.getBoundingClientRect();
+            const carHeight = carWrapper.offsetHeight || 88;
+            const targetBottom = Math.max(40, arenaRect.bottom - btnRect.bottom - (carHeight * 0.25));
+            crashBottomPx = `${Math.round(targetBottom)}px`;
           }
 
+          setTimeout(() => {
+            carWrapper.style.bottom = crashBottomPx;
+          }, 140);
+
+          setTimeout(() => {
+            Sound.playExplosion();
+            const expEl = document.getElementById('step2-explosion');
+            if (expEl) {
+              expEl.classList.remove('hidden');
+              expEl.classList.add('boom-active');
+            }
+            document.getElementById('player-car-svg').classList.add('opacity-0');
+            const screenEl = document.getElementById('screen-step2');
+            if (screenEl) {
+              screenEl.classList.add('shake-active');
+              setTimeout(() => screenEl.classList.remove('shake-active'), 500);
+            }
+          }, 680);
+
           if (this.state.lives > 0) {
-            // ライフが残っている場合：爆発のあと車が復活して、その場で選び直せる！
             setTimeout(() => {
-              if (btn) {
-                btn.disabled = true;
-                btn.classList.add('opacity-40', 'pointer-events-none');
-              }
-              const step2FeedbackEl = document.getElementById('step2-feedback');
-              if (step2FeedbackEl) {
-                step2FeedbackEl.textContent = `💪 あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`;
-              }
-              Sound.speak(`あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`);
-              this.resetStep2CarPosition(1);
+              btn.disabled = true;
+              btn.classList.add('opacity-35', 'scale-90', 'pointer-events-none');
+              const expEl = document.getElementById('step2-explosion');
+              if (expEl) expEl.className = 'hidden absolute -inset-8 flex flex-col items-center justify-center pointer-events-none z-30';
+              document.getElementById('player-car-svg').classList.remove('opacity-0');
+
+              carWrapper.style.transition = 'none';
+              carWrapper.style.left = '50%';
+              carWrapper.style.bottom = '10px';
+              carWrapper.style.opacity = '1';
+              carWrapper.style.transform = 'translateX(-50%) rotate(0deg)';
+              void carWrapper.offsetWidth;
+              carWrapper.style.transition = 'left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.68s cubic-bezier(0.35, 0, 0.2, 1), opacity 0.22s ease, transform 0.28s ease';
+
+              this.showRecoveryToast(2);
               this.state.isBusy = false;
-              this.startStep2HintTimer();
-            }, 1450);
-          } else {
-            // ライフが0になった場合：爆発アニメーションのあとに従来のホームに戻るメッセージを表示
-            setTimeout(() => {
-              this.handleMistake(
-                `「 ${targetHira} 」の カタカナ は <span class="text-3xl text-rose-600 mx-1">「 ${targetKata} 」</span> だよ！`,
-                `${readHira} の カタカナ は、${readHira} だよ！`
-              );
             }, 1550);
+          } else {
+            const { hiraChars, kataChars, targetIndices, stepCursor } = this.state.step2;
+            const activeIdx = targetIndices[stepCursor];
+            const targetHira = hiraChars[activeIdx];
+            const targetKata = kataChars[activeIdx];
+
+            setTimeout(() => {
+              document.getElementById('player-car-svg').classList.remove('opacity-0');
+              this.showMistakeModal(
+                `ひらがなの「 ${targetHira} 」は、カタカナの「 ${targetKata} 」だよ！`,
+                `ざんねん！ ${targetHira} は、この カタカナ だよ！`
+              );
+            }, 1600);
           }
         }
       },
 
-      completeStep2Word() {
-        if (!this.state.step2) return;
+      finishStep2Word() {
         const { wordObj, kataChars, hiraChars } = this.state.step2;
         const slotsEl = document.getElementById('step2-word-slots');
         slotsEl.innerHTML = '';
-        kataChars.forEach((ch, idx) => {
+
+        kataChars.forEach((kChar, idx) => {
           const box = document.createElement('div');
-          box.className = 'flex flex-col items-center pop-in';
+          box.className = 'flex flex-col items-center';
           box.innerHTML = `
-            <span class="text-xs sm:text-sm font-black text-emerald-700 mb-0.5">${hiraChars[idx] || ''}</span>
-            <div class="w-9 h-11 sm:w-11 sm:h-13 rounded-xl border-4 bg-amber-300 border-amber-500 text-slate-900 flex items-center justify-center text-lg sm:text-2xl font-black shadow">
-              ${ch}
+            <span class="text-xs sm:text-base font-black text-emerald-700 mb-0.5">${hiraChars[idx]}</span>
+            <div class="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-black text-lg sm:text-2xl border-4 bg-amber-400 text-slate-900 border-amber-600 shadow-lg scale-105">
+              ${kChar}
             </div>
           `;
           slotsEl.appendChild(box);
@@ -4124,10 +3938,12 @@
         const iconEl = document.getElementById('step2-target-icon');
         if (iconEl) iconEl.classList.add('scale-110', 'bg-amber-100', 'border-amber-400');
 
-        // 言葉完成時は車の効果音とファンファーレのみ再生（「やったね」の後の読み上げなし）
         const car = this.getSelectedCar();
         Sound.playCarSound(car.soundType);
         Sound.playFanfare();
+        setTimeout(() => {
+          Sound.speak(`${wordObj.hiragana}！`);
+        }, 220);
         const step2FeedbackEl = document.getElementById('step2-feedback');
         if (step2FeedbackEl) {
           step2FeedbackEl.textContent = `やったね！「 ${wordObj.katakana} 」かんせい！`;
@@ -4136,66 +3952,51 @@
         setTimeout(() => {
           if (iconEl) iconEl.classList.remove('scale-110', 'bg-amber-100', 'border-amber-400');
           this.setupStep3();
-        }, 1500);
+        }, 1650);
       },
 
       /* ----------------------------------------------------------------
        * ステップ③：ゴール駐車（2桁・3桁の数字と位取り）
        * ---------------------------------------------------------------- */
-      numberToKana(n) {
-        const num = Number(n);
-        if (!num || num < 0) return '';
-        const hundreds = ['', 'ひゃく', 'にひゃく', 'さんびゃく', 'よんひゃく', 'ごひゃく', 'ろっぴゃく', 'ななひゃく', 'はっぴゃく', 'きゅうひゃく'];
-        const tens = ['', 'じゅう', 'にじゅう', 'さんじゅう', 'よんじゅう', 'ごじゅう', 'ろくじゅう', 'ななじゅう', 'はちじゅう', 'きゅうじゅう'];
-        const ones = ['', 'いち', 'に', 'さん', 'よん', 'ご', 'ろく', 'なな', 'はち', 'きゅう'];
-        const h = Math.floor(num / 100);
-        const t = Math.floor((num % 100) / 10);
-        const o = num % 10;
-        return (hundreds[h] || '') + (tens[t] || '') + (ones[o] || '');
-      },
-
       setupStep3() {
         this.state.isBusy = false;
         this.showScreen('screen-step3', 3);
-        this.updateLifeUI(false);
 
         const car = this.getSelectedCar();
         document.getElementById('step3-car-svg').innerHTML = getCarSideSVG(car.id);
-        document.getElementById('step3-feedback').textContent = 'ばんごう を よく みて タップ してね！';
 
-        // 駐車場の下部通路にトップビューのマイカーを中央配置でリセット
-        const movingCar = document.getElementById('step3-moving-car');
-        const topCarSvg = document.getElementById('step3-car-top-svg');
-        if (topCarSvg) {
-          topCarSvg.innerHTML = getCarTopSVG(car.id);
-          topCarSvg.classList.add('car-idle');
+        const movingCarEl = document.getElementById('step3-moving-car');
+        const movingCarSvgEl = document.getElementById('step3-car-top-svg');
+        if (movingCarSvgEl) {
+          movingCarSvgEl.innerHTML = getCarTopSVG(car.id);
         }
-        if (movingCar) {
-          movingCar.style.transition = 'none';
-          movingCar.style.left = '50%';
-          movingCar.style.opacity = '1';
-          movingCar.style.transform = 'translate(-50%, 0px) rotate(0deg) scale(1)';
-          // 次フレームでトランジションを有効化
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              movingCar.style.transition = 'left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease';
-            });
-          });
+        if (movingCarEl) {
+          movingCarEl.style.transition = 'none';
+          movingCarEl.style.left = '50%';
+          movingCarEl.style.transform = 'translate(-50%, 0px) rotate(0deg)';
+          void movingCarEl.offsetWidth;
+          movingCarEl.style.transition = 'left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)';
         }
 
         const pool = this.state.difficulty === 'easy' ? NumberQuestionsEasy : NumberQuestionsHard;
-        const q = pool[Math.floor(Math.random() * pool.length)];
+        let q = pool[Math.floor(Math.random() * pool.length)];
+        for (let retry = 0; retry < 10; retry++) {
+          if (q.num !== this.state.lastStep3Num) break;
+          q = pool[Math.floor(Math.random() * pool.length)];
+        }
+        this.state.lastStep3Num = q.num;
 
         const dists = [...q.distractors].sort(() => Math.random() - 0.5).slice(0, 2);
         const choices = [
-          { num: q.num, kana: q.kana, isCorrect: true },
-          { num: dists[0], kana: this.numberToKana(dists[0]), isCorrect: false },
-          { num: dists[1], kana: this.numberToKana(dists[1]), isCorrect: false }
+          { num: q.num, isCorrect: true },
+          { num: dists[0], isCorrect: false },
+          { num: dists[1], isCorrect: false }
         ].sort(() => Math.random() - 0.5);
 
         this.state.step3 = { q, choices };
 
         document.getElementById('step3-kana-number').textContent = `「 ${q.kana} 」ばん`;
+        document.getElementById('step3-feedback').textContent = 'ばんごう を よく みて タップ してね！';
 
         const lotsEl = document.getElementById('parking-lots');
         lotsEl.innerHTML = '';
@@ -4203,25 +4004,25 @@
         choices.forEach((c, idx) => {
           const btn = document.createElement('button');
           btn.id = `park-btn-${idx}`;
-          btn.className = 'btn-3d relative bg-slate-800 hover:bg-slate-750 rounded-3xl p-2 sm:p-3 border-4 border-dashed border-amber-400 shadow-2xl flex flex-col items-stretch justify-between min-h-[195px] sm:min-h-[235px]';
+          btn.className = 'btn-3d relative h-full min-h-0 bg-slate-800 hover:bg-slate-750 border-x-4 border-t-8 border-amber-400 rounded-t-2xl p-1.5 sm:p-2 flex flex-col items-center justify-between shadow-xl transition-all overflow-hidden';
           btn.innerHTML = `
-            <!-- 上段：番号看板エリア（z-30で車よりも常に前面＆上部に独立配置） -->
-            <div id="park-sign-${idx}" class="relative z-30 w-full bg-slate-900/95 border-2 border-amber-400 rounded-2xl px-1.5 py-1 sm:py-1.5 shadow-md flex flex-col items-center justify-center shrink-0">
-              <span class="bg-sky-500 text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full leading-none mb-0.5">P ちゅうしゃじょう</span>
-              <span id="park-num-${idx}" class="text-2xl sm:text-4xl font-black text-white tracking-wider leading-none my-0.5 transition-all duration-300">${c.num}</span>
-              <span id="park-kana-hint-${idx}" class="text-[10px] sm:text-xs font-black text-amber-300 leading-tight mt-0.5 hidden">${c.kana}</span>
+            <div id="park-sign-${idx}" class="relative z-30 w-full flex flex-col items-center bg-slate-900/90 rounded-xl py-1 px-1.5 border border-slate-600 shadow-sm shrink-0">
+              <div class="w-full flex items-center justify-between text-[10px] sm:text-xs font-black text-amber-400 leading-none">
+                <span>P-${idx + 1}</span>
+                <span>ちゅうしゃ</span>
+              </div>
+              <div class="text-xl sm:text-3xl font-black text-white tracking-wider drop-shadow leading-tight mt-0.5">
+                ${c.num}
+              </div>
+              <div id="park-sub-${idx}" class="hidden text-[10px] sm:text-xs font-black text-transparent leading-none select-none">.</div>
             </div>
-
-            <!-- 中段：ステータスバナー（「ここに とめる」「✨駐車完了！✨」を車の停止位置より上に独立配置） -->
-            <div id="park-status-${idx}" class="relative z-30 w-full mt-1 py-0.5 px-1 rounded-xl bg-slate-900/90 border border-slate-600 flex items-center justify-center text-[10px] sm:text-xs font-black text-amber-300 shadow shrink-0 transition-all duration-300">
-              ここに とめる
+            <div id="park-status-${idx}" class="relative z-30 w-full flex justify-center my-0.5 shrink-0">
+              <div class="bg-slate-900/80 text-slate-300 text-[10px] sm:text-xs py-0.5 px-2.5 rounded-full font-bold border border-slate-600">
+                ここに とめる
+              </div>
             </div>
-
-            <!-- 下段：車の駐車スペース（車止めライン付き・この枠内に車が収まる） -->
-            <div id="park-bay-${idx}" class="relative z-10 w-full flex-1 mt-1 rounded-2xl bg-slate-700/55 border-x-2 border-b-2 border-dashed border-slate-400/70 flex flex-col items-center justify-start p-1.5 min-h-[92px] sm:min-h-[115px] overflow-hidden">
-              <!-- 車止めブロック（黄色いライン） -->
-              <div class="w-3/4 h-2 rounded-full bg-amber-400 border border-amber-600 shadow-sm shrink-0 mt-0.5"></div>
-              <!-- 落とし穴（間違い時に駐車スペース中央に開く） -->
+            <div id="park-bay-${idx}" class="relative flex-1 min-h-0 w-full flex flex-col items-center justify-start pt-1">
+              <div class="w-3/4 h-1.5 rounded-full bg-amber-400/80 shadow-sm shrink-0"></div>
               <div id="pitfall-hole-${idx}" class="pitfall-hole"></div>
             </div>
           `;
@@ -4230,47 +4031,32 @@
         });
 
         this.speakStep3Prompt();
-        this.startStep3HintTimer();
       },
 
       speakStep3Prompt() {
         if (!this.state.step3) return;
-        Sound.init();
         Sound.speak(`${this.state.step3.q.kana} ばん の ちゅうしゃじょう に とめよう！`);
       },
 
-      startStep3HintTimer() {
-        // 30秒の自動ヒントタイマーは廃止（手動の「💡ヒント」ボタンのみ使用）
-        this.clearHintTimer();
-      },
-
-      // 駐車スペース（下部 #park-bay-idx）の車止めライン手前にピタッと停まるY移動量を算出
-      calcStep3ParkDeltaY(idx) {
-        const movingCar = document.getElementById('step3-moving-car');
-        const laneEl = document.getElementById('parking-drive-lane');
+      calcStep3ParkDeltaY(idx, movingCarEl, isPitfall = false) {
         const bayEl = document.getElementById(`park-bay-${idx}`);
         const statusEl = document.getElementById(`park-status-${idx}`);
-        if (!movingCar || !laneEl) return -110;
+        if (!bayEl || !movingCarEl) return -135;
 
-        const laneRect = laneEl.getBoundingClientRect();
-        const carHeight = movingCar.offsetHeight || 96;
-        const parkedScale = 0.68;
-        const scaledHalfHeight = (carHeight * parkedScale) / 2;
-        // 通路待機時（translateY=0）の車の中心Y座標
-        const initialCarCenterY = laneRect.bottom - 4 - carHeight / 2;
+        const bayRect = bayEl.getBoundingClientRect();
+        const carRect = movingCarEl.getBoundingClientRect();
 
-        if (bayEl) {
-          const bayRect = bayEl.getBoundingClientRect();
-          // 下段の駐車スペース（#park-bay-idx）内の中央やや下を基本ターゲットにしつつ、
-          // 車の先端（フロントバンパー）が中段の「✨駐車完了！✨」バナーに絶対重ならないよう座標を保証する
-          let targetCenterY = bayRect.top + bayRect.height * 0.58;
-          const minTopY = statusEl ? (statusEl.getBoundingClientRect().bottom + 8) : (bayRect.top + 10);
-          if (targetCenterY - scaledHalfHeight < minTopY) {
-            targetCenterY = minTopY + scaledHalfHeight;
-          }
-          return targetCenterY - initialCarCenterY;
+        if (isPitfall) {
+          const bayCenterY = bayRect.top + bayRect.height * 0.52;
+          const carCenterY = carRect.top + carRect.height * 0.5;
+          return Math.round(bayCenterY - carCenterY);
         }
-        return -110;
+
+        const safeTopY = statusEl
+          ? statusEl.getBoundingClientRect().bottom + 6
+          : bayRect.top + 8;
+        const targetCarTopY = Math.max(safeTopY, bayRect.top + 8);
+        return Math.round(targetCarTopY - carRect.top);
       },
 
       answerStep3(idx) {
@@ -4278,313 +4064,209 @@
         const choice = this.state.step3.choices[idx];
         const btn = document.getElementById(`park-btn-${idx}`);
 
+        const lotCenters = ['16.67%', '50%', '83.33%'];
+        const movingCarEl = document.getElementById('step3-moving-car');
+
         if (choice.isCorrect) {
           this.state.isBusy = true;
-          this.clearHintTimer();
-          btn.classList.remove('hint-active', 'border-dashed');
-          btn.classList.replace('border-amber-400', 'border-emerald-400');
-          btn.classList.add('bg-emerald-900/70');
 
-          // チャイム音（ピンポーン）とエンジン音のみ再生（正解後の読み上げなし）
-          const car = this.getSelectedCar();
+          btn.classList.remove('bg-slate-800');
+          btn.classList.add('bg-emerald-800', 'border-emerald-400');
           Sound.playCorrect();
+
+          const car = this.getSelectedCar();
           Sound.playCarSound(car.soundType);
-          document.getElementById('step3-feedback').textContent = `ピンポーン！「${choice.num}」ばん に ちゅうしゃ するよ！`;
 
-          const movingCar = document.getElementById('step3-moving-car');
-          const topCarSvg = document.getElementById('step3-car-top-svg');
-          const statusBanner = document.getElementById(`park-status-${idx}`);
-          const numLabel = document.getElementById(`park-num-${idx}`);
-          const signBox = document.getElementById(`park-sign-${idx}`);
-          const kanaHint = document.getElementById(`park-kana-hint-${idx}`);
+          if (movingCarEl) {
+            const steerDeg = idx === 0 ? -10 : idx === 2 ? 10 : 0;
+            movingCarEl.style.left = lotCenters[idx];
+            movingCarEl.style.transform = `translate(-50%, 0px) rotate(${steerDeg}deg)`;
 
-          if (statusBanner) {
-            statusBanner.className = 'relative z-30 w-full mt-1 py-0.5 px-1 rounded-xl bg-emerald-950 border-2 border-emerald-400 flex items-center justify-center text-[10px] sm:text-xs font-black text-emerald-300 shadow shrink-0 transition-all duration-300';
-            statusBanner.innerHTML = '<span class="animate-pulse">オーライ！</span>';
-          }
-          if (signBox) {
-            signBox.classList.replace('border-amber-400', 'border-emerald-400');
-          }
-          if (numLabel) {
-            numLabel.classList.add('text-emerald-300');
-          }
-          if (kanaHint) {
-            kanaHint.classList.remove('hidden');
-          }
-
-          if (movingCar) {
-            // 1段階目：選んだ駐車場の正面（左=16.67%, 中央=50%, 右=83.33%）へステアリングを切って横移動
-            const targetLeftPercent = idx * 33.3333 + 16.6667;
-            const tiltDeg = idx === 0 ? -14 : idx === 2 ? 14 : 0;
-            movingCar.style.left = `${targetLeftPercent}%`;
-            movingCar.style.transform = `translate(-50%, -10px) rotate(${tiltDeg}deg)`;
-
-            // 2段階目：車体をまっすぐに戻し、中段ステータスバナーの下（#park-bay内）にピタッと前進して駐車完了
             setTimeout(() => {
-              const deltaY = this.calcStep3ParkDeltaY(idx);
-              movingCar.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg) scale(0.68)`;
-
-              setTimeout(() => {
-                if (topCarSvg) topCarSvg.classList.remove('car-idle');
-                if (statusBanner) {
-                  statusBanner.className = 'relative z-30 w-full mt-1 py-0.5 px-1 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 border-2 border-amber-500 flex items-center justify-center text-[11px] sm:text-xs font-black text-slate-900 shadow-lg scale-105 shrink-0 transition-all duration-300';
-                  statusBanner.innerHTML = '<span>✨バッチリ！✨</span>';
-                }
-                document.getElementById('step3-feedback').textContent = `やったー！「${choice.num}」ばん に バッチリ とめられたね！`;
-                Sound.playFanfare();
-              }, 480);
-            }, 380);
-          }
-
-          setTimeout(() => {
-            this.showRewardScreen();
-          }, 1950);
-        } else {
-          // 間違えた場合：選んだ駐車スペース（看板の下）まで移動したら落とし穴に落ちるアニメーション！
-          this.state.isBusy = true;
-          this.clearHintTimer();
-
-          // 2ライフ制の減算
-          this.state.lives = Math.max(0, this.state.lives - 1);
-          this.updateLifeUI();
-
-          const movingCar = document.getElementById('step3-moving-car');
-          const topCarSvg = document.getElementById('step3-car-top-svg');
-          const pitfall = document.getElementById(`pitfall-hole-${idx}`);
-          const statusBanner = document.getElementById(`park-status-${idx}`);
-          const { num, kana } = this.state.step3.q;
-
-          if (movingCar) {
-            // 1段階目：選んだ駐車場の正面へ横移動
-            const targetLeftPercent = idx * 33.3333 + 16.6667;
-            const tiltDeg = idx === 0 ? -14 : idx === 2 ? 14 : 0;
-            movingCar.style.left = `${targetLeftPercent}%`;
-            movingCar.style.transform = `translate(-50%, -10px) rotate(${tiltDeg}deg) scale(1)`;
-
-            // 2段階目：番号看板・ステータスバナーの下にある駐車スペース中央まで前進
-            setTimeout(() => {
-              const deltaY = this.calcStep3ParkDeltaY(idx);
-              movingCar.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg) scale(0.72)`;
-
-              // 3段階目：駐車スペースに到着した瞬間に落とし穴がパカッと開いてクルクル落ちていく！
-              setTimeout(() => {
-                Sound.playPitfall();
-                if (topCarSvg) topCarSvg.classList.remove('car-idle');
-                if (pitfall) pitfall.classList.add('open');
-                if (statusBanner) {
-                  statusBanner.className = 'relative z-30 w-full mt-1 py-0.5 px-1 rounded-xl bg-rose-950 border-2 border-rose-400 flex items-center justify-center text-[10px] sm:text-xs font-black text-rose-300 shadow shrink-0';
-                  statusBanner.innerHTML = '<span>🕳️ おとしあな！</span>';
-                }
-                document.getElementById('step3-feedback').textContent = 'うわぁ〜！ おとしあな に おちちゃった！';
-
-                movingCar.style.transition = 'transform 0.65s cubic-bezier(0.55, 0.08, 0.68, 0.53), opacity 0.55s ease';
-                movingCar.style.transform = `translate(-50%, ${deltaY + 6}px) rotate(540deg) scale(0)`;
-                movingCar.style.opacity = '0';
-              }, 460);
+              const deltaY = this.calcStep3ParkDeltaY(idx, movingCarEl, false);
+              movingCarEl.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg)`;
             }, 340);
           }
 
+          setTimeout(() => {
+            Sound.playFanfare();
+            const statusEl = document.getElementById(`park-status-${idx}`);
+            if (statusEl) {
+              statusEl.innerHTML = `
+                <div class="bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 text-slate-950 text-xs sm:text-sm py-0.5 px-3 rounded-full font-black border-2 border-white shadow-lg pop-in whitespace-nowrap">
+                  ✨バッチリ！✨
+                </div>
+              `;
+            }
+            document.getElementById('step3-feedback').textContent =
+              `やったー！「 ${this.state.step3.q.num} 」ばん に ちゅうしゃ かんりょう！`;
+          }, 820);
+
+          setTimeout(() => this.completeMission(), 1550);
+        } else {
+          this.state.isBusy = true;
+          this.state.lives = Math.max(0, this.state.lives - 1);
+          this.updateLifeUI();
+          btn.classList.add('border-rose-500');
+
+          if (movingCarEl) {
+            const steerDeg = idx === 0 ? -10 : idx === 2 ? 10 : 0;
+            movingCarEl.style.left = lotCenters[idx];
+            movingCarEl.style.transform = `translate(-50%, 0px) rotate(${steerDeg}deg)`;
+
+            setTimeout(() => {
+              const deltaY = this.calcStep3ParkDeltaY(idx, movingCarEl, true);
+              movingCarEl.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg)`;
+
+              const holeEl = document.getElementById(`pitfall-hole-${idx}`);
+              if (holeEl) holeEl.classList.add('open');
+            }, 340);
+
+            setTimeout(() => {
+              Sound.playPitfall();
+              const deltaY = this.calcStep3ParkDeltaY(idx, movingCarEl, true);
+              movingCarEl.style.transition = 'transform 0.65s cubic-bezier(0.55, 0.08, 0.68, 0.53)';
+              movingCarEl.style.transform = `translate(-50%, ${deltaY}px) scale(0.05) rotate(540deg)`;
+            }, 780);
+          }
+
           if (this.state.lives > 0) {
-            // ライフが残っている場合：落とし穴から復活してその場で再チャレンジ！
             setTimeout(() => {
-              if (btn) {
-                btn.disabled = true;
-                btn.classList.add('opacity-45', 'pointer-events-none');
+              btn.disabled = true;
+              btn.classList.add('opacity-30', 'scale-95', 'pointer-events-none');
+              const holeEl = document.getElementById(`pitfall-hole-${idx}`);
+              if (holeEl) holeEl.classList.remove('open');
+
+              if (movingCarEl) {
+                movingCarEl.style.transition = 'none';
+                movingCarEl.style.left = '50%';
+                movingCarEl.style.transform = 'translate(-50%, 0px) scale(1) rotate(0deg)';
+                void movingCarEl.offsetWidth;
+                movingCarEl.style.transition = 'left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)';
               }
-              if (movingCar) {
-                movingCar.style.transition = 'none';
-                movingCar.style.left = '50%';
-                movingCar.style.opacity = '1';
-                movingCar.style.transform = 'translate(-50%, 0px) rotate(0deg) scale(1)';
-                requestAnimationFrame(() => {
-                  requestAnimationFrame(() => {
-                    movingCar.style.transition = 'left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease';
-                  });
-                });
-              }
-              if (topCarSvg) topCarSvg.classList.add('car-idle');
-              document.getElementById('step3-feedback').textContent = `💪 あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`;
-              Sound.speak(`あっぶなーい！ あと ${this.state.lives}かい チャレンジ できるよ！`);
+
+              this.showRecoveryToast(3);
               this.state.isBusy = false;
-              this.startStep3HintTimer();
-            }, 1550);
+            }, 1600);
           } else {
-            // ライフが0になった場合：落とし穴アニメーションのあとに従来のホームに戻るメッセージを表示
+            const { q } = this.state.step3;
+            const digits = String(q.num).split('').join(' と ');
             setTimeout(() => {
-              this.handleMistake(
-                `「 ${kana} 」ばん は <span class="text-3xl text-rose-600 mx-1">「 ${num} 」</span> だよ！`,
-                `せいかいは、${kana} ばん だよ！`
+              this.showMistakeModal(
+                `「 ${q.kana} 」は、すうじ で「 ${q.num} 」（${digits}）とかくよ！`,
+                `ざんねん！ おとしあなに おちちゃった！ ${q.kana} は、${q.num} だよ！`
               );
-            }, 1680);
+            }, 1600);
           }
         }
       },
 
       /* ----------------------------------------------------------------
-       * ご褒美＆5回連続クリア新車アンロック画面
+       * ゴール＆ご褒美（5回連続クリア判定＆新車アンロック）
        * ---------------------------------------------------------------- */
-      showRewardScreen() {
+      completeMission() {
         this.state.stars += 1;
-
-        // 現在の難易度の連続クリアスタンプを+1
         const newStreak = this.getCurrentStreak() + 1;
         this.setCurrentStreak(newStreak);
 
-        const isEasy = this.state.difficulty === 'easy';
-        const modeName = isEasy ? '🌱 かんたんモード' : '🔥 しっかりモード';
-        let newlyUnlockedCar = null;
+        const isFifthClear = (newStreak % 5 === 0);
+        const currentTier = this.state.difficulty;
+        const lockedTierCars = CarCatalog.filter(c => c.tier === currentTier && !this.state.unlockedCars.includes(c.id));
 
-        // 5回連続クリア達成時に、現在の難易度の未解放車両を1台アンロック！
-        if (newStreak >= 5) {
-          this.setCurrentStreak(0);
-          const lockedTierCars = CarCatalog.filter(
-            c => c.tier === this.state.difficulty && !this.state.unlockedCars.includes(c.id)
-          );
-          if (lockedTierCars.length > 0) {
-            newlyUnlockedCar = lockedTierCars[0];
-            this.state.unlockedCars.push(newlyUnlockedCar.id);
-            this.state.selectedCarId = newlyUnlockedCar.id;
-          }
+        let newlyUnlockedCar = null;
+        if (isFifthClear && lockedTierCars.length > 0) {
+          newlyUnlockedCar = lockedTierCars[0];
+          this.state.unlockedCars.push(newlyUnlockedCar.id);
+          this.state.selectedCarId = newlyUnlockedCar.id;
+        } else if (isFifthClear) {
+          this.state.stars += 2;
         }
 
-        this.saveData();
+        this.saveState();
         this.updateHeaderUI();
         this.showScreen('screen-reward', 0);
-        Confetti.start();
 
-        const card = document.getElementById('reward-card');
+        Confetti.fire();
+        Sound.playFanfare();
+
+        const rewardCard = document.getElementById('reward-card');
+        const rewardTitle = document.getElementById('reward-title');
         const nextBtnText = document.getElementById('reward-next-btn-text');
 
         if (newlyUnlockedCar) {
-          if (nextBtnText) nextBtnText.textContent = 'この くるま で ドライブ！';
-          const badgeStyle = newlyUnlockedCar.tier === 'hard'
-            ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 text-slate-900 border-2 border-amber-600'
-            : 'bg-amber-400 text-slate-900';
+          const isDeluxe = newlyUnlockedCar.tier === 'hard';
+          rewardTitle.textContent = isDeluxe ? '👑 デラックス新車 ゲット！' : '🎉 あたらしい くるま ゲット！';
+          nextBtnText.textContent = 'この くるま で はしる！';
 
-          card.innerHTML = `
-            <span class="${badgeStyle} font-black text-xs sm:text-sm px-4 py-1 rounded-full mb-2 shadow">
-              🎊 5かい れんぞくクリア 達成！ あたらしい くるま！ 🎊
-            </span>
-            <div class="w-48 h-28 sm:w-56 sm:h-32 my-2 car-idle">${getCarSideSVG(newlyUnlockedCar.id)}</div>
-            <div class="text-xs font-black text-amber-600">${newlyUnlockedCar.type}</div>
-            <div class="text-2xl sm:text-3xl font-black text-rose-600 mt-0.5">${newlyUnlockedCar.name}</div>
-            <p class="text-xs sm:text-sm font-bold text-slate-600 mt-2 text-center">
-              5かい まちがえずに クリア できたね！ すごい！！
+          rewardCard.innerHTML = `
+            <div class="text-xs sm:text-sm font-black ${isDeluxe ? 'bg-gradient-to-r from-amber-300 to-yellow-400 text-slate-900' : 'bg-rose-100 text-rose-600'} px-3.5 py-1 rounded-full mb-2 shadow-sm">
+              ✨ 5かい れんぞく クリア ごほうび ✨
+            </div>
+            <div class="w-48 h-28 sm:w-56 sm:h-32 my-1 car-idle flex items-center justify-center">
+              ${getCarSideSVG(newlyUnlockedCar.id)}
+            </div>
+            <div class="text-2xl sm:text-3xl font-black text-slate-800 mt-1">
+              ${newlyUnlockedCar.name}
+            </div>
+            <p class="text-xs sm:text-sm font-bold text-slate-500 mt-1">
+              マイガレージに なかまいり したよ！
             </p>
           `;
+
           setTimeout(() => {
             Sound.playCarSound(newlyUnlockedCar.soundType);
-            Sound.speak(`5かい れんぞく クリア おめでとう！ あたらしい くるま、${newlyUnlockedCar.kana} を ゲット したよ！`);
-          }, 400);
+            Sound.speak(`やったー！ 5かい れんぞく クリア！ ${newlyUnlockedCar.kana} を ゲットしたよ！`);
+          }, 450);
         } else {
-          // 1〜4回目クリア時（または全車コンプリート時）：5つの連続スタンプゲージを表示
-          if (nextBtnText) nextBtnText.textContent = 'つぎの ドライブへ！';
-          const currentCar = this.getSelectedCar();
-          const remainCount = 5 - newStreak;
+          const car = this.getSelectedCar();
+          const filledCount = isFifthClear ? 5 : (newStreak % 5);
+          const remain = 5 - filledCount;
 
-          let starsHTML = '<div class="flex items-center justify-center gap-2 my-2">';
+          rewardTitle.textContent = 'ドライブ だいせいこう！';
+          nextBtnText.textContent = 'つぎの ドライブへ！';
+
+          let stampBoxesHTML = '';
           for (let i = 1; i <= 5; i++) {
-            const filled = i <= newStreak;
-            starsHTML += `
-              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-4 flex items-center justify-center text-xl sm:text-2xl font-black ${
-                filled
-                  ? 'bg-amber-400 border-amber-600 text-white shadow-lg scale-110'
-                  : 'bg-slate-100 border-slate-300 text-slate-300'
+            const active = i <= filledCount;
+            stampBoxesHTML += `
+              <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl border-2 flex flex-col items-center justify-center font-black ${
+                active ? 'bg-amber-300 border-amber-500 text-amber-950 scale-105 shadow' : 'bg-slate-100 border-slate-300 text-slate-400'
               }">
-                ${filled ? '★' : i}
+                <span class="text-lg sm:text-xl leading-none">${active ? '⭐' : '☆'}</span>
+                <span class="text-[9px]">${i}</span>
               </div>
             `;
           }
-          starsHTML += '</div>';
 
-          const lockedTierCars = CarCatalog.filter(
-            c => c.tier === this.state.difficulty && !this.state.unlockedCars.includes(c.id)
-          );
-
-          const progressMsg = lockedTierCars.length > 0
-            ? `あと <span class="text-rose-600 text-xl sm:text-2xl">${remainCount}かい</span> れんぞくクリアで あたらしい くるま！`
-            : `${modeName} の くるま は ぜんぶ コンプリート しているよ！`;
-
-          card.innerHTML = `
-            <span class="bg-sky-500 text-white font-black text-xs sm:text-sm px-4 py-1 rounded-full mb-1 shadow">
-              ${modeName}：${newStreak}かい れんぞく クリア！
-            </span>
-            <div class="w-40 h-22 sm:w-48 sm:h-26 my-1 car-idle">${getCarSideSVG(currentCar.id)}</div>
-            ${starsHTML}
-            <p class="text-sm sm:text-base font-black text-slate-800 mt-1 text-center">
-              ${progressMsg}
+          rewardCard.innerHTML = `
+            <div class="text-xs sm:text-sm font-black text-amber-700 bg-amber-100 px-3 py-1 rounded-full mb-2">
+              ${currentTier === 'easy' ? '🌱 かんたん' : '👑 しっかり'} れんぞくスタンプ：${filledCount} / 5
+            </div>
+            <div class="w-40 h-24 sm:w-48 sm:h-28 my-1 car-idle flex items-center justify-center">
+              ${getCarSideSVG(car.id)}
+            </div>
+            <div class="flex items-center justify-center gap-2 my-2">
+              ${stampBoxesHTML}
+            </div>
+            <p class="text-sm sm:text-base font-black text-rose-600 mt-1">
+              ${remain > 0
+                ? `あと ${remain}かい れんぞくクリアで 新車ゲット！`
+                : 'ぜんぶの くるま を コンプリート！ ボーナス⭐＋3！'}
             </p>
           `;
+
           setTimeout(() => {
-            if (lockedTierCars.length > 0) {
-              Sound.speak(`やったね！ ${newStreak}かい れんぞく クリア！ あと ${remainCount}かい で あたらしい くるま を ゲット できるよ！`);
-            } else {
-              Sound.speak(`やったね！ ${newStreak}かい れんぞく クリア！ すごいね！`);
-            }
-          }, 400);
+            Sound.speak(remain > 0
+              ? `ゴール！ あと ${remain}かい クリアで、あたらしい くるま が もらえるよ！`
+              : 'ゴール！ ぜんぶの くるま を ゲットしたね！ すごい！');
+          }, 450);
         }
       }
     };
 
-    /* ============================================================================
-     * 5. 紙吹雪（コンフェッティ）エフェクト
-     * ============================================================================ */
-    const Confetti = {
-      animId: null,
-      particles: [],
-      start() {
-        const canvas = document.getElementById('confetti-canvas');
-        if (!canvas) return;
-        canvas.classList.remove('hidden');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        const ctx = canvas.getContext('2d');
-
-        const colors = ['#f43f5e', '#facc15', '#38bdf8', '#4ade80', '#a855f7', '#fb923c'];
-        this.particles = Array.from({ length: 65 }, () => ({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height - canvas.height,
-          size: Math.random() * 10 + 7,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          speedY: Math.random() * 3 + 2,
-          speedX: (Math.random() - 0.5) * 2.5,
-          angle: Math.random() * 360,
-          spin: (Math.random() - 0.5) * 8
-        }));
-
-        const loop = () => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          this.particles.forEach(p => {
-            p.y += p.speedY;
-            p.x += p.speedX;
-            p.angle += p.spin;
-            if (p.y > canvas.height) p.y = -20;
-
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate((p.angle * Math.PI) / 180);
-            ctx.fillStyle = p.color;
-            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
-            ctx.restore();
-          });
-          this.animId = requestAnimationFrame(loop);
-        };
-        loop();
-      },
-      stop() {
-        if (this.animId) {
-          cancelAnimationFrame(this.animId);
-          this.animId = null;
-        }
-        const canvas = document.getElementById('confetti-canvas');
-        if (canvas) canvas.classList.add('hidden');
-      }
-    };
-
-    // 起動時にゲーム初期化
-    window.onload = () => {
+    window.addEventListener('DOMContentLoaded', () => {
       Game.init();
-    };
+    });
   </script>
 </body>
 </html>
