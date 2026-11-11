@@ -117,13 +117,13 @@
       animation: screenShake 0.45s ease-in-out;
     }
 
-    /* STEP③ 落とし穴アニメーション */
+    /* STEP③ 落とし穴アニメーション（下部駐車スペースの中央に配置） */
     .pitfall-hole {
       position: absolute;
       left: 50%;
-      top: 54%;
-      width: 110px;
-      height: 110px;
+      top: 52%;
+      width: 92px;
+      height: 92px;
       border-radius: 9999px;
       background: radial-gradient(circle, #020617 55%, #1e293b 78%, #facc15 82%, #0f172a 100%);
       box-shadow: inset 0 10px 20px rgba(0,0,0,0.95), 0 0 0 4px #475569;
@@ -451,17 +451,17 @@
         </div>
 
         <!-- 駐車場エリア（上部：駐車スペース3枠 ＋ 下部：車が走る通路レーン） -->
-        <div id="parking-arena" class="relative flex-1 bg-slate-700 rounded-3xl border-4 border-slate-500 p-3 sm:p-4 my-2 flex flex-col justify-between overflow-hidden shadow-inner">
-          <!-- 駐車スペース3択 -->
-          <div id="parking-lots" class="grid grid-cols-3 gap-2.5 sm:gap-4 items-stretch z-10">
-            <!-- JSで駐車場ボタンを生成 -->
+        <div id="parking-arena" class="relative flex-1 bg-slate-700 rounded-3xl border-4 border-slate-500 p-2.5 sm:p-4 my-1.5 flex flex-col justify-between overflow-hidden shadow-inner">
+          <!-- 駐車スペース3択（看板エリアを車より前面のz-30にするため親のz-index固定を解除） -->
+          <div id="parking-lots" class="grid grid-cols-3 gap-2 sm:gap-4 items-stretch">
+            <!-- JSで駐車場ボタン（上部：番号看板エリア / 下部：車止め付き駐車スペース）を生成 -->
           </div>
 
           <!-- 通路の白破線 -->
           <div class="w-full border-b-2 border-dashed border-slate-400/70 my-auto pointer-events-none"></div>
 
           <!-- 下部：発進して駐車枠へ移動するマイカー（トップビュー） -->
-          <div id="parking-drive-lane" class="relative w-full h-24 sm:h-28 z-20 pointer-events-none">
+          <div id="parking-drive-lane" class="relative w-full h-20 sm:h-24 z-20 pointer-events-none shrink-0">
             <div id="step3-moving-car"
                  style="left: 50%; transform: translate(-50%, 0px) rotate(0deg); transition: left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);"
                  class="absolute bottom-1 w-20 h-24 sm:w-24 sm:h-28 flex items-center justify-center">
@@ -3311,6 +3311,18 @@
       /* ----------------------------------------------------------------
        * ステップ③：ゴール駐車（2桁・3桁の数字と位取り）
        * ---------------------------------------------------------------- */
+      numberToKana(n) {
+        const num = Number(n);
+        if (!num || num < 0) return '';
+        const hundreds = ['', 'ひゃく', 'にひゃく', 'さんびゃく', 'よんひゃく', 'ごひゃく', 'ろっぴゃく', 'ななひゃく', 'はっぴゃく', 'きゅうひゃく'];
+        const tens = ['', 'じゅう', 'にじゅう', 'さんじゅう', 'よんじゅう', 'ごじゅう', 'ろくじゅう', 'ななじゅう', 'はちじゅう', 'きゅうじゅう'];
+        const ones = ['', 'いち', 'に', 'さん', 'よん', 'ご', 'ろく', 'なな', 'はち', 'きゅう'];
+        const h = Math.floor(num / 100);
+        const t = Math.floor((num % 100) / 10);
+        const o = num % 10;
+        return (hundreds[h] || '') + (tens[t] || '') + (ones[o] || '');
+      },
+
       setupStep3() {
         this.state.isBusy = false;
         this.showScreen('screen-step3', 3);
@@ -3344,9 +3356,9 @@
 
         const dists = [...q.distractors].sort(() => Math.random() - 0.5).slice(0, 2);
         const choices = [
-          { num: q.num, isCorrect: true },
-          { num: dists[0], isCorrect: false },
-          { num: dists[1], isCorrect: false }
+          { num: q.num, kana: q.kana, isCorrect: true },
+          { num: dists[0], kana: this.numberToKana(dists[0]), isCorrect: false },
+          { num: dists[1], kana: this.numberToKana(dists[1]), isCorrect: false }
         ].sort(() => Math.random() - 0.5);
 
         this.state.step3 = { q, choices };
@@ -3359,13 +3371,25 @@
         choices.forEach((c, idx) => {
           const btn = document.createElement('button');
           btn.id = `park-btn-${idx}`;
-          btn.className = 'btn-3d relative overflow-hidden bg-slate-800 hover:bg-slate-750 rounded-3xl p-2.5 sm:p-4 border-4 border-dashed border-amber-400 shadow-2xl flex flex-col items-center justify-between min-h-[145px] sm:min-h-[180px]';
+          btn.className = 'btn-3d relative bg-slate-800 hover:bg-slate-750 rounded-3xl p-2 sm:p-3 border-4 border-dashed border-amber-400 shadow-2xl flex flex-col items-stretch justify-between min-h-[185px] sm:min-h-[225px]';
           btn.innerHTML = `
-            <span class="bg-sky-500 text-white text-[11px] sm:text-xs font-black px-2.5 py-0.5 rounded-full z-10">P ちゅうしゃじょう</span>
-            <div id="pitfall-hole-${idx}" class="pitfall-hole"></div>
-            <span id="park-num-${idx}" class="text-3xl sm:text-5xl font-black text-white tracking-wider my-auto transition-all duration-300 z-10">${c.num}</span>
-            <div id="parked-car-slot-${idx}" class="w-full h-8 sm:h-10 flex items-center justify-center text-xs font-bold text-amber-300 z-10">
-              ここへ とめる
+            <!-- 上部：番号看板エリア（z-30で車よりも常に前面＆上部に独立配置） -->
+            <div id="park-sign-${idx}" class="relative z-30 w-full bg-slate-900/95 border-2 border-amber-400 rounded-2xl px-1.5 py-1.5 sm:py-2 shadow-md flex flex-col items-center justify-center shrink-0">
+              <span class="bg-sky-500 text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full leading-none mb-1">P ちゅうしゃじょう</span>
+              <span id="park-num-${idx}" class="text-2xl sm:text-4xl font-black text-white tracking-wider leading-none my-0.5 transition-all duration-300">${c.num}</span>
+              <span id="park-kana-hint-${idx}" class="text-[10px] sm:text-xs font-black text-amber-300 leading-tight mt-0.5 hidden">${c.kana}</span>
+            </div>
+
+            <!-- 下部：車の駐車スペース（車止めライン付き・ここへ車が収まる） -->
+            <div id="park-bay-${idx}" class="relative z-10 w-full flex-1 mt-1.5 rounded-2xl bg-slate-700/55 border-x-2 border-b-2 border-dashed border-slate-400/70 flex flex-col items-center justify-between p-1.5 min-h-[96px] sm:min-h-[118px] overflow-hidden">
+              <!-- 車止めブロック（黄色いライン） -->
+              <div class="w-3/4 h-2 rounded-full bg-amber-400 border border-amber-600 shadow-sm shrink-0 mt-0.5"></div>
+              <!-- 落とし穴（間違い時に駐車スペース中央に開く） -->
+              <div id="pitfall-hole-${idx}" class="pitfall-hole"></div>
+              <!-- 下部ステータスラベル（z-30で車の上でも読めるピル表示） -->
+              <div id="parked-car-slot-${idx}" class="relative z-30 mt-auto px-2 py-0.5 rounded-full bg-slate-900/85 border border-slate-600 flex items-center justify-center text-[10px] sm:text-xs font-black text-amber-300 shadow">
+                ここへ とめる
+              </div>
             </div>
           `;
           btn.onclick = () => this.answerStep3(idx);
@@ -3384,13 +3408,44 @@
 
       startStep3HintTimer() {
         this.clearHintTimer();
-        // 30秒間操作がなければ正解の駐車場がキラキラ揺れてヒントを出す
+        // 30秒間操作がなければ番号看板にひらがな読みを表示し、正解の駐車場がキラキラ揺れてヒントを出す
         this.state.hintTimer = setTimeout(() => {
           if (!this.state.step3 || this.state.isBusy) return;
-          const correctIdx = this.state.step3.choices.findIndex(c => c.isCorrect);
-          const btn = document.getElementById(`park-btn-${correctIdx}`);
-          if (btn) btn.classList.add('hint-active');
+          this.state.step3.choices.forEach((c, idx) => {
+            const kanaHint = document.getElementById(`park-kana-hint-${idx}`);
+            if (kanaHint) kanaHint.classList.remove('hidden');
+            if (c.isCorrect) {
+              const btn = document.getElementById(`park-btn-${idx}`);
+              if (btn) btn.classList.add('hint-active');
+            }
+          });
         }, 30000);
+      },
+
+      // 駐車スペース（下部 #park-bay-idx）の車止めライン手前にピタッと停まるY移動量を算出
+      calcStep3ParkDeltaY(idx) {
+        const movingCar = document.getElementById('step3-moving-car');
+        const laneEl = document.getElementById('parking-drive-lane');
+        const bayEl = document.getElementById(`park-bay-${idx}`);
+        const btnEl = document.getElementById(`park-btn-${idx}`);
+        if (!movingCar || !laneEl) return -120;
+
+        const laneRect = laneEl.getBoundingClientRect();
+        const carHeight = movingCar.offsetHeight || 96;
+        // 通路待機時（translateY=0）の車の中心Y座標
+        const initialCarCenterY = laneRect.bottom - 4 - carHeight / 2;
+
+        if (bayEl) {
+          const bayRect = bayEl.getBoundingClientRect();
+          // 番号看板の下にある駐車スペース（車止めラインの下〜下部ラベルの間）の中心へ停止
+          const targetCenterY = bayRect.top + bayRect.height * 0.52;
+          return targetCenterY - initialCarCenterY;
+        }
+        if (btnEl) {
+          const btnRect = btnEl.getBoundingClientRect();
+          return (btnRect.top + btnRect.height * 0.72) - initialCarCenterY;
+        }
+        return -120;
       },
 
       answerStep3(idx) {
@@ -3415,12 +3470,20 @@
           const topCarSvg = document.getElementById('step3-car-top-svg');
           const slot = document.getElementById(`parked-car-slot-${idx}`);
           const numLabel = document.getElementById(`park-num-${idx}`);
+          const signBox = document.getElementById(`park-sign-${idx}`);
+          const kanaHint = document.getElementById(`park-kana-hint-${idx}`);
 
           if (slot) {
             slot.innerHTML = '<span class="text-emerald-300 font-black animate-pulse">オーライ！</span>';
           }
+          if (signBox) {
+            signBox.classList.replace('border-amber-400', 'border-emerald-400');
+          }
           if (numLabel) {
-            numLabel.classList.add('-translate-y-2', 'scale-90', 'text-emerald-300');
+            numLabel.classList.add('text-emerald-300');
+          }
+          if (kanaHint) {
+            kanaHint.classList.remove('hidden');
           }
 
           if (movingCar) {
@@ -3430,15 +3493,10 @@
             movingCar.style.left = `${targetLeftPercent}%`;
             movingCar.style.transform = `translate(-50%, -10px) rotate(${tiltDeg}deg)`;
 
-            // 2段階目：車体をまっすぐに戻して駐車枠の中へスッと前進して駐車完了
+            // 2段階目：車体をまっすぐに戻し、番号看板の下（車止めラインの手前）にピタッと前進して駐車完了
             setTimeout(() => {
-              const btnRect = btn.getBoundingClientRect();
-              const carRect = movingCar.getBoundingClientRect();
-              const currentCenterY = carRect.top + carRect.height / 2;
-              const targetCenterY = btnRect.top + btnRect.height * 0.58;
-              const deltaY = targetCenterY - currentCenterY - 10;
-
-              movingCar.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg) scale(0.92)`;
+              const deltaY = this.calcStep3ParkDeltaY(idx);
+              movingCar.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg) scale(0.76)`;
 
               setTimeout(() => {
                 if (topCarSvg) topCarSvg.classList.remove('car-idle');
@@ -3453,14 +3511,13 @@
             this.showRewardScreen();
           }, 1950);
         } else {
-          // 間違えた場合：選んだ数字のところまで移動したら落とし穴に落ちるアニメーション！
+          // 間違えた場合：選んだ駐車スペース（看板の下）まで移動したら落とし穴に落ちるアニメーション！
           this.state.isBusy = true;
           this.clearHintTimer();
 
           const movingCar = document.getElementById('step3-moving-car');
           const topCarSvg = document.getElementById('step3-car-top-svg');
           const pitfall = document.getElementById(`pitfall-hole-${idx}`);
-          const numLabel = document.getElementById(`park-num-${idx}`);
           const slot = document.getElementById(`parked-car-slot-${idx}`);
           const { num, kana } = this.state.step3.q;
 
@@ -3471,27 +3528,21 @@
             movingCar.style.left = `${targetLeftPercent}%`;
             movingCar.style.transform = `translate(-50%, -10px) rotate(${tiltDeg}deg) scale(1)`;
 
-            // 2段階目：駐車スペース（数字の上）まで前進
+            // 2段階目：番号看板の下にある駐車スペース中央まで前進
             setTimeout(() => {
-              const btnRect = btn.getBoundingClientRect();
-              const carRect = movingCar.getBoundingClientRect();
-              const currentCenterY = carRect.top + carRect.height / 2;
-              const targetCenterY = btnRect.top + btnRect.height * 0.56;
-              const deltaY = targetCenterY - currentCenterY - 10;
+              const deltaY = this.calcStep3ParkDeltaY(idx);
+              movingCar.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg) scale(0.8)`;
 
-              movingCar.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg) scale(0.95)`;
-
-              // 3段階目：数字の上に到着した瞬間に落とし穴がパカッと開いてクルクル落ちていく！
+              // 3段階目：駐車スペースに到着した瞬間に落とし穴がパカッと開いてクルクル落ちていく！（上の数字看板はそのまま見える）
               setTimeout(() => {
                 Sound.playPitfall();
                 if (topCarSvg) topCarSvg.classList.remove('car-idle');
                 if (pitfall) pitfall.classList.add('open');
-                if (numLabel) numLabel.classList.add('opacity-20', 'scale-50');
                 if (slot) slot.innerHTML = '<span class="text-rose-400 font-black">🕳️ おとしあな！</span>';
                 document.getElementById('step3-feedback').textContent = 'うわぁ〜！ おとしあな に おちちゃった！';
 
                 movingCar.style.transition = 'transform 0.65s cubic-bezier(0.55, 0.08, 0.68, 0.53), opacity 0.55s ease';
-                movingCar.style.transform = `translate(-50%, ${deltaY + 8}px) rotate(540deg) scale(0)`;
+                movingCar.style.transform = `translate(-50%, ${deltaY + 6}px) rotate(540deg) scale(0)`;
                 movingCar.style.opacity = '0';
               }, 460);
             }, 340);
