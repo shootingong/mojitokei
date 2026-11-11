@@ -558,8 +558,6 @@
               <button onclick="Game.speakStep2Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-8 h-8 sm:w-10 sm:h-10 rounded-xl border-b-4 border-amber-600 flex items-center justify-center text-base sm:text-xl shrink-0 shadow">
                 🔊
               </button>
-              <!-- 対象ワードのイラストアイコン -->
-              <div id="step2-target-icon" class="w-12 h-9 sm:w-16 sm:h-11 bg-sky-50 rounded-xl border-2 border-sky-300 p-0.5 flex items-center justify-center shrink-0 transition-transform duration-300"></div>
               <div class="min-w-0">
                 <div class="text-[10px] sm:text-xs font-black text-emerald-700 leading-none">ステップ② カタカナ・ドライブ</div>
                 <div class="text-xs sm:text-base font-black text-slate-800 truncate mt-0.5">
@@ -579,9 +577,12 @@
             </div>
           </div>
 
-          <!-- ことばスロット（ひらがなガイド＋カタカナ穴埋め枠） -->
-          <div id="step2-word-slots" class="flex items-center justify-center gap-1 sm:gap-2 py-0.5 flex-wrap">
-            <!-- JSで文字スロットを生成 -->
+          <!-- イラストアイコン（左側・大きめ）＋ ことばスロット（右側：ひらがなガイド＋カタカナ穴埋め枠） -->
+          <div class="flex items-center justify-center gap-2 sm:gap-3 py-1 px-1 bg-emerald-50/70 rounded-2xl border border-emerald-200">
+            <div id="step2-target-icon" class="w-20 h-14 sm:w-28 sm:h-20 bg-white rounded-2xl border-2 border-sky-400 p-1 flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300"></div>
+            <div id="step2-word-slots" class="flex items-center justify-center gap-1 sm:gap-1.5 flex-wrap">
+              <!-- JSで文字スロットを生成 -->
+            </div>
           </div>
 
           <!-- 問題文の直下：ガイドコメント欄 -->
@@ -705,10 +706,10 @@
           </div>
         </div>
 
-        <!-- 駐車場エリア（上部：駐車スペース3枠[flex-1] ＋ 下部：車が走る通路レーン[shrink-0] で途切れず全体を表示） -->
-        <div id="parking-arena" class="relative flex-1 bg-slate-700 rounded-3xl border-4 border-slate-500 p-2 sm:p-3 mt-1 flex flex-col justify-between overflow-hidden shadow-inner min-h-0">
-          <!-- 上部：3つの駐車スペース（看板のz-30が車レーンのz-20より前面に効くよう親のz-indexを解除） -->
-          <div id="parking-lots" class="flex-1 min-h-0 grid grid-cols-3 gap-2 sm:gap-4 items-stretch">
+        <!-- 駐車場エリア（上部：底辺まで閉じた駐車スペース3枠 ＋ 下部：車が走る通路レーン） -->
+        <div id="parking-arena" class="relative flex-1 bg-slate-700 rounded-3xl border-4 border-slate-500 p-2 sm:p-3 mt-1 flex flex-col justify-around overflow-hidden shadow-inner min-h-0">
+          <!-- 上部：3つの駐車スペース（縦長になりすぎないよう最大高さを抑え、底辺もしっかり閉じる） -->
+          <div id="parking-lots" class="w-full flex-1 max-h-44 sm:max-h-52 min-h-0 grid grid-cols-3 gap-2 sm:gap-4 items-stretch">
             <!-- JSで3つの駐車スペースを生成 -->
           </div>
 
@@ -3692,6 +3693,11 @@
         const slotsEl = document.getElementById('step2-word-slots');
         slotsEl.innerHTML = '';
 
+        const isLongWord = kataChars.length >= 6;
+        const slotSizeCls = isLongWord
+          ? 'w-8 h-8 sm:w-10 sm:h-10 text-base sm:text-xl'
+          : 'w-9 h-9 sm:w-12 sm:h-12 text-lg sm:text-2xl';
+
         kataChars.forEach((kChar, idx) => {
           const hChar = hiraChars[idx];
           const isSolved = !targetIndices.includes(idx) || targetIndices.indexOf(idx) < stepCursor;
@@ -3700,10 +3706,10 @@
           const box = document.createElement('div');
           box.className = 'flex flex-col items-center';
           box.innerHTML = `
-            <span class="text-xs sm:text-base font-black ${isCurrent ? 'text-rose-600 scale-110' : 'text-slate-600'} mb-0.5">
+            <span class="text-[11px] sm:text-sm font-black ${isCurrent ? 'text-rose-600 scale-110' : 'text-slate-600'} mb-0.5 leading-none">
               ${hChar}
             </span>
-            <div class="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-black text-lg sm:text-2xl border-4 transition-all ${
+            <div class="${slotSizeCls} rounded-xl flex items-center justify-center font-black border-4 transition-all ${
               isSolved
                 ? 'bg-emerald-500 text-white border-emerald-700 shadow'
                 : isCurrent
@@ -3923,12 +3929,17 @@
         const slotsEl = document.getElementById('step2-word-slots');
         slotsEl.innerHTML = '';
 
+        const isLongWord = kataChars.length >= 6;
+        const slotSizeCls = isLongWord
+          ? 'w-8 h-8 sm:w-10 sm:h-10 text-base sm:text-xl'
+          : 'w-9 h-9 sm:w-12 sm:h-12 text-lg sm:text-2xl';
+
         kataChars.forEach((kChar, idx) => {
           const box = document.createElement('div');
           box.className = 'flex flex-col items-center';
           box.innerHTML = `
-            <span class="text-xs sm:text-base font-black text-emerald-700 mb-0.5">${hiraChars[idx]}</span>
-            <div class="w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-black text-lg sm:text-2xl border-4 bg-amber-400 text-slate-900 border-amber-600 shadow-lg scale-105">
+            <span class="text-[11px] sm:text-sm font-black text-emerald-700 mb-0.5 leading-none">${hiraChars[idx]}</span>
+            <div class="${slotSizeCls} rounded-xl flex items-center justify-center font-black border-4 bg-amber-400 text-slate-900 border-amber-600 shadow-lg scale-105">
               ${kChar}
             </div>
           `;
@@ -4004,7 +4015,7 @@
         choices.forEach((c, idx) => {
           const btn = document.createElement('button');
           btn.id = `park-btn-${idx}`;
-          btn.className = 'btn-3d relative h-full min-h-0 bg-slate-800 hover:bg-slate-750 border-x-4 border-t-8 border-amber-400 rounded-t-2xl p-1.5 sm:p-2 flex flex-col items-center justify-between shadow-xl transition-all overflow-hidden';
+          btn.className = 'btn-3d relative h-full min-h-0 bg-slate-800 hover:bg-slate-750 border-4 border-t-8 border-amber-400 rounded-2xl p-1.5 sm:p-2 flex flex-col items-center justify-between shadow-xl transition-all overflow-hidden';
           btn.innerHTML = `
             <div id="park-sign-${idx}" class="relative z-30 w-full flex flex-col items-center bg-slate-900/90 rounded-xl py-1 px-1.5 border border-slate-600 shadow-sm shrink-0">
               <div class="w-full flex items-center justify-between text-[10px] sm:text-xs font-black text-amber-400 leading-none">
@@ -4021,9 +4032,10 @@
                 ここに とめる
               </div>
             </div>
-            <div id="park-bay-${idx}" class="relative flex-1 min-h-0 w-full flex flex-col items-center justify-start pt-1">
+            <div id="park-bay-${idx}" class="relative flex-1 min-h-0 w-full flex flex-col items-center justify-between pt-1 pb-0.5">
               <div class="w-3/4 h-1.5 rounded-full bg-amber-400/80 shadow-sm shrink-0"></div>
               <div id="pitfall-hole-${idx}" class="pitfall-hole"></div>
+              <div class="w-2/3 border-b-2 border-dashed border-amber-300/60 shrink-0"></div>
             </div>
           `;
           btn.onclick = () => this.answerStep3(idx);
@@ -4041,7 +4053,7 @@
       calcStep3ParkDeltaY(idx, movingCarEl, isPitfall = false) {
         const bayEl = document.getElementById(`park-bay-${idx}`);
         const statusEl = document.getElementById(`park-status-${idx}`);
-        if (!bayEl || !movingCarEl) return -135;
+        if (!bayEl || !movingCarEl) return -120;
 
         const bayRect = bayEl.getBoundingClientRect();
         const carRect = movingCarEl.getBoundingClientRect();
@@ -4053,9 +4065,10 @@
         }
 
         const safeTopY = statusEl
-          ? statusEl.getBoundingClientRect().bottom + 6
-          : bayRect.top + 8;
-        const targetCarTopY = Math.max(safeTopY, bayRect.top + 8);
+          ? statusEl.getBoundingClientRect().bottom + 4
+          : bayRect.top + 4;
+        const centeredTopY = bayRect.top + Math.max(2, (bayRect.height - carRect.height) * 0.5);
+        const targetCarTopY = Math.max(safeTopY, centeredTopY);
         return Math.round(targetCarTopY - carRect.top);
       },
 
