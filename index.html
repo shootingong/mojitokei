@@ -575,10 +575,10 @@
               <span id="step2-guide-badge" class="hidden lg:inline-block text-xs font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
                 ひらがな と おなじ カタカナ を えらぼう！
               </span>
-              <!-- 手動ヒントボタン -->
-              <button onclick="Game.triggerManualHint(2)" class="btn-3d bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-black px-2.5 py-1.5 rounded-xl border-b-4 border-yellow-500 text-xs sm:text-sm flex items-center gap-1 shadow">
+              <!-- 手動ヒントボタン（2段階式） -->
+              <button id="btn-hint-step2" onclick="Game.triggerManualHint(2)" class="btn-3d bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-black px-2.5 py-1.5 rounded-xl border-b-4 border-yellow-500 text-xs sm:text-sm flex items-center gap-1 shadow">
                 <span>💡</span>
-                <span>ヒント</span>
+                <span id="btn-hint-step2-label">ヒント</span>
               </button>
               <!-- いつでも開ける50音表ボタン -->
               <button onclick="Game.openKanaChart()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-2.5 sm:px-3 py-1.5 rounded-xl border-b-4 border-sky-700 text-xs sm:text-sm flex items-center gap-1 shadow">
@@ -2555,11 +2555,10 @@
         const rad = ((i * 30 - 90) * Math.PI) / 180;
         const x = 100 + 70 * Math.cos(rad);
         const y = 100 + 70 * Math.sin(rad);
-        const isTargetHour = (i === hour);
         numbersHTML += `
           <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central"
-                font-size="${isTargetHour ? '22' : '19'}" font-weight="900"
-                fill="${isTargetHour ? '#be123c' : '#1e293b'}">${i}</text>
+                font-size="19" font-weight="900"
+                fill="#1e293b">${i}</text>
         `;
       }
 
@@ -2939,37 +2938,139 @@
       },
 
       /* ----------------------------------------------------------------
-       * 手動「💡ヒント」ボタン（30秒待たなくても自分の意思でヒントを出せる）
+       * 手動「💡ヒント」ボタン（答えを直接光らせず、考える余地を残すヒント）
        * ---------------------------------------------------------------- */
       triggerManualHint(stepNumber) {
         Sound.init();
         if (this.state.isBusy) return;
-        Sound.playCorrect();
+        Sound.playHintChime();
 
+        // 【ステップ①】2択に絞った上で、時計自体は変えずに針が指す数字を声と文字でガイド
         if (stepNumber === 1 && this.state.step1) {
-          const correctIdx = this.state.step1.choices.findIndex(c => c.isCorrect);
-          const btn = document.getElementById(`clock-btn-${correctIdx}`);
-          if (btn) btn.classList.add('hint-active');
-          document.getElementById('step1-feedback').textContent = '💡 ヒント！ キラキラ ゆれている とけい を みてみよう！';
+          const { targetHour, targetMin, choices } = this.state.step1;
+          const activeWrongIndices = choices
+            .map((c, idx) => ({ c, idx, btn: document.getElementById(`clock-btn-${idx}`) }))
+            .filter(item => !item.c.isCorrect && item.btn && !item.btn.disabled);
+
+          // まだ3択（ハズレが2つ残っている状態）なら、ハズレを1つ消して2択に絞る
+          if (activeWrongIndices.length >= 2) {
+            const pick = activeWrongIndices[Math.floor(Math.random() * activeWrongIndices.length)];
+            pick.btn.disabled = true;
+            pick.btn.classList.add('opacity-30', 'pointer-events-none', 'scale-95');
+          }
+
+          const longHandNum = targetMin === 0 ? 12 : 6;
+          const guideText = `💡 あかい みじかい はり が「${targetHour}」、あおい ながい はり が「${longHandNum}」を さしているのは どれかな？`;
+          const guideSpeech = `あかい みじかい はり が ${targetHour}、あおい ながい はり が ${longHandNum} を さしているのは どれかな？`;
+
+          document.getElementById('step1-feedback').textContent = guideText;
+          Sound.speak(guideSpeech);
+
+        // 【ステップ②】案2-B：2段階ヒント（1回目：2択に絞る ➔ 2回目：ひらがなを表示するが正解は光らせない）
         } else if (stepNumber === 2 && this.state.step2) {
-          this.state.step2.currentChoices.forEach((c, idx) => {
-            const hintSpan = document.getElementById(`lane-hint-${idx}`);
-            if (hintSpan) hintSpan.classList.remove('opacity-0');
-            if (c.isCorrect) {
+          const s2 = this.state.step2;
+          const activeIdx = s2.targetIndices[s2.stepCursor];
+          const targetHira = s2.hiraChars[activeIdx] || '';
+          const readHira = targetHira === 'ー' ? 'のばす おと' : targetHira;
+
+          const activeWrongLanes = s2.currentChoices
+            .map((c, idx) => ({ c, idx, btn: document.getElementById(`lane-btn-${idx}`) }))
+            .filter(item => !item.c.isCorrect && item.btn && !item.btn.disabled);
+
+          // 1段階目：まだ3車線すべて残っている場合は、ハズレを1車線だけ通行止め（🚧）にして2択にする
+          if ((s2.hintStage || 0) === 0 && activeWrongLanes.length >= 2) {
+            s2.hintStage = 1;
+            const pick = activeWrongLanes[Math.floor(Math.random() * activeWrongLanes.length)];
+            pick.btn.disabled = true;
+            pick.btn.classList.add('opacity-35', 'pointer-events-none', 'scale-95');
+            const topBadge = pick.btn.querySelector('span');
+            if (topBadge) {
+              topBadge.className = 'text-xs font-black text-white bg-slate-600 px-2.5 py-0.5 rounded-full mb-1';
+              topBadge.textContent = '🚧 ちがうよ';
+            }
+
+            const hintLabel = document.getElementById('btn-hint-step2-label');
+            if (hintLabel) hintLabel.textContent = 'ヒント②';
+
+            const badge = document.getElementById('step2-guide-badge');
+            if (badge) {
+              badge.classList.remove('hidden');
+              badge.textContent = '💡 2つに しぼったよ！ もういちど ヒント で ひらがな が でるよ！';
+            }
+            Sound.speak('ちがう みち を ひとつ とめたよ！ のこり ふたつ から さがしてみよう！');
+          } else {
+            // 2段階目：残っている選択肢の下にひらがなを表示する（正解の枠は光らせない）
+            s2.hintStage = 2;
+            s2.currentChoices.forEach((c, idx) => {
               const btn = document.getElementById(`lane-btn-${idx}`);
-              if (btn) btn.classList.add('hint-active');
+              const hintSpan = document.getElementById(`lane-hint-${idx}`);
+              if (hintSpan && btn && !btn.disabled) {
+                hintSpan.classList.remove('opacity-0');
+              }
+            });
+
+            const hintLabel = document.getElementById('btn-hint-step2-label');
+            if (hintLabel) hintLabel.textContent = 'ヒント';
+
+            const badge = document.getElementById('step2-guide-badge');
+            if (badge) {
+              badge.classList.remove('hidden');
+              badge.textContent = `💡 したの ひらがな を みて、「 ${targetHira} 」と おなじ みち を えらぼう！`;
             }
-          });
+            Sound.speak(`カタカナの したに ひらがな を だしたよ！ ${readHira} は どっちかな？`);
+          }
+
+        // 【ステップ③】案3-A：2択に絞った上で、最初の数字・位取りに着目させる文字＆声のガイド
         } else if (stepNumber === 3 && this.state.step3) {
-          this.state.step3.choices.forEach((c, idx) => {
-            const kanaHint = document.getElementById(`park-kana-hint-${idx}`);
-            if (kanaHint) kanaHint.classList.remove('hidden');
-            if (c.isCorrect) {
-              const btn = document.getElementById(`park-btn-${idx}`);
-              if (btn) btn.classList.add('hint-active');
+          const { q, choices } = this.state.step3;
+          const activeWrongLots = choices
+            .map((c, idx) => ({ c, idx, btn: document.getElementById(`park-btn-${idx}`) }))
+            .filter(item => !item.c.isCorrect && item.btn && !item.btn.disabled);
+
+          // まだ3択ならハズレの駐車場を1つ消して2択にする
+          if (activeWrongLots.length >= 2) {
+            const pick = activeWrongLots[Math.floor(Math.random() * activeWrongLots.length)];
+            pick.btn.disabled = true;
+            pick.btn.classList.add('opacity-35', 'pointer-events-none', 'scale-95');
+            const statusBanner = document.getElementById(`park-status-${pick.idx}`);
+            if (statusBanner) {
+              statusBanner.innerHTML = '<span>🚧 ちがうよ</span>';
             }
-          });
-          document.getElementById('step3-feedback').textContent = '💡 ヒント！ すうじ の した の ひらがな を みてみよう！';
+          }
+
+          const digits = String(q.num).split('');
+          let hintText = '';
+          let hintSpeech = '';
+
+          if (digits.length === 2) {
+            if (digits[1] === '0') {
+              hintText = `💡「${q.kana}」は、ひだりの すうじ が「 ${digits[0]} 」で、みぎが「 0 」だよ！`;
+              hintSpeech = `${q.kana} は、ひだりの すうじ が ${digits[0]} で、みぎが ゼロ だよ！ どっちかな？`;
+            } else if (digits[0] === '1') {
+              hintText = `💡「${q.kana}」は、ひだりの すうじ が「 1 」で、みぎが「 ${digits[1]} 」だよ！`;
+              hintSpeech = `${q.kana} は、ひだりの すうじ が 1 で、みぎが ${digits[1]} だよ！ どっちかな？`;
+            } else {
+              hintText = `💡「${q.kana}」は、ひだりの すうじ が「 ${digits[0]} 」から はじまるよ！`;
+              hintSpeech = `${q.kana} は、ひだりの すうじ が ${digits[0]} から はじまるよ！ どっちかな？`;
+            }
+          } else if (digits.length === 3) {
+            if (digits[1] === '0' && digits[2] === '0') {
+              hintText = `💡「${q.kana}」は、すうじが 3つ！ ひだりが「 ${digits[0]} 」で、「 0 」が 2つ ならぶよ！`;
+              hintSpeech = `${q.kana} は、すうじが 3つ ならんでいて、ひだりが ${digits[0]}、そのあとに ゼロ が ふたつ ならぶよ！`;
+            } else if (digits[1] === '0') {
+              hintText = `💡「${q.kana}」は、すうじが 3つ！ まんなかが「 0 」で、さいごが「 ${digits[2]} 」だよ！`;
+              hintSpeech = `${q.kana} は、すうじが 3つ ならんでいて、まんなかが ゼロ、さいごが ${digits[2]} だよ！`;
+            } else if (digits[2] === '0') {
+              hintText = `💡「${q.kana}」は、すうじが 3つ！ ひだりが「 ${digits[0]} 」、まんなかが「 ${digits[1]} 」、さいごが「 0 」だよ！`;
+              hintSpeech = `${q.kana} は、すうじが 3つ ならんでいて、ひだりが ${digits[0]}、まんなかが ${digits[1]}、さいごが ゼロ だよ！`;
+            } else {
+              hintText = `💡「${q.kana}」は、すうじが 3つ！ ひだりが「 ${digits[0]} 」で、さいごが「 ${digits[2]} 」だよ！`;
+              hintSpeech = `${q.kana} は、すうじが 3つ ならんでいて、ひだりが ${digits[0]} で、さいごが ${digits[2]} だよ！`;
+            }
+          }
+
+          document.getElementById('step3-feedback').textContent = hintText;
+          Sound.speak(hintSpeech);
         }
       },
 
@@ -3552,14 +3653,8 @@
       },
 
       startStep1HintTimer() {
+        // 30秒の自動ヒントタイマーは廃止（手動の「💡ヒント」ボタンのみ使用）
         this.clearHintTimer();
-        // 30秒間操作がなければ正解の時計がキラキラ揺れてヒントを出す
-        this.state.hintTimer = setTimeout(() => {
-          if (!this.state.step1 || this.state.isBusy) return;
-          const correctIdx = this.state.step1.choices.findIndex(c => c.isCorrect);
-          const btn = document.getElementById(`clock-btn-${correctIdx}`);
-          if (btn) btn.classList.add('hint-active');
-        }, 30000);
       },
 
       answerStep1(idx) {
@@ -3728,6 +3823,11 @@
         const targetKata = kataChars[activeIdx];
         const targetHira = hiraChars[activeIdx];
 
+        // 2段階ヒントのステージをリセット
+        this.state.step2.hintStage = 0;
+        const hintLabel = document.getElementById('btn-hint-step2-label');
+        if (hintLabel) hintLabel.textContent = 'ヒント';
+
         // 次の文字問題が始まる際に、マイカーを道路の下部スタート位置に再配置
         this.resetStep2CarPosition(this.state.currentLane);
 
@@ -3795,25 +3895,8 @@
       },
 
       startStep2HintTimer() {
+        // 30秒の自動ヒントタイマーは廃止（手動の「💡ヒント」ボタンのみ使用）
         this.clearHintTimer();
-        // 30秒間操作がなければ、全選択肢の下にひらがなヒントが浮かび上がり、正解がキラキラ揺れる
-        this.state.hintTimer = setTimeout(() => {
-          this.triggerStep2Hint(false);
-        }, 30000);
-      },
-
-      triggerStep2Hint(isManual = false) {
-        if (!this.state.step2 || this.state.isBusy) return;
-        this.clearHintTimer();
-        if (isManual) Sound.playHintChime();
-        this.state.step2.currentChoices.forEach((c, idx) => {
-          const hintSpan = document.getElementById(`lane-hint-${idx}`);
-          if (hintSpan) hintSpan.classList.remove('opacity-0');
-          if (c.isCorrect) {
-            const btn = document.getElementById(`lane-btn-${idx}`);
-            if (btn) btn.classList.add('hint-active');
-          }
-        });
       },
 
       // STEP② 正解時のターボジェットSVG生成（'blue': 青ターボ / 'rainbow': 豪華なキラキラ虹色ターボ）
@@ -4201,25 +4284,8 @@
       },
 
       startStep3HintTimer() {
+        // 30秒の自動ヒントタイマーは廃止（手動の「💡ヒント」ボタンのみ使用）
         this.clearHintTimer();
-        // 30秒間操作がなければ番号看板にひらがな読みを表示し、正解の駐車場がキラキラ揺れてヒントを出す
-        this.state.hintTimer = setTimeout(() => {
-          this.triggerStep3Hint(false);
-        }, 30000);
-      },
-
-      triggerStep3Hint(isManual = false) {
-        if (!this.state.step3 || this.state.isBusy) return;
-        this.clearHintTimer();
-        if (isManual) Sound.playHintChime();
-        this.state.step3.choices.forEach((c, idx) => {
-          const kanaHint = document.getElementById(`park-kana-hint-${idx}`);
-          if (kanaHint) kanaHint.classList.remove('hidden');
-          if (c.isCorrect) {
-            const btn = document.getElementById(`park-btn-${idx}`);
-            if (btn) btn.classList.add('hint-active');
-          }
-        });
       },
 
       // 駐車スペース（下部 #park-bay-idx）の車止めライン手前にピタッと停まるY移動量を算出
