@@ -963,6 +963,39 @@
       </div>
 
       <!-- ==========================================
+           12. カスタムパーツ交換（購入）の確認モーダル（誤タップ防止）
+           ========================================== -->
+      <div id="modal-part-confirm" class="hidden fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5">
+        <div class="w-full max-w-md bg-white rounded-3xl border-4 sm:border-8 border-amber-400 shadow-2xl p-4 sm:p-5 flex flex-col items-center text-center gap-2.5 pop-in">
+          <div class="bg-amber-100 text-amber-800 border-2 border-amber-400 font-black text-xs sm:text-sm px-3.5 py-0.5 rounded-full">
+            🔧 カスタムパーツ こうかん
+          </div>
+          <h3 id="part-confirm-name" class="text-xl sm:text-2xl font-black text-slate-800">
+            「 おうさまの カンムリ 」を かうよ！
+          </h3>
+          <!-- マイカーに仮装着したプレビュー（横向き＆上向き） -->
+          <div class="w-full bg-slate-900 rounded-2xl border-4 border-sky-400 p-3 flex items-center justify-center gap-4 shadow-inner">
+            <div id="part-confirm-preview-side" class="w-36 h-20 sm:w-44 sm:h-24 car-idle flex items-center justify-center"></div>
+            <div id="part-confirm-preview-top" class="w-14 h-20 sm:w-16 sm:h-24 flex items-center justify-center"></div>
+          </div>
+          <p id="part-confirm-desc" class="text-xs sm:text-sm font-black text-slate-600">
+            ルビーが ひかる きんの おうかん！
+          </p>
+          <div id="part-confirm-cost" class="w-full bg-amber-50 border-2 border-amber-300 rounded-xl py-1.5 px-3 text-sm sm:text-base font-black text-rose-600">
+            ⭐ 2こ つかうよ
+          </div>
+          <div class="grid grid-cols-2 gap-2.5 w-full mt-1">
+            <button onclick="Game.closePartConfirmModal()" class="btn-3d bg-slate-200 hover:bg-slate-300 text-slate-700 font-black text-sm sm:text-base py-3 rounded-2xl border-b-4 border-slate-400 shadow">
+              ✕ やめる
+            </button>
+            <button onclick="Game.confirmPartPurchase()" class="btn-3d bg-rose-500 hover:bg-rose-400 text-white font-black text-sm sm:text-lg py-3 rounded-2xl border-b-4 border-rose-700 shadow-lg flex items-center justify-center gap-1">
+              <span>✨</span><span>ゲットする！</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
            9. ひらがな・カタカナ 50音表モーダル
            ========================================== -->
       <div id="modal-kana-chart" class="hidden fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
@@ -4101,6 +4134,7 @@
         sugorokuSteps: 0,
         unlockedSpots: [],
         pendingRewardSpeech: null,
+        pendingPartPurchase: null,
         garageTab: 'easy',
         kanaChartTab: 'basic',
         lives: 3,
@@ -4983,6 +5017,59 @@
         this.renderGarage();
       },
 
+      openPartConfirmModal(part) {
+        Sound.init();
+        this.state.pendingPartPurchase = part;
+        const car = this.getSelectedCar();
+
+        // 現在のマイカーに購入予定のパーツを仮装着したプレビューを生成
+        const prevEquipped = { ...this.state.equippedParts };
+        this.state.equippedParts[part.category] = part.id;
+        const sideSvg = getCarSideSVG(car.id, true);
+        const topSvg = getCarTopSVG(car.id, true);
+        this.state.equippedParts = prevEquipped;
+
+        document.getElementById('part-confirm-name').textContent = `「 ${part.name} 」を かうよ！`;
+        document.getElementById('part-confirm-desc').textContent = part.desc;
+        document.getElementById('part-confirm-cost').textContent =
+          `⭐ ${part.cost}こ つかうよ（のこり ⭐${this.state.stars} ➔ ⭐${this.state.stars - part.cost}）`;
+        document.getElementById('part-confirm-preview-side').innerHTML = sideSvg;
+        document.getElementById('part-confirm-preview-top').innerHTML = topSvg;
+
+        document.getElementById('modal-part-confirm').classList.remove('hidden');
+        Sound.playHintChime();
+        Sound.speak(`${part.kana} を かうよ！ スターを ${part.cost}こ つかうけど、いいかな？`);
+      },
+
+      confirmPartPurchase() {
+        Sound.init();
+        const part = this.state.pendingPartPurchase;
+        if (!part) return;
+        this.state.pendingPartPurchase = null;
+        document.getElementById('modal-part-confirm').classList.add('hidden');
+
+        if (this.state.stars < part.cost || this.state.unlockedParts.includes(part.id)) {
+          this.renderGarage();
+          return;
+        }
+
+        this.state.stars -= part.cost;
+        this.state.unlockedParts.push(part.id);
+        this.state.equippedParts[part.category] = part.id;
+        this.saveState();
+        this.updateHeaderUI();
+        Sound.playFanfare();
+        Sound.speak(`やったね！ ${part.kana} を ゲットして つけたよ！`);
+        this.renderGarage();
+      },
+
+      closePartConfirmModal() {
+        Sound.init();
+        this.state.pendingPartPurchase = null;
+        document.getElementById('modal-part-confirm').classList.add('hidden');
+        Sound.playGentleTryAgain();
+      },
+
       renderGarage() {
         const easyCars = CarCatalog.filter(c => c.tier === 'easy');
         const hardCars = CarCatalog.filter(c => c.tier === 'hard');
@@ -5094,14 +5181,7 @@
                 Sound.speak(`${part.kana} を つけたよ！`);
                 this.renderGarage();
               } else if (canAfford) {
-                this.state.stars -= part.cost;
-                this.state.unlockedParts.push(part.id);
-                this.state.equippedParts[part.category] = part.id;
-                this.saveState();
-                this.updateHeaderUI();
-                Sound.playFanfare();
-                Sound.speak(`やったね！ ${part.kana} を ゲットして つけたよ！`);
-                this.renderGarage();
+                this.openPartConfirmModal(part);
               } else {
                 Sound.playGentleTryAgain();
                 Sound.speak(`スターが あと ${part.cost - this.state.stars}こ たりないよ！ ドライブで あつめよう！`);
