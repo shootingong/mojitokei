@@ -377,114 +377,127 @@
               <span>📖</span>
               <span>50おんひょう</span>
             </button>
-            <button onclick="Game.openParentSettings()" class="btn-3d bg-slate-600 hover:bg-slate-500 text-white font-black py-2 sm:py-2.5 px-2 rounded-2xl border-b-4 border-slate-800 shadow flex items-center justify-center gap-1 text-xs sm:text-base">
-              <span>⚙️</span>
-              <span>せってい</span>
-            </button>
+            <div class="relative flex">
+              <button id="btn-parent-settings"
+                      onpointerdown="Game.startSettingsHold(event)"
+                      onpointerup="Game.cancelSettingsHold()"
+                      onpointerleave="Game.cancelSettingsHold()"
+                      onpointercancel="Game.cancelSettingsHold()"
+                      class="btn-3d relative overflow-hidden w-full bg-slate-600 hover:bg-slate-500 text-white font-black py-2 sm:py-2.5 px-2 rounded-2xl border-b-4 border-slate-800 shadow flex items-center justify-center gap-1 text-xs sm:text-base">
+                <span id="hold-bar-settings" class="absolute inset-y-0 left-0 bg-amber-400/45 w-0 pointer-events-none"></span>
+                <span class="relative z-10">⚙️</span>
+                <span class="relative z-10">せってい</span>
+              </button>
+              <!-- 短押し時の長押しガイドトースト -->
+              <div id="settings-hold-toast" class="hidden absolute bottom-full right-0 mb-1.5 bg-slate-900/95 text-amber-300 text-[11px] font-black px-3 py-1.5 rounded-xl shadow-xl whitespace-nowrap z-50 border border-amber-400 pointer-events-none">
+                🔒 ながおし（1.2びょう）で ひらくよ
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- ==========================================
-           2. マイガレージ（全24車種＋カスタムパーツ20種＋ことばずかん100種）画面
+           2. マイガレージ（くるまずかん・パーツ・ことばずかん）画面
            ========================================== -->
       <section id="screen-garage" class="hidden flex-1 flex flex-col justify-between p-2.5 sm:p-4 bg-slate-800 text-white overflow-hidden">
-        <div class="flex items-center justify-between gap-2 shrink-0">
-          <div>
-            <h2 class="text-base sm:text-2xl font-black text-amber-400 flex items-center gap-1.5">
-              <span>🛠️</span><span>マイガレージ・カスタム・ずかん</span>
-            </h2>
-            <p id="garage-subtitle" class="text-[10px] sm:text-xs text-slate-300 font-bold">
-              5かい れんぞく クリア で あたらしい くるま、⭐で パーツ を ゲット！
-            </p>
-          </div>
-          <button onclick="Game.goTitle()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-2xl border-b-4 border-sky-700 shadow shrink-0">
-            🏠 もどる
-          </button>
-        </div>
-
-        <!-- 4タブ切り替え（かんたん車 / デラックス車 / カスタムパーツ / ことばずかん） -->
-        <div class="grid grid-cols-4 gap-1.5 sm:gap-2 my-1.5 shrink-0">
-          <button id="garage-tab-easy" onclick="Game.switchGarageTab('easy')" class="btn-3d py-1.5 px-1.5 sm:px-2 rounded-xl font-black text-[10px] sm:text-xs border-b-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 bg-emerald-500 text-white border-emerald-700 shadow">
-            <span>🌱かんたん車</span>
-            <span id="garage-easy-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">1/12</span>
-          </button>
-          <button id="garage-tab-hard" onclick="Game.switchGarageTab('hard')" class="btn-3d py-1.5 px-1.5 sm:px-2 rounded-xl font-black text-[10px] sm:text-xs border-b-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 bg-slate-700 text-slate-300 border-slate-900">
-            <span>👑DXくるま</span>
-            <span id="garage-hard-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">0/12</span>
-          </button>
-          <button id="garage-tab-parts" onclick="Game.switchGarageTab('parts')" class="btn-3d py-1.5 px-1.5 sm:px-2 rounded-xl font-black text-[10px] sm:text-xs border-b-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 bg-slate-700 text-slate-300 border-slate-900">
-            <span>🔧パーツ</span>
-            <span id="garage-parts-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">0/20</span>
-          </button>
-          <button id="garage-tab-words" onclick="Game.switchGarageTab('words')" class="btn-3d py-1.5 px-1.5 sm:px-2 rounded-xl font-black text-[10px] sm:text-xs border-b-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 bg-slate-700 text-slate-300 border-slate-900">
-            <span>📕ことばずかん</span>
-            <span id="garage-words-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">0/100</span>
-          </button>
-        </div>
-
-        <!-- カスタムパーツタブ専用のプレビュー＆カテゴリバー -->
-        <div id="garage-parts-header" class="hidden flex-col gap-1.5 mb-1.5 shrink-0">
-          <!-- 現在のマイカー（横向き＆上向き）リアルタイムプレビュー -->
-          <div class="bg-slate-900/90 border-2 border-amber-400 rounded-2xl px-3 py-1.5 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-3">
-              <div id="parts-preview-side" class="w-28 h-14 sm:w-36 sm:h-16 car-idle flex items-center justify-center"></div>
-              <div id="parts-preview-top" class="w-10 h-14 sm:w-12 sm:h-16 flex items-center justify-center"></div>
+        <!-- 上部：ヘッダー＆4タブ切り替え -->
+        <div class="flex flex-col gap-1.5 shrink-0">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg sm:text-2xl font-black text-amber-400 flex items-center gap-1.5">
+                <span>🛠️</span><span>マイガレージ ＆ ずかん</span>
+              </h2>
+              <p id="garage-subtitle" class="text-[10px] sm:text-xs font-bold text-slate-300">
+                5かい れんぞく クリア で あたらしい くるま が ふえるよ！
+              </p>
             </div>
-            <div class="flex flex-col items-end gap-1">
-              <div class="bg-amber-100 border-2 border-amber-400 px-2.5 py-0.5 rounded-full flex items-center gap-1 text-amber-900 font-black text-xs sm:text-sm">
-                <span>もっている ⭐</span>
-                <span id="parts-star-count" class="text-base sm:text-lg">0</span>
+            <button onclick="Game.goTitle()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-3 py-1.5 rounded-2xl border-b-4 border-sky-700 text-xs sm:text-sm shadow">
+              🏠 もどる
+            </button>
+          </div>
+
+          <!-- 4つの切り替えタブ -->
+          <div class="grid grid-cols-4 gap-1 sm:gap-1.5">
+            <button id="garage-tab-easy" onclick="Game.switchGarageTab('easy')" class="btn-3d py-1.5 px-1.5 sm:px-2 rounded-xl font-black text-[10px] sm:text-xs border-b-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 bg-emerald-500 text-white border-emerald-700 shadow">
+              <span>🌱かんたん</span>
+              <span id="garage-easy-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">1/12</span>
+            </button>
+            <button id="garage-tab-hard" onclick="Game.switchGarageTab('hard')" class="btn-3d py-1.5 px-1.5 sm:px-2 rounded-xl font-black text-[10px] sm:text-xs border-b-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 bg-slate-700 text-slate-300 border-slate-900">
+              <span>👑しっかりDX</span>
+              <span id="garage-hard-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">0/12</span>
+            </button>
+            <button id="garage-tab-parts" onclick="Game.switchGarageTab('parts')" class="btn-3d py-1.5 px-1.5 sm:px-2 rounded-xl font-black text-[10px] sm:text-xs border-b-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 bg-slate-700 text-slate-300 border-slate-900">
+              <span>🔧パーツ</span>
+              <span id="garage-parts-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">0/20</span>
+            </button>
+            <button id="garage-tab-words" onclick="Game.switchGarageTab('words')" class="btn-3d py-1.5 px-1.5 sm:px-2 rounded-xl font-black text-[10px] sm:text-xs border-b-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 bg-slate-700 text-slate-300 border-slate-900">
+              <span>📕ことば</span>
+              <span id="garage-words-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">0/100</span>
+            </button>
+          </div>
+
+          <!-- カスタムパーツタブ選択時のみ表示されるマイカープレビュー＆カテゴリバー -->
+          <div id="garage-parts-header" class="hidden flex-col gap-1.5 bg-slate-900/90 p-2 rounded-2xl border-2 border-sky-500/60">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-3">
+                <div id="parts-preview-side" class="w-28 h-14 sm:w-32 sm:h-16 car-idle flex items-center justify-center"></div>
+                <div id="parts-preview-top" class="w-10 h-14 sm:w-12 sm:h-16 flex items-center justify-center"></div>
               </div>
-              <button onclick="Game.unequipAllParts()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] sm:text-xs font-black px-2.5 py-1 rounded-xl border border-slate-500">
-                🔄 ぜんぶ はずす
+              <div class="flex flex-col items-end gap-1">
+                <div class="bg-amber-400/20 border border-amber-400 px-2.5 py-0.5 rounded-full text-xs font-black text-amber-300">
+                  ⭐ <span id="parts-star-count">0</span> こ
+                </div>
+                <button onclick="Game.unequipAllParts()" class="btn-3d bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-black px-2.5 py-1 rounded-xl border-b-2 border-slate-950">
+                  🔄 ノーマルにもどす
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-4 gap-1">
+              <button id="part-cat-wheel" onclick="Game.switchPartCategory('wheel')" class="btn-3d py-1 px-1 rounded-xl font-black text-[10px] sm:text-xs border-b-2 bg-amber-400 text-slate-900 border-amber-600 shadow">
+                🛞 タイヤ
+              </button>
+              <button id="part-cat-wing" onclick="Game.switchPartCategory('wing')" class="btn-3d py-1 px-1 rounded-xl font-black text-[10px] sm:text-xs border-b-2 bg-slate-700 text-slate-300 border-slate-900">
+                🏁 ウィング
+              </button>
+              <button id="part-cat-roof" onclick="Game.switchPartCategory('roof')" class="btn-3d py-1 px-1 rounded-xl font-black text-[10px] sm:text-xs border-b-2 bg-slate-700 text-slate-300 border-slate-900">
+                👑 やね
+              </button>
+              <button id="part-cat-turbo" onclick="Game.switchPartCategory('turbo')" class="btn-3d py-1 px-1 rounded-xl font-black text-[10px] sm:text-xs border-b-2 bg-slate-700 text-slate-300 border-slate-900">
+                🔥 ターボ
               </button>
             </div>
           </div>
-          <!-- 4つのパーツカテゴリ切り替え -->
-          <div class="grid grid-cols-4 gap-1.5">
-            <button id="part-cat-wheel" onclick="Game.switchPartCategory('wheel')" class="btn-3d py-1 px-1 rounded-xl font-black text-[10px] sm:text-xs border-b-2 bg-amber-400 text-slate-900 border-amber-600">
-              🛞 タイヤ(5)
-            </button>
-            <button id="part-cat-wing" onclick="Game.switchPartCategory('wing')" class="btn-3d py-1 px-1 rounded-xl font-black text-[10px] sm:text-xs border-b-2 bg-slate-700 text-slate-300 border-slate-900">
-              🏁 ウィング(5)
-            </button>
-            <button id="part-cat-roof" onclick="Game.switchPartCategory('roof')" class="btn-3d py-1 px-1 rounded-xl font-black text-[10px] sm:text-xs border-b-2 bg-slate-700 text-slate-300 border-slate-900">
-              👑 やね(5)
-            </button>
-            <button id="part-cat-turbo" onclick="Game.switchPartCategory('turbo')" class="btn-3d py-1 px-1 rounded-xl font-black text-[10px] sm:text-xs border-b-2 bg-slate-700 text-slate-300 border-slate-900">
-              🔥 ターボ(5)
-            </button>
-          </div>
         </div>
 
-        <!-- グリッド表示エリア（車 / パーツ / ことばずかん 共通） -->
-        <div id="garage-grid" class="flex-1 grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-2.5 overflow-y-auto p-1 min-h-0">
-          <!-- JSで動的生成 -->
+        <!-- 中央：コレクション一覧グリッド -->
+        <div id="garage-grid" class="flex-1 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-2.5 p-1 my-1.5 min-h-0">
+          <!-- JSで生成 -->
         </div>
 
-        <div class="pt-1.5 shrink-0">
-          <button onclick="Game.startMission()" class="btn-3d w-full bg-rose-500 hover:bg-rose-400 text-white font-black text-base sm:text-lg py-2.5 sm:py-3 rounded-2xl border-b-4 border-rose-700 shadow-lg flex items-center justify-center gap-2">
+        <!-- 下部：選んだ車で出発ボタン -->
+        <div class="shrink-0">
+          <button onclick="Game.startMission()" class="btn-3d w-full bg-rose-500 hover:bg-rose-400 text-white font-black text-base sm:text-xl py-2.5 sm:py-3 rounded-2xl border-b-4 border-rose-700 shadow-lg flex items-center justify-center gap-2">
             <span>🚦</span><span>この くるま で しゅっぱつ！</span>
           </button>
         </div>
       </section>
 
       <!-- ==========================================
-           3. ステップ①：出発タイマー（案A：スタートゲート＆信号＋案B：朝・昼・夕方・夜の空＆ヘッドライト）
+           3. ステップ①：しゅっぱつタイマー（時計よみ）
            ========================================== -->
-      <section id="screen-step1" class="hidden flex-1 flex flex-col justify-between p-2 sm:p-4 bg-gradient-to-b from-amber-50 to-sky-100 overflow-hidden">
-        <!-- 上部：問題文＆直下のコメント欄＆ライフ表示 -->
+      <section id="screen-step1" class="hidden flex-1 flex flex-col justify-between p-2 sm:p-4 bg-gradient-to-b from-sky-200 to-emerald-100 overflow-hidden">
+        <!-- 上部：問題文＆直下のコメント欄＆ライフ -->
         <div class="flex flex-col gap-1 shrink-0 z-20">
-          <div class="bg-white/95 rounded-2xl border-2 border-sky-300 px-3 py-1.5 sm:py-2 shadow-sm flex items-center justify-between gap-2">
+          <div class="bg-white/95 rounded-2xl border-2 border-sky-400 px-3 py-1.5 sm:py-2 shadow-sm flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
-              <button onclick="Game.speakStep1Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-b-4 border-amber-600 flex items-center justify-center text-lg sm:text-xl shrink-0 shadow">
+              <button onclick="Game.speakStep1Prompt()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-b-4 border-sky-700 flex items-center justify-center text-lg sm:text-xl shrink-0 shadow">
                 🔊
               </button>
               <div class="min-w-0">
-                <div class="text-[10px] sm:text-[11px] font-black text-sky-600 leading-none">ステップ① しゅっぱつゲート</div>
-                <div id="step1-question-text" class="text-xs sm:text-lg font-black text-slate-800 truncate mt-0.5">
-                  「 3じ 」に しゅっぱつ！ おなじ とけい は どれかな？
+                <div class="text-[10px] sm:text-[11px] font-black text-sky-600 leading-none">ステップ① しゅっぱつタイマー</div>
+                <div id="step1-question-text" class="text-xs sm:text-base font-black text-slate-800 truncate mt-0.5">
+                  「 8じ 」に しゅっぱつ！ おなじ とけい は どれかな？
                 </div>
               </div>
             </div>
@@ -495,7 +508,7 @@
 
           <!-- 問題文の直下：ガイドコメント欄 -->
           <div class="bg-slate-800 rounded-xl py-1.5 px-3 flex items-center gap-2 text-white border-b-2 border-slate-950 shadow-sm">
-            <span class="text-sm sm:text-base shrink-0">🚦</span>
+            <span class="text-sm sm:text-base shrink-0">📢</span>
             <span id="step1-feedback" class="text-[11px] sm:text-sm font-black text-amber-300 leading-tight">
               あかい みじかい はり と あおい ながい はり を みてね！
             </span>
@@ -512,121 +525,117 @@
           </div>
         </div>
 
-        <!-- 風景エリア：朝・昼・夕方・夜の空＋マイカー（ヘッドライト）＋信号機＆道を遮るスタートゲート -->
-        <div id="step1-scene" class="relative w-full h-28 sm:h-36 rounded-3xl border-4 border-sky-400 shadow-lg overflow-hidden my-0.5 shrink-0 transition-colors duration-500 bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200">
-          <!-- 空の装飾（太陽・月・星・雲） -->
+        <!-- 風景シーン（信号機・スタートゲート・マイカー） -->
+        <div id="step1-scene" class="relative w-full h-28 sm:h-36 rounded-3xl border-4 border-sky-400 shadow-lg overflow-hidden my-0.5 shrink-0 bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200">
           <div id="step1-sky-decor" class="absolute inset-0 pointer-events-none"></div>
 
-          <!-- 時間帯バッジ（あさ / おひる / ゆうがた / よる） -->
-          <div id="step1-time-badge" class="absolute top-2 left-3 z-20 bg-white/90 backdrop-blur px-2.5 py-0.5 rounded-full border-2 border-sky-400 font-black text-xs sm:text-sm text-slate-800 shadow flex items-center gap-1">
+          <!-- 左上：時間帯バッジ -->
+          <div id="step1-time-badge" class="absolute top-2 left-2.5 z-20 bg-white/90 backdrop-blur px-2.5 py-0.5 rounded-full border-2 border-sky-400 text-xs sm:text-sm font-black text-slate-800 flex items-center gap-1 shadow">
             <span>☀️</span><span>あさ</span>
           </div>
 
-          <!-- 遠くの山・草むら -->
-          <div class="absolute bottom-11 sm:bottom-13 inset-x-0 h-6 bg-emerald-500/80 rounded-t-full pointer-events-none"></div>
+          <!-- 下部：道路 -->
+          <div class="absolute bottom-0 inset-x-0 h-11 sm:h-12 bg-slate-700 border-t-4 border-slate-500 flex items-center justify-around px-6">
+            <div class="w-8 h-1.5 bg-white/80 rounded"></div>
+            <div class="w-8 h-1.5 bg-white/80 rounded"></div>
+            <div class="w-8 h-1.5 bg-white/80 rounded"></div>
+            <div class="w-8 h-1.5 bg-white/80 rounded"></div>
+          </div>
 
-          <!-- 道路（横方向・スタートライン付き） -->
-          <div class="absolute bottom-0 inset-x-0 h-12 sm:h-14 bg-slate-700 border-t-4 border-slate-500 flex items-center">
-            <div class="w-full border-t-2 border-dashed border-white/75"></div>
-            <!-- START停止線 -->
-            <div class="absolute left-[56%] inset-y-0 w-3 bg-white flex flex-col items-center justify-center">
-              <span class="text-[7px] font-black text-slate-900 leading-none rotate-90">START</span>
+          <!-- 信号機＆スタートゲート（縦のSTOPバー1本が道路を縦に塞ぐ配置） -->
+          <div class="absolute right-10 sm:right-16 bottom-1 z-20 flex items-end gap-2.5">
+            <!-- 信号機（道路の奥側の歩道に立つ） -->
+            <div class="flex flex-col items-center mb-8 sm:mb-9">
+              <div class="bg-slate-900 border-2 border-slate-400 rounded-xl p-1 flex gap-1 shadow-md">
+                <div id="step1-light-red" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e]"></div>
+                <div id="step1-light-yellow" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-950"></div>
+                <div id="step1-light-green" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-950"></div>
+              </div>
+              <div class="w-2 h-8 sm:h-10 bg-slate-500"></div>
+            </div>
+
+            <!-- 遮断機ゲート（道路上端の支柱から道路下端へSTOPバーが降りる） -->
+            <div class="relative w-8 h-16 sm:h-18">
+              <svg viewBox="0 0 28 68" class="w-8 h-full overflow-visible">
+                <!-- 道路の奥側に立つ黄色い支柱台座 -->
+                <rect x="6" y="0" width="16" height="22" rx="4" fill="#facc15" stroke="#0f172a" stroke-width="2.5"/>
+                <rect x="9" y="4" width="10" height="6" rx="1.5" fill="#1e293b"/>
+                <!-- 回転する縦のSTOPバー（軸 14,14 から道路の下端 y=62 まで真っ直ぐ降りる） -->
+                <g id="step1-gate-arm" class="gate-barrier-arm">
+                  <rect x="10" y="12" width="8" height="48" rx="4" fill="#ef4444" stroke="#0f172a" stroke-width="2.2"/>
+                  <rect x="10" y="21" width="8" height="8" fill="#ffffff"/>
+                  <rect x="10" y="36" width="8" height="8" fill="#ffffff"/>
+                  <circle cx="14" cy="54" r="10.5" fill="#ef4444" stroke="#ffffff" stroke-width="2.2"/>
+                  <circle cx="14" cy="54" r="11.5" fill="none" stroke="#0f172a" stroke-width="1.5"/>
+                  <text x="14" y="57" text-anchor="middle" font-size="6.5" font-weight="900" fill="#ffffff">STOP</text>
+                </g>
+                <!-- 支柱の回転軸ピン -->
+                <circle cx="14" cy="14" r="5" fill="#475569" stroke="#0f172a" stroke-width="2"/>
+                <circle cx="14" cy="14" r="2" fill="#f8fafc"/>
+              </svg>
             </div>
           </div>
 
-          <!-- 信号機（STARTラインの奥） -->
-          <div class="absolute bottom-11 sm:bottom-13 left-[60%] z-10 flex flex-col items-center pointer-events-none">
-            <div class="bg-slate-900 border-2 border-slate-400 rounded-xl p-1 flex flex-col gap-1 shadow-md">
-              <div id="step1-light-red" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e] transition-all"></div>
-              <div id="step1-light-yellow" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-950 transition-all"></div>
-              <div id="step1-light-green" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-950 transition-all"></div>
-            </div>
-            <div class="w-2 h-4 bg-slate-500"></div>
-          </div>
-
-          <!-- 道路をしっかり遮る紅白スタートゲート（縦のSTOPバーのみ） -->
-          <div class="absolute bottom-1 left-[54%] z-20 pointer-events-none">
-            <svg width="60" height="84" viewBox="0 0 60 84" class="overflow-visible">
-              <!-- 遮断機の支柱（道路の奥側） -->
-              <rect x="6" y="4" width="16" height="28" rx="4" fill="#475569" stroke="#1e293b" stroke-width="2.5"/>
-              <!-- 道路の手前側まで縦に降りて道を遮るゲートバー＆STOP標識（正解時に上へ跳ね上がる） -->
-              <g id="step1-gate-arm" class="gate-barrier-arm">
-                <rect x="9" y="12" width="10" height="66" rx="4" fill="#ef4444" stroke="#1e293b" stroke-width="2.5"/>
-                <rect x="10" y="24" width="8" height="12" fill="#ffffff"/>
-                <rect x="10" y="52" width="8" height="12" fill="#ffffff"/>
-                <circle cx="14" cy="44" r="13" fill="#ef4444" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="14" y="47" text-anchor="middle" font-size="7.5" font-weight="900" fill="#ffffff">STOP</text>
-              </g>
-              <circle cx="14" cy="14" r="5" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
-            </svg>
-          </div>
-
-          <!-- マイカー（右向きに反転・ヘッドライト＆ブレーキバッジ付き） -->
+          <!-- マイカー（右向きに反転して配置） -->
           <div id="step1-car-actor"
                style="left: 12%; transform: translateX(0px) rotate(0deg); transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.65s cubic-bezier(0.4, 0, 0.2, 1);"
-               class="absolute bottom-1 z-20 w-28 h-16 sm:w-36 sm:h-20 pointer-events-none">
-            <!-- 夕方・夜用の黄色いヘッドライトビーム -->
-            <div id="step1-headlight-beam" class="hidden absolute left-[84%] bottom-2 w-28 sm:w-36 h-12 pointer-events-none"
-                 style="background: linear-gradient(90deg, rgba(254,240,138,0.85) 0%, rgba(254,240,138,0) 100%); clip-path: polygon(0 35%, 100% 0, 100% 100%, 0 70%);"></div>
-            <!-- 不正解時の急ブレーキバッジ -->
-            <div id="step1-brake-badge" class="hidden absolute -top-5 left-1/2 -translate-x-1/2 bg-rose-600 text-white text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full border-2 border-white shadow whitespace-nowrap">
-              💥 キキーッ！ストップ！
+               class="absolute bottom-3 sm:bottom-3.5 z-20 w-28 h-16 sm:w-36 sm:h-20 flex items-center justify-center">
+            <!-- 急ブレーキ吹き出し -->
+            <div id="step1-brake-badge" class="hidden absolute -top-6 left-1/2 -translate-x-1/2 bg-rose-500 text-white font-black text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full border-2 border-white shadow whitespace-nowrap">
+              💦 まだ あか！
             </div>
-            <!-- 車本体（左向きSVGを scaleX(-1) で右向きに配置） -->
-            <div class="w-full h-full transform -scale-x-100">
-              <div id="step1-car-preview" class="w-full h-full car-idle drop-shadow-md"></div>
-            </div>
+            <!-- 夕方・夜のヘッドライト光線 -->
+            <div id="step1-headlight-beam" class="hidden absolute left-[88%] top-1/2 -translate-y-1/2 w-24 h-12 bg-gradient-to-r from-yellow-200/80 to-transparent pointer-events-none" style="clip-path: polygon(0 35%, 100% 0, 100% 100%, 0 65%);"></div>
+            <div id="step1-car-preview" class="w-full h-full transform -scale-x-100 car-idle"></div>
           </div>
         </div>
 
         <!-- 風景と3つのアナログ時計の間：デジタル時計表示 -->
-        <div class="flex justify-center my-0.5 shrink-0">
-          <div class="bg-slate-900 border-4 border-amber-400 rounded-2xl px-5 py-1 sm:px-7 sm:py-1.5 shadow-lg flex items-center gap-2">
-            <span class="text-xs sm:text-sm font-black text-amber-300">しゅっぱつ じこく</span>
-            <div class="bg-slate-950 px-3 py-0.5 rounded-xl border border-slate-700 font-black text-2xl sm:text-4xl tracking-wider flex items-center">
-              <span id="digital-hour" class="text-rose-500">3</span>
-              <span class="text-amber-400 mx-0.5">:</span>
-              <span id="digital-min" class="text-sky-400">00</span>
+        <div class="flex justify-center my-0.5 shrink-0 z-20">
+          <div class="bg-slate-900 border-4 border-amber-400 rounded-2xl px-5 py-1 shadow-lg flex items-center gap-3">
+            <span class="text-[11px] sm:text-xs font-black text-amber-300">しゅっぱつ じこく</span>
+            <div class="font-mono text-2xl sm:text-4xl font-black text-emerald-400 tracking-wider leading-none">
+              <span id="digital-hour">8</span>:<span id="digital-min">00</span>
             </div>
           </div>
         </div>
 
-        <!-- 下部：3つのアナログ時計選択肢（小さいスマホ画面でも3つ横並びで収まるグリッド） -->
-        <div id="clock-choices" class="flex-1 min-h-0 grid grid-cols-3 gap-2 sm:gap-4 items-center justify-items-center w-full max-w-2xl mx-auto py-0.5">
-          <!-- JSで3つのアナログ時計ボタンを生成 -->
+        <!-- 下部：3つのアナログ時計選択肢 -->
+        <div id="clock-choices" class="grid grid-cols-3 gap-2 sm:gap-4 place-items-center w-full max-w-xl mx-auto my-auto shrink-0">
+          <!-- JSで3つの時計ボタンを生成 -->
         </div>
       </section>
 
       <!-- ==========================================
            4. ステップ②：カタカナ・ドライブ（3車線ことば集め）
            ========================================== -->
-      <section id="screen-step2" class="hidden flex-1 flex flex-col justify-between p-2 sm:p-4 bg-emerald-100 overflow-hidden">
-        <!-- 上部：問題ボード（左に大きなイラスト、右に文字スロット）＆直下のコメント欄＆ライフ -->
+      <section id="screen-step2" class="hidden flex-1 flex flex-col justify-between p-2 sm:p-4 bg-gradient-to-b from-emerald-100 to-sky-200 overflow-hidden">
+        <!-- 上部：問題ボード＆コメント欄＆ライフ -->
         <div class="flex flex-col gap-1 shrink-0 z-20">
-          <div class="bg-white/95 rounded-2xl border-2 border-emerald-400 p-2 sm:p-2.5 shadow-sm flex flex-col gap-1.5">
+          <div class="bg-white/95 rounded-2xl border-2 border-emerald-500 p-2 sm:p-2.5 shadow-sm flex flex-col gap-1.5">
             <div class="flex items-center justify-between gap-1.5">
-              <div class="flex items-center gap-1.5">
-                <button onclick="Game.speakStep2Prompt()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-slate-900 w-8 h-8 sm:w-9 sm:h-9 rounded-xl border-b-4 border-amber-600 flex items-center justify-center text-base sm:text-lg shadow shrink-0">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <button onclick="Game.speakStep2Prompt()" class="btn-3d bg-emerald-500 hover:bg-emerald-400 text-white w-8 h-8 sm:w-9 sm:h-9 rounded-xl border-b-4 border-emerald-700 flex items-center justify-center text-base sm:text-lg shrink-0 shadow">
                   🔊
                 </button>
-                <span class="text-xs sm:text-sm font-black text-emerald-800">
-                  ステップ② カタカナ・ドライブ
+                <span class="text-xs sm:text-sm font-black text-emerald-800 truncate">
+                  ステップ② カタカナの みち を えらぼう！
                 </span>
               </div>
-              <div class="flex items-center gap-1.5">
-                <button onclick="Game.openKanaChart()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-2 sm:px-3 py-1 rounded-xl border-b-4 border-sky-700 text-xs sm:text-sm flex items-center gap-1 shadow">
-                  <span>📖</span><span>50おんひょう</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="Game.openKanaChart()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-2 sm:px-2.5 py-1 rounded-xl border-b-4 border-sky-700 text-[11px] sm:text-xs flex items-center gap-1 shadow">
+                  <span>📖</span><span>50おん</span>
                 </button>
-                <button onclick="Game.triggerManualHint(2)" class="btn-3d bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-black px-2 sm:px-3 py-1 rounded-xl border-b-4 border-yellow-500 text-xs sm:text-sm flex items-center gap-1 shadow">
+                <button onclick="Game.triggerManualHint(2)" class="btn-3d bg-yellow-300 hover:bg-yellow-200 text-slate-900 font-black px-2 sm:px-2.5 py-1 rounded-xl border-b-4 border-yellow-500 text-[11px] sm:text-xs flex items-center gap-1 shadow">
                   <span>💡</span><span id="btn-hint-step2-label">ヒント</span>
                 </button>
               </div>
             </div>
 
-            <!-- イラスト（左側・大きめ）＋ 穴埋め文字スロット（右側） -->
-            <div class="flex items-center justify-center gap-2.5 sm:gap-4 bg-emerald-50/80 rounded-xl p-1.5 sm:p-2 border border-emerald-200">
-              <div id="step2-target-icon" class="w-20 h-14 sm:w-28 sm:h-20 bg-white rounded-2xl border-2 border-emerald-300 p-1 flex items-center justify-center shadow-sm shrink-0 transition-transform"></div>
-              <div id="step2-word-slots" class="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
+            <!-- ターゲットイラスト（左側・大きめ表示）＋ 文字スロット（右側） -->
+            <div class="flex items-center justify-center gap-2.5 sm:gap-4 bg-slate-50 rounded-xl p-1.5 sm:p-2 border border-slate-200">
+              <div id="step2-target-icon" class="w-20 h-14 sm:w-28 sm:h-20 bg-white rounded-2xl border-2 border-sky-300 p-1 flex items-center justify-center shadow-sm shrink-0 transition-transform"></div>
+              <div id="step2-word-slots" class="flex items-center justify-center gap-1 sm:gap-1.5 flex-wrap">
                 <!-- JSで文字スロットを生成 -->
               </div>
             </div>
@@ -636,7 +645,7 @@
           <div class="bg-slate-800 rounded-xl py-1.5 px-3 flex items-center gap-2 text-white border-b-2 border-slate-950 shadow-sm">
             <span class="text-sm sm:text-base shrink-0">🛣️</span>
             <span id="step2-feedback" class="text-[11px] sm:text-sm font-black text-amber-300 leading-tight">
-              おなじ カタカナ の みち を えらぼう！
+              おなじ カタカナ の みち を タップ してね！
             </span>
           </div>
 
@@ -651,41 +660,36 @@
           </div>
         </div>
 
-        <!-- 中央〜下部：3車線の道路エリア（下端から上端まで車が走り抜ける） -->
-        <div id="step2-road-arena" class="relative flex-1 min-h-0 w-full max-w-xl mx-auto my-1 bg-slate-700 rounded-3xl border-x-8 border-emerald-500 shadow-2xl overflow-hidden flex flex-col justify-between">
-          <!-- 3車線の白破線アニメーション（車線境界の2本＋路肩ラインを正確に描画） -->
-          <div class="absolute inset-0 pointer-events-none">
-            <div class="absolute inset-y-0 left-1.5 w-1 bg-amber-400/70"></div>
-            <div class="absolute inset-y-0 right-1.5 w-1 bg-amber-400/70"></div>
-            <div class="absolute inset-y-0 left-1/3 -translate-x-1/2 w-1.5 road-lines"></div>
-            <div class="absolute inset-y-0 left-2/3 -translate-x-1/2 w-1.5 road-lines"></div>
+        <!-- 中央〜下部：3車線道路アリーナ（車が下端から上端まで走り抜ける） -->
+        <div id="step2-road-arena" class="relative flex-1 min-h-0 w-full max-w-xl mx-auto my-1 bg-slate-700 rounded-3xl border-x-8 border-amber-400 shadow-2xl overflow-hidden flex flex-col justify-between p-3 sm:p-4">
+          <!-- 車線境界の白破線アニメーション（1/3と2/3の位置のみ） -->
+          <div class="absolute inset-y-0 left-1/3 -translate-x-1/2 w-2 road-lines pointer-events-none opacity-80"></div>
+          <div class="absolute inset-y-0 left-2/3 -translate-x-1/2 w-2 road-lines pointer-events-none opacity-80"></div>
+
+          <!-- レア虹ターボ時の上部バナー -->
+          <div id="step2-rainbow-banner" class="hidden absolute top-24 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-rose-500 via-amber-400 to-sky-500 text-white font-black text-xs sm:text-base px-4 py-1 rounded-full border-2 border-white shadow-xl whitespace-nowrap pop-in pointer-events-none">
+            🌈 レア！ にじいろターボ ！！ ✨
           </div>
 
-          <!-- 上部：3つのカタカナ道路標識ボタン -->
-          <div id="step2-lanes" class="relative z-20 grid grid-cols-3 gap-2 sm:gap-4 justify-items-center pt-3 sm:pt-4 px-2 sm:px-4">
-            <!-- JSで3つの車線ボタンを生成 -->
+          <!-- 上部：3車線のカタカナ標識ボタン -->
+          <div id="step2-lanes" class="relative z-20 grid grid-cols-3 gap-2 sm:gap-4 place-items-center w-full pt-1">
+            <!-- JSで3つの道ボタンを生成 -->
           </div>
 
-          <!-- 下部〜上端まで移動するマイカー（上向き・ターボ炎・爆発エフェクト内蔵） -->
+          <!-- 道路を走るマイカー（下端から上端まで移動） -->
           <div id="player-car-wrapper"
-               style="left: 50%; bottom: 10px; transform: translateX(-50%) rotate(0deg); transition: left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.68s cubic-bezier(0.35, 0, 0.2, 1), opacity 0.22s ease, transform 0.28s ease;"
-               class="absolute z-20 w-16 h-24 sm:w-20 sm:h-28 pointer-events-none flex flex-col items-center">
-            <!-- レア虹ターボ発動バナー -->
-            <div id="step2-rainbow-banner" class="hidden absolute -top-7 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-500 via-amber-400 to-sky-500 text-white font-black text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full border-2 border-white shadow-lg whitespace-nowrap">
-              🌈 レア！にじいろターボ！！✨
-            </div>
-            <!-- マイカー本体 -->
+               style="left: 50%; bottom: 10px; transform: translateX(-50%) rotate(0deg);"
+               class="absolute z-20 w-16 h-24 sm:w-20 sm:h-28 pointer-events-none flex items-center justify-center">
+            <!-- プレイヤー車SVG -->
             <div id="player-car-svg" class="w-full h-full car-idle drop-shadow-xl"></div>
-            <!-- 車体真後ろ中央から噴き出すターボジェット炎 -->
-            <div id="step2-turbo-fx" style="left: 50%;" class="hidden absolute top-[88%] w-12 h-16 sm:w-14 sm:h-20 turbo-flame-anim pointer-events-none"></div>
-            <!-- 間違い時の爆発エフェクト -->
+            <!-- ターボジェット炎エフェクト -->
+            <div id="step2-turbo-fx" class="hidden absolute top-[88%] left-1/2 w-14 h-20 turbo-flame-anim pointer-events-none"></div>
+            <!-- 不正解時のドカーン爆発エフェクト -->
             <div id="step2-explosion" class="hidden absolute -inset-8 flex flex-col items-center justify-center pointer-events-none z-30">
-              <svg viewBox="0 0 120 120" class="w-28 h-28 sm:w-32 sm:h-32 drop-shadow-lg">
-                <polygon points="60,4 73,32 104,18 88,48 116,64 86,76 100,106 70,92 56,116 44,88 14,102 30,72 4,56 34,44 20,14 50,30" fill="#ef4444" stroke="#7f1d1d" stroke-width="4"/>
-                <polygon points="60,18 70,40 94,30 80,52 102,64 78,72 88,94 66,82 56,102 48,80 26,90 38,68 18,56 42,48 32,26 54,38" fill="#f97316"/>
-                <circle cx="60" cy="60" r="22" fill="#fde047"/>
-                <text x="60" y="66" text-anchor="middle" font-size="18" font-weight="900" fill="#7f1d1d">ドカーン!</text>
-              </svg>
+              <div class="text-5xl sm:text-6xl leading-none drop-shadow-lg">💥</div>
+              <div class="bg-rose-600 text-white font-black text-xs sm:text-sm px-2.5 py-0.5 rounded-full border-2 border-yellow-300 shadow-lg -mt-1 whitespace-nowrap">
+                ドカーン！
+              </div>
             </div>
           </div>
         </div>
@@ -894,9 +898,99 @@
             </div>
           </div>
 
+          <!-- テストプレイ確認用：全24車種＆全16行き先の実物デザイン一覧プレビュー（マスクなし） -->
+          <div class="bg-indigo-50 p-3 rounded-2xl border border-indigo-200 flex flex-col gap-2">
+            <div class="text-sm font-black text-indigo-900">🔍 テストプレイ確認（マスクなし一覧）</div>
+            <p class="text-[11px] text-slate-600 leading-tight">
+              ゲーム内に登場する全24車種と全16行き先の一枚絵をロックなしで一覧確認できます。
+            </p>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="Game.openPreviewGallery('cars')" class="btn-3d bg-indigo-500 hover:bg-indigo-400 text-white font-black text-xs py-2 px-2 rounded-xl border-b-4 border-indigo-700 shadow">
+                🚗 全24車種の一覧
+              </button>
+              <button onclick="Game.openPreviewGallery('spots')" class="btn-3d bg-teal-600 hover:bg-teal-500 text-white font-black text-xs py-2 px-2 rounded-xl border-b-4 border-teal-800 shadow">
+                🖼️ 全16行き先の一覧
+              </button>
+            </div>
+          </div>
+
           <button onclick="Game.closeParentSettings()" class="btn-3d w-full bg-sky-500 text-white font-black py-3 rounded-2xl border-b-4 border-sky-700 text-base">
             とじる
           </button>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           8-B. おうちのひと用 パスワード入力モーダル（0314）
+           ========================================== -->
+      <div id="modal-settings-passcode" class="hidden fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div id="passcode-dialog-box" class="w-full max-w-sm bg-white rounded-3xl border-4 border-slate-400 shadow-2xl p-5 flex flex-col items-center gap-3 text-slate-800 pop-in">
+          <div class="w-full flex items-center justify-between border-b-2 border-slate-100 pb-2">
+            <h3 class="text-base sm:text-lg font-black flex items-center gap-1.5 text-slate-800">
+              <span>🔐</span><span>おうちのひと パスワード</span>
+            </h3>
+            <button onclick="Game.closePasscodeModal()" class="text-slate-400 hover:text-slate-600 font-black text-xl px-2">✕</button>
+          </div>
+
+          <p id="passcode-guide-msg" class="text-xs sm:text-sm font-black text-slate-600 text-center">
+            4けたの パスワードを いれてください
+          </p>
+
+          <!-- 4桁の入力表示スロット -->
+          <div id="passcode-slots" class="flex items-center justify-center gap-2.5 my-1">
+            <div class="w-12 h-13 sm:w-13 sm:h-14 rounded-2xl border-4 border-slate-300 bg-slate-100 flex items-center justify-center text-2xl font-black text-slate-800"></div>
+            <div class="w-12 h-13 sm:w-13 sm:h-14 rounded-2xl border-4 border-slate-300 bg-slate-100 flex items-center justify-center text-2xl font-black text-slate-800"></div>
+            <div class="w-12 h-13 sm:w-13 sm:h-14 rounded-2xl border-4 border-slate-300 bg-slate-100 flex items-center justify-center text-2xl font-black text-slate-800"></div>
+            <div class="w-12 h-13 sm:w-13 sm:h-14 rounded-2xl border-4 border-slate-300 bg-slate-100 flex items-center justify-center text-2xl font-black text-slate-800"></div>
+          </div>
+
+          <!-- テンキー（0〜9・クリア・1文字消す） -->
+          <div class="grid grid-cols-3 gap-2 w-full mt-1">
+            <button onclick="Game.inputPasscodeDigit('1')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">1</button>
+            <button onclick="Game.inputPasscodeDigit('2')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">2</button>
+            <button onclick="Game.inputPasscodeDigit('3')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">3</button>
+            <button onclick="Game.inputPasscodeDigit('4')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">4</button>
+            <button onclick="Game.inputPasscodeDigit('5')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">5</button>
+            <button onclick="Game.inputPasscodeDigit('6')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">6</button>
+            <button onclick="Game.inputPasscodeDigit('7')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">7</button>
+            <button onclick="Game.inputPasscodeDigit('8')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">8</button>
+            <button onclick="Game.inputPasscodeDigit('9')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">9</button>
+            <button onclick="Game.clearPasscodeInput()" class="btn-3d bg-rose-100 hover:bg-rose-200 text-rose-700 font-black text-xs sm:text-sm py-2.5 rounded-2xl border-b-4 border-rose-300 shadow-sm">クリア</button>
+            <button onclick="Game.inputPasscodeDigit('0')" class="btn-3d bg-slate-100 hover:bg-sky-100 active:bg-sky-200 text-slate-800 font-black text-xl py-2.5 rounded-2xl border-b-4 border-slate-300 shadow-sm">0</button>
+            <button onclick="Game.backspacePasscodeInput()" class="btn-3d bg-amber-100 hover:bg-amber-200 text-amber-800 font-black text-sm sm:text-base py-2.5 rounded-2xl border-b-4 border-amber-300 shadow-sm">⌫ けす</button>
+          </div>
+
+          <button onclick="Game.closePasscodeModal()" class="btn-3d w-full bg-slate-500 hover:bg-slate-400 text-white font-black py-2.5 rounded-2xl border-b-4 border-slate-700 text-sm mt-1">
+            やめる
+          </button>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           8-C. テストプレイ確認用：全24車種・全16行き先 マスクなし実物一覧モーダル
+           ========================================== -->
+      <div id="modal-preview-gallery" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+        <div class="w-full max-w-3xl h-[92dvh] bg-white rounded-3xl border-4 border-indigo-400 shadow-2xl p-3 sm:p-4 flex flex-col justify-between text-slate-800 pop-in overflow-hidden">
+          <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-slate-200 shrink-0">
+            <h3 id="preview-gallery-title" class="text-base sm:text-xl font-black text-indigo-900">
+              🚗 ゲーム内 実物デザイン一覧
+            </h3>
+            <div class="flex items-center gap-1.5">
+              <button onclick="Game.openPreviewGallery('cars')" class="btn-3d bg-indigo-500 text-white font-black px-2.5 py-1 rounded-xl border-b-2 border-indigo-700 text-xs">
+                🚗 全24車種
+              </button>
+              <button onclick="Game.openPreviewGallery('spots')" class="btn-3d bg-teal-600 text-white font-black px-2.5 py-1 rounded-xl border-b-2 border-teal-800 text-xs">
+                🖼️ 全16行き先
+              </button>
+              <button onclick="Game.closePreviewGallery()" class="btn-3d bg-rose-500 text-white font-black px-3 py-1 rounded-xl border-b-2 border-rose-700 text-xs">
+                ✕ とじる
+              </button>
+            </div>
+          </div>
+
+          <div id="preview-gallery-body" class="flex-1 overflow-y-auto p-2 my-1 min-h-0 bg-slate-100 rounded-2xl border-2 border-slate-200">
+            <!-- JSで全24車種または全16行き先の一枚絵を描画 -->
+          </div>
         </div>
       </div>
 
@@ -4141,6 +4235,8 @@
         maxLives: 3,
         isBusy: false,
         holdTimer: null,
+        settingsHoldTimer: null,
+        passcodeInput: '',
         lastStep1Key: null,
         lastStep2Word: null,
         lastStep3Num: null,
@@ -4397,16 +4493,22 @@
         this.saveState();
         this.updateHeaderUI();
 
-        if (!document.getElementById('screen-title').classList.contains('hidden')) {
+        const titleEl = document.getElementById('screen-title');
+        const garageEl = document.getElementById('screen-garage');
+        const s1El = document.getElementById('screen-step1');
+        const s2El = document.getElementById('screen-step2');
+        const s3El = document.getElementById('screen-step3');
+
+        if (titleEl && !titleEl.classList.contains('hidden')) {
           this.renderTitleScreen();
           Sound.speak(mode === 'easy' ? 'かんたん モード！' : 'しっかり モード！ デラックスの くるま を めざそう！');
-        } else if (!document.getElementById('screen-garage').classList.contains('hidden')) {
+        } else if (garageEl && !garageEl.classList.contains('hidden')) {
           this.renderGarage();
-        } else if (!document.getElementById('screen-step1').classList.contains('hidden')) {
+        } else if (s1El && !s1El.classList.contains('hidden')) {
           this.setupStep1();
-        } else if (!document.getElementById('screen-step2').classList.contains('hidden')) {
+        } else if (s2El && !s2El.classList.contains('hidden')) {
           this.setupStep2();
-        } else if (!document.getElementById('screen-step3').classList.contains('hidden')) {
+        } else if (s3El && !s3El.classList.contains('hidden')) {
           this.setupStep3();
         }
       },
@@ -4819,6 +4921,134 @@
         Sound.speak(car.kana);
       },
 
+      startSettingsHold(event) {
+        if (event && event.cancelable) event.preventDefault();
+        Sound.init();
+        this.cancelSettingsHold();
+
+        const barEl = document.getElementById('hold-bar-settings');
+        if (barEl) {
+          barEl.style.transition = 'width 1.2s linear';
+          barEl.style.width = '100%';
+        }
+
+        const toast = document.getElementById('settings-hold-toast');
+        if (toast) toast.classList.remove('hidden');
+
+        this.state.settingsHoldTimer = setTimeout(() => {
+          this.cancelSettingsHold(true);
+          this.openPasscodeModal();
+        }, 1200);
+      },
+
+      cancelSettingsHold(completed = false) {
+        if (this.state.settingsHoldTimer) {
+          clearTimeout(this.state.settingsHoldTimer);
+          this.state.settingsHoldTimer = null;
+        }
+        const barEl = document.getElementById('hold-bar-settings');
+        if (barEl) {
+          barEl.style.transition = 'none';
+          barEl.style.width = '0%';
+        }
+        const toast = document.getElementById('settings-hold-toast');
+        if (!completed) {
+          setTimeout(() => {
+            if (toast) toast.classList.add('hidden');
+          }, 1400);
+        } else if (toast) {
+          toast.classList.add('hidden');
+        }
+      },
+
+      openPasscodeModal() {
+        Sound.init();
+        this.state.passcodeInput = '';
+        this.renderPasscodeSlots();
+        const msgEl = document.getElementById('passcode-guide-msg');
+        if (msgEl) {
+          msgEl.textContent = '4けたの パスワードを いれてください';
+          msgEl.className = 'text-xs sm:text-sm font-black text-slate-600 text-center';
+        }
+        document.getElementById('modal-settings-passcode').classList.remove('hidden');
+      },
+
+      closePasscodeModal() {
+        this.state.passcodeInput = '';
+        document.getElementById('modal-settings-passcode').classList.add('hidden');
+      },
+
+      renderPasscodeSlots(isError = false) {
+        const container = document.getElementById('passcode-slots');
+        if (!container) return;
+        const len = this.state.passcodeInput.length;
+        let html = '';
+        for (let i = 0; i < 4; i++) {
+          const char = this.state.passcodeInput[i] || '';
+          const active = i === len && !isError;
+          html += `
+            <div class="w-12 h-13 sm:w-14 sm:h-14 rounded-2xl border-4 flex items-center justify-center text-2xl font-black transition-all ${
+              isError
+                ? 'border-rose-500 bg-rose-50 text-rose-600'
+                : char
+                ? 'border-sky-500 bg-sky-50 text-slate-800 scale-105'
+                : active
+                ? 'border-amber-400 bg-amber-50/60 text-slate-800'
+                : 'border-slate-300 bg-slate-100 text-slate-400'
+            }">
+              ${char ? '●' : ''}
+            </div>
+          `;
+        }
+        container.innerHTML = html;
+      },
+
+      inputPasscodeDigit(digit) {
+        Sound.init();
+        if (this.state.passcodeInput.length >= 4) return;
+        this.state.passcodeInput += String(digit);
+        this.renderPasscodeSlots(false);
+
+        if (this.state.passcodeInput.length === 4) {
+          if (this.state.passcodeInput === '0314') {
+            Sound.playCorrect();
+            setTimeout(() => {
+              this.closePasscodeModal();
+              this.openParentSettings();
+            }, 180);
+          } else {
+            Sound.playGentleTryAgain();
+            this.renderPasscodeSlots(true);
+            const msgEl = document.getElementById('passcode-guide-msg');
+            if (msgEl) {
+              msgEl.textContent = '❌ パスワードが ちがいます';
+              msgEl.className = 'text-xs sm:text-sm font-black text-rose-600 text-center';
+            }
+            const box = document.getElementById('passcode-dialog-box');
+            if (box) {
+              box.classList.add('shake-active');
+              setTimeout(() => box.classList.remove('shake-active'), 460);
+            }
+            setTimeout(() => {
+              this.state.passcodeInput = '';
+              this.renderPasscodeSlots(false);
+            }, 650);
+          }
+        }
+      },
+
+      clearPasscodeInput() {
+        Sound.init();
+        this.state.passcodeInput = '';
+        this.renderPasscodeSlots(false);
+      },
+
+      backspacePasscodeInput() {
+        Sound.init();
+        this.state.passcodeInput = this.state.passcodeInput.slice(0, -1);
+        this.renderPasscodeSlots(false);
+      },
+
       openParentSettings() {
         Sound.init();
         this.updateParentSettingsUI();
@@ -4827,6 +5057,74 @@
 
       closeParentSettings() {
         document.getElementById('modal-parent-settings').classList.add('hidden');
+      },
+
+      openPreviewGallery(type) {
+        Sound.init();
+        const modal = document.getElementById('modal-preview-gallery');
+        const titleEl = document.getElementById('preview-gallery-title');
+        const bodyEl = document.getElementById('preview-gallery-body');
+        if (!modal || !bodyEl) return;
+
+        modal.classList.remove('hidden');
+        bodyEl.innerHTML = '';
+
+        if (type === 'cars') {
+          titleEl.textContent = '🚗 ゲーム内 全24車種 実物デザイン一覧（タップで音＆名前）';
+          const grid = document.createElement('div');
+          grid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-2.5';
+          CarCatalog.forEach((car, idx) => {
+            const card = document.createElement('button');
+            card.className = `btn-3d rounded-2xl p-2 flex flex-col items-center justify-between border-4 bg-white ${
+              car.tier === 'hard' ? 'border-amber-400' : 'border-sky-300'
+            } shadow-sm`;
+            card.innerHTML = `
+              <div class="w-full flex items-center justify-between text-[10px] font-black px-1">
+                <span class="bg-slate-800 text-white px-1.5 py-0.5 rounded-full">#${idx + 1}</span>
+                <span class="${car.tier === 'hard' ? 'text-amber-600' : 'text-emerald-600'}">${car.tier === 'hard' ? '👑しっかりDX' : '🌱かんたん'}</span>
+              </div>
+              <div class="flex items-center justify-center gap-2 my-1 w-full">
+                <div class="w-24 h-14 flex items-center justify-center">${getCarSideSVG(car.id, false)}</div>
+                <div class="w-9 h-14 flex items-center justify-center">${getCarTopSVG(car.id, false)}</div>
+              </div>
+              <div class="text-xs font-black text-slate-900 truncate w-full text-center">${car.name}</div>
+            `;
+            card.onclick = () => {
+              Sound.playCarSound(car.soundType);
+              Sound.speak(car.kana);
+            };
+            grid.appendChild(card);
+          });
+          bodyEl.appendChild(grid);
+        } else {
+          titleEl.textContent = '🖼️ ゲーム内 全16行き先 一枚絵デザイン一覧（タップで拡大）';
+          const grid = document.createElement('div');
+          grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3';
+          SugorokuSpots.forEach((spot, idx) => {
+            const card = document.createElement('button');
+            card.className = 'btn-3d rounded-2xl p-2.5 flex flex-col items-center gap-1.5 border-4 border-teal-400 bg-white shadow-sm text-left';
+            card.innerHTML = `
+              <div class="w-full flex items-center justify-between text-xs font-black text-teal-900 px-1">
+                <span>${idx + 1}. ${spot.icon} ${spot.name}</span>
+                <span class="bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full text-[10px]">${spot.step}マス目</span>
+              </div>
+              <div class="w-full h-36 sm:h-40 rounded-xl overflow-hidden border-2 border-sky-300">
+                ${getSpotSceneSVG(spot.id, this.state.selectedCarId)}
+              </div>
+              <div class="w-full text-[11px] font-bold text-slate-600 px-1">${spot.desc}</div>
+            `;
+            card.onclick = () => {
+              this.showSpotArrivalModal(spot, false);
+            };
+            grid.appendChild(card);
+          });
+          bodyEl.appendChild(grid);
+        }
+      },
+
+      closePreviewGallery() {
+        const modal = document.getElementById('modal-preview-gallery');
+        if (modal) modal.classList.add('hidden');
       },
 
       setPenaltyMode(resetOnMistake) {
@@ -4888,7 +5186,8 @@
 
       openKanaChart() {
         Sound.init();
-        if (!document.getElementById('screen-step2').classList.contains('hidden') && this.state.step2) {
+        const step2El = document.getElementById('screen-step2');
+        if (step2El && !step2El.classList.contains('hidden') && this.state.step2) {
           const activeIdx = this.state.step2.targetIndices[this.state.step2.stepCursor];
           const targetKata = this.state.step2.kataChars[activeIdx];
           const isExtra = KanaExtraColumns.some(col => col.cells.some(c => c && c[1] === targetKata));
@@ -4924,7 +5223,8 @@
         let targetKata = null;
         let targetHira = null;
         let targetWordHira = null;
-        if (!document.getElementById('screen-step2').classList.contains('hidden') && this.state.step2) {
+        const step2El = document.getElementById('screen-step2');
+        if (step2El && !step2El.classList.contains('hidden') && this.state.step2) {
           const activeIdx = this.state.step2.targetIndices[this.state.step2.stepCursor];
           targetKata = this.state.step2.kataChars[activeIdx];
           targetHira = this.state.step2.hiraChars[activeIdx];
@@ -5100,12 +5400,18 @@
         const grid = document.getElementById('garage-grid');
         grid.innerHTML = '';
 
-        // 1. カスタムパーツショップ画面
-        if (this.state.garageTab === 'parts') {
-          if (partsHeader) {
+        if (partsHeader) {
+          if (this.state.garageTab === 'parts') {
             partsHeader.classList.remove('hidden');
             partsHeader.classList.add('flex');
+          } else {
+            partsHeader.classList.add('hidden');
+            partsHeader.classList.remove('flex');
           }
+        }
+
+        // 1. カスタムパーツショップ画面
+        if (this.state.garageTab === 'parts') {
           if (subtitleEl) subtitleEl.textContent = 'あつめた ⭐スター で くるま を カッコよく カスタム しよう！';
 
           const car = this.getSelectedCar();
@@ -6527,6 +6833,8 @@
         }
       }
     };
+
+    window.Game = Game;
 
     window.onload = () => {
       Game.init();
