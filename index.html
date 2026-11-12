@@ -348,12 +348,15 @@
           </div>
 
           <!-- おでかけすごろくミニバー（タップでスタンプ帳を開く） -->
-          <button id="title-sugoroku-bar" onclick="Game.openSugorokuModal()" class="btn-3d w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 text-white rounded-2xl border-b-4 border-teal-800 px-3 py-1.5 shadow flex items-center justify-between text-xs sm:text-sm font-black">
+          <button id="title-sugoroku-bar" onclick="Game.openSugorokuModal()" class="btn-3d w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 text-white rounded-2xl border-b-4 border-teal-800 px-3 py-1.5 shadow flex items-center justify-between gap-2 text-xs sm:text-sm font-black">
             <div class="flex items-center gap-1.5 truncate">
               <span class="text-base sm:text-lg">🗺️</span>
               <span id="title-map-next-text" class="truncate">つぎ：ほいくえん（あと 5かい）</span>
             </div>
-            <span class="bg-white/25 px-2 py-0.5 rounded-full text-[10px] sm:text-xs shrink-0">スタンプちょう ▶</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <div id="title-map-dots" class="flex items-center gap-1 bg-slate-900/25 px-2 py-1 rounded-full"></div>
+              <span class="bg-white/25 px-2 py-0.5 rounded-full text-[10px] sm:text-xs">スタンプちょう ▶</span>
+            </div>
           </button>
         </div>
 
@@ -1071,166 +1074,9 @@
       { id: 'disneyland', step: 80, name: 'でぃずにーらんど', icon: '🏰', desc: 'ゆめの おしろに ゴール！ おめでとう！！' }
     ];
 
-    // 各スポット到着時の一枚絵イメージSVG生成（選んだカスタムマイカーが風景の中に登場！）
+    // 各スポット到着時の一枚絵イメージSVG生成（選んだカスタムマイカーが右向きで風景の中に登場！）
     function getSpotSceneSVG(spotId, carId) {
-      const carSVG = getCarSideSVG(carId, true);
-      const scenes = {
-        hoikuen: {
-          sky: '#bae6fd', ground: '#86efac',
-          bg: `<rect x="70" y="34" width="180" height="72" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="4"/>
-               <polygon points="56,38 160,6 264,38" fill="#fb7185" stroke="#e11d48" stroke-width="4" stroke-linejoin="round"/>
-               <circle cx="160" cy="26" r="10" fill="#ffffff" stroke="#e11d48" stroke-width="2.5"/>
-               <text x="160" y="56" text-anchor="middle" font-size="13" font-weight="900" fill="#be185d">ほいくえん</text>
-               <rect x="142" y="70" width="36" height="36" rx="4" fill="#38bdf8" stroke="#0284c7" stroke-width="3"/>
-               <circle cx="40" cy="70" r="22" fill="#4ade80"/><rect x="35" y="88" width="10" height="20" fill="#78350f"/>`
-        },
-        shopping: {
-          sky: '#e0f2fe', ground: '#cbd5e1',
-          bg: `<rect x="40" y="18" width="240" height="88" rx="8" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
-               <rect x="40" y="18" width="240" height="24" rx="6" fill="#ec4899"/>
-               <text x="160" y="35" text-anchor="middle" font-size="13" font-weight="900" fill="#ffffff">SHOPPING MALL</text>
-               <rect x="64" y="52" width="44" height="32" rx="4" fill="#bae6fd" stroke="#0284c7" stroke-width="2.5"/>
-               <rect x="192" y="52" width="44" height="32" rx="4" fill="#bae6fd" stroke="#0284c7" stroke-width="2.5"/>
-               <rect x="132" y="62" width="56" height="44" fill="#38bdf8" stroke="#0369a1" stroke-width="3"/>`
-        },
-        gamecenter: {
-          sky: '#1e1b4b', ground: '#334155',
-          bg: `<rect x="52" y="16" width="216" height="90" rx="10" fill="#312e81" stroke="#facc15" stroke-width="4"/>
-               <rect x="74" y="24" width="172" height="24" rx="6" fill="#f43f5e" stroke="#fde047" stroke-width="2.5"/>
-               <text x="160" y="41" text-anchor="middle" font-size="14" font-weight="900" fill="#fde047">🕹️ GAME CENTER ⭐</text>
-               <rect x="82" y="56" width="38" height="44" rx="4" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
-               <rect x="140" y="56" width="38" height="44" rx="4" fill="#a855f7" stroke="#ffffff" stroke-width="2"/>
-               <rect x="198" y="56" width="38" height="44" rx="4" fill="#4ade80" stroke="#ffffff" stroke-width="2"/>`
-        },
-        bookoff: {
-          sky: '#bae6fd', ground: '#94a3b8',
-          bg: `<rect x="48" y="22" width="224" height="84" rx="6" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="4"/>
-               <rect x="48" y="22" width="224" height="34" rx="4" fill="#facc15" stroke="#ca8a04" stroke-width="3"/>
-               <text x="160" y="45" text-anchor="middle" font-size="18" font-weight="900" fill="#1e3a8a">📚 BOOK・OFF</text>
-               <rect x="80" y="66" width="60" height="40" fill="#bae6fd" stroke="#ffffff" stroke-width="2.5"/>
-               <rect x="176" y="66" width="60" height="40" fill="#bae6fd" stroke="#ffffff" stroke-width="2.5"/>`
-        },
-        kouen: {
-          sky: '#bae6fd', ground: '#86efac',
-          bg: `<circle cx="52" cy="64" r="28" fill="#22c55e"/><rect x="46" y="86" width="12" height="22" fill="#78350f"/>
-               <path d="M180 104 L180 42 L214 42 L256 104" fill="none" stroke="#f43f5e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-               <line x1="180" y1="56" x2="206" y2="56" stroke="#facc15" stroke-width="5"/>
-               <line x1="104" y1="38" x2="152" y2="38" stroke="#ca8a04" stroke-width="6"/>
-               <line x1="108" y1="38" x2="100" y2="104" stroke="#ca8a04" stroke-width="5"/>
-               <line x1="148" y1="38" x2="156" y2="104" stroke="#ca8a04" stroke-width="5"/>
-               <line x1="128" y1="38" x2="128" y2="82" stroke="#475569" stroke-width="3"/>
-               <rect x="116" y="82" width="24" height="6" rx="2" fill="#ef4444"/>`
-        },
-        soccer: {
-          sky: '#7dd3fc', ground: '#22c55e',
-          bg: `<rect x="76" y="34" width="168" height="68" fill="none" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
-               <line x1="76" y1="54" x2="244" y2="54" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 6"/>
-               <line x1="76" y1="74" x2="244" y2="74" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 6"/>
-               <circle cx="230" cy="86" r="16" fill="#ffffff" stroke="#0f172a" stroke-width="3"/>
-               <polygon points="230,78 236,83 234,91 226,91 224,83" fill="#0f172a"/>`
-        },
-        doubutsuen: {
-          sky: '#fef08a', ground: '#bef264',
-          bg: `<path d="M40 104 L40 44 Q100 14 160 44 L160 104" fill="none" stroke="#15803d" stroke-width="7"/>
-               <text x="100" y="42" text-anchor="middle" font-size="12" font-weight="900" fill="#14532d">ZOO どうぶつえん</text>
-               <rect x="216" y="44" width="14" height="60" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
-               <circle cx="224" cy="36" r="14" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
-               <circle cx="176" cy="78" r="22" fill="#ea580c"/><circle cx="176" cy="78" r="15" fill="#fde047"/>`
-        },
-        hakone: {
-          sky: '#bae6fd', ground: '#4ade80',
-          bg: `<polygon points="150,104 215,24 280,104" fill="#38bdf8" stroke="#0284c7" stroke-width="3"/>
-               <polygon points="194,50 215,24 236,50 226,54 215,46 204,54" fill="#ffffff"/>
-               <line x1="20" y1="22" x2="180" y2="54" stroke="#334155" stroke-width="3"/>
-               <rect x="86" y="38" width="32" height="22" rx="4" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
-               <ellipse cx="64" cy="94" rx="34" ry="12" fill="#7dd3fc" stroke="#78350f" stroke-width="4"/>
-               <text x="64" y="82" text-anchor="middle" font-size="14" font-weight="900" fill="#ef4444">♨️ おんせん</text>`
-        },
-        yama: {
-          sky: '#7dd3fc', ground: '#16a34a',
-          bg: `<polygon points="10,106 95,18 180,106" fill="#22c55e" stroke="#15803d" stroke-width="4"/>
-               <polygon points="110,106 205,10 300,106" fill="#15803d" stroke="#14532d" stroke-width="4"/>
-               <polygon points="181,36 205,10 229,36" fill="#ffffff"/>
-               <circle cx="52" cy="28" r="16" fill="#fde047"/>`
-        },
-        suizokukan: {
-          sky: '#0284c7', ground: '#0369a1',
-          bg: `<rect x="24" y="14" width="272" height="90" rx="16" fill="#38bdf8" stroke="#bae6fd" stroke-width="5"/>
-               <path d="M70 56 C86 34 118 34 134 56 C118 52 96 52 70 56 Z" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
-               <ellipse cx="210" cy="48" rx="34" ry="18" fill="#1d4ed8"/>
-               <circle cx="150" cy="30" r="5" fill="#e0f2fe"/><circle cx="164" cy="22" r="7" fill="#e0f2fe"/>`
-        },
-        izu: {
-          sky: '#38bdf8', ground: '#fde047',
-          bg: `<rect x="0" y="72" width="320" height="36" fill="#0284c7"/>
-               <path d="M64 104 Q72 56 60 28" fill="none" stroke="#78350f" stroke-width="8" stroke-linecap="round"/>
-               <path d="M60 28 Q30 22 24 40 M60 28 Q50 8 76 14 M60 28 Q92 20 96 38" fill="none" stroke="#16a34a" stroke-width="7" stroke-linecap="round"/>
-               <circle cx="256" cy="32" r="20" fill="#fde047"/>`
-        },
-        omatsuri: {
-          sky: '#0f172a', ground: '#475569',
-          bg: `<circle cx="84" cy="36" r="24" fill="none" stroke="#fde047" stroke-width="3" stroke-dasharray="4 6"/>
-               <circle cx="84" cy="36" r="12" fill="none" stroke="#f43f5e" stroke-width="3" stroke-dasharray="3 5"/>
-               <circle cx="236" cy="30" r="22" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="4 6"/>
-               <rect x="130" y="52" width="90" height="52" fill="#b45309" stroke="#fde047" stroke-width="3"/>
-               <polygon points="122,52 175,32 228,52" fill="#ef4444" stroke="#ffffff" stroke-width="3"/>
-               <ellipse cx="52" cy="64" rx="10" ry="14" fill="#ef4444" stroke="#fde047" stroke-width="2"/>
-               <ellipse cx="268" cy="64" rx="10" ry="14" fill="#ef4444" stroke="#fde047" stroke-width="2"/>`
-        },
-        yuenchi: {
-          sky: '#bae6fd', ground: '#86efac',
-          bg: `<circle cx="210" cy="54" r="38" fill="none" stroke="#ec4899" stroke-width="5"/>
-               <line x1="210" y1="54" x2="188" y2="104" stroke="#64748b" stroke-width="5"/>
-               <line x1="210" y1="54" x2="232" y2="104" stroke="#64748b" stroke-width="5"/>
-               <circle cx="210" cy="16" r="7" fill="#facc15"/><circle cx="248" cy="54" r="7" fill="#38bdf8"/>
-               <circle cx="172" cy="54" r="7" fill="#4ade80"/><circle cx="210" cy="92" r="7" fill="#f43f5e"/>
-               <path d="M16 94 Q56 24 96 74 T156 44" fill="none" stroke="#f59e0b" stroke-width="5"/>`
-        },
-        kisarazu: {
-          sky: '#38bdf8', ground: '#0284c7',
-          bg: `<line x1="88" y1="18" x2="88" y2="104" stroke="#e2e8f0" stroke-width="10"/>
-               <line x1="232" y1="18" x2="232" y2="104" stroke="#e2e8f0" stroke-width="10"/>
-               <line x1="88" y1="26" x2="20" y2="86" stroke="#cbd5e1" stroke-width="2.5"/>
-               <line x1="88" y1="26" x2="156" y2="86" stroke="#cbd5e1" stroke-width="2.5"/>
-               <line x1="232" y1="26" x2="164" y2="86" stroke="#cbd5e1" stroke-width="2.5"/>
-               <line x1="232" y1="26" x2="300" y2="86" stroke="#cbd5e1" stroke-width="2.5"/>
-               <rect x="0" y="84" width="320" height="12" fill="#64748b"/>`
-        },
-        umi: {
-          sky: '#38bdf8', ground: '#fde68a',
-          bg: `<rect x="0" y="64" width="320" height="32" fill="#0ea5e9"/>
-               <path d="M0 76 Q40 68 80 76 T160 76 T240 76 T320 76" fill="none" stroke="#ffffff" stroke-width="4"/>
-               <line x1="224" y1="104" x2="240" y2="48" stroke="#78350f" stroke-width="5"/>
-               <path d="M196 48 Q240 18 280 54 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="3"/>
-               <circle cx="64" cy="28" r="18" fill="#fde047"/>`
-        },
-        disneyland: {
-          sky: '#1e1b4b', ground: '#4ade80',
-          bg: `<circle cx="64" cy="34" r="22" fill="none" stroke="#fde047" stroke-width="3" stroke-dasharray="4 5"/>
-               <circle cx="256" cy="28" r="24" fill="none" stroke="#f472b6" stroke-width="3" stroke-dasharray="4 5"/>
-               <rect x="108" y="48" width="104" height="58" fill="#e0f2fe" stroke="#38bdf8" stroke-width="3"/>
-               <rect x="138" y="24" width="44" height="82" fill="#bae6fd" stroke="#0284c7" stroke-width="3"/>
-               <polygon points="102,48 120,20 138,48" fill="#2563eb" stroke="#fde047" stroke-width="2.5"/>
-               <polygon points="182,48 200,20 218,48" fill="#2563eb" stroke="#fde047" stroke-width="2.5"/>
-               <polygon points="134,24 160,2 186,24" fill="#1d4ed8" stroke="#fde047" stroke-width="3"/>
-               <path d="M148 106 L148 78 Q160 66 172 78 L172 106 Z" fill="#facc15"/>`
-        }
-      };
-      const sc = scenes[spotId] || scenes.hoikuen;
-      return `
-        <svg viewBox="0 0 320 160" class="w-full h-full">
-          <rect width="320" height="106" fill="${sc.sky}"/>
-          <rect y="102" width="320" height="58" fill="${sc.ground}"/>
-          ${sc.bg}
-          <!-- 手前の道路 -->
-          <rect y="114" width="320" height="40" fill="#334155" stroke="#1e293b" stroke-width="3"/>
-          <line x1="10" y1="134" x2="310" y2="134" stroke="#ffffff" stroke-width="4" stroke-dasharray="18 14"/>
-          <!-- 到着したマイカー（中央左寄りに配置） -->
-          <g transform="translate(26, 72) scale(0.75)">
-            ${carSVG.replace(/<svg[^>]*>|<\/svg>/g, '')}
-          </g>
-        </svg>
-      `;
+      return getSpotPostcardSVG(spotId, carId);
     }
 
     // 車種ごとの横向きタイヤ中心座標・屋根高さ・後部ウィング基準位置を取得
@@ -3549,7 +3395,7 @@
           <circle cx="248" cy="148" r="24" fill="#ffffff" stroke="#0f172a" stroke-width="4"/>
           <polygon points="248,136 258,144 254,156 242,156 238,144" fill="#0f172a"/>
         `,
-        zoo: `
+        doubutsuen: `
           <rect width="360" height="220" fill="#fef08a"/>
           <path d="M0 144 Q180 120 360 144 L360 220 L0 220 Z" fill="#86efac"/>
           <rect x="0" y="168" width="360" height="44" fill="#d97706"/>
@@ -3595,7 +3441,7 @@
           <polygon points="244,158 284,104 324,158" fill="#f97316" stroke="#7c2d12" stroke-width="3.5" stroke-linejoin="round"/>
           <polygon points="270,158 284,124 298,158" fill="#fde047"/>
         `,
-        aquarium: `
+        suizokukan: `
           <rect width="360" height="220" fill="#0c4a6e"/>
           <circle cx="80" cy="46" r="60" fill="#0284c7" opacity="0.35"/>
           <circle cx="260" cy="80" r="85" fill="#0369a1" opacity="0.4"/>
@@ -4665,6 +4511,7 @@
         const steps = this.state.sugorokuSteps || 0;
         const nextSpot = SugorokuSpots.find(s => s.step > steps);
         const textEl = document.getElementById('title-map-next-text');
+        const dotsEl = document.getElementById('title-map-dots');
         if (textEl) {
           if (nextSpot) {
             const rem = nextSpot.step - steps;
@@ -4672,6 +4519,17 @@
           } else {
             textEl.textContent = `🏰 ぜんぶの ばしょ に とうちゃく！（${steps}かい）`;
           }
+        }
+        if (dotsEl) {
+          const subStepsDone = nextSpot ? (steps % STEPS_PER_SPOT) : STEPS_PER_SPOT;
+          let dotsHTML = '';
+          for (let i = 1; i <= STEPS_PER_SPOT; i++) {
+            const filled = i <= subStepsDone;
+            dotsHTML += `<span class="w-2.5 h-2.5 rounded-full border ${
+              filled ? 'bg-amber-300 border-amber-500 shadow-sm scale-110' : 'bg-white/25 border-white/50'
+            }"></span>`;
+          }
+          dotsEl.innerHTML = dotsHTML;
         }
       },
 
@@ -4687,6 +4545,12 @@
         Sound.init();
         this.renderSugorokuModal();
         document.getElementById('modal-sugoroku-map').classList.remove('hidden');
+        setTimeout(() => {
+          const currentEl = document.getElementById('sugoroku-current-spot');
+          if (currentEl) {
+            currentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 80);
       },
 
       closeSugorokuModal() {
@@ -4781,6 +4645,9 @@
 
             const cell = document.createElement('div');
             cell.className = 'relative z-10 flex flex-col items-center';
+            if (isCurrentTarget || (!nextSpot && spot.id === 'disneyland')) {
+              cell.id = 'sugoroku-current-spot';
+            }
 
             // 現在向かっているスポットなら、上にマイカーアイコンを表示
             const carMarkerHTML = (isCurrentTarget && steps > 0) ? `
@@ -5244,17 +5111,17 @@
           });
           return;
         }
-
-        if (partsHeader) {
-          partsHeader.classList.add('hidden');
-          partsHeader.classList.remove('flex');
-        }
-
-        // 2. ことばずかん（全39種）画面
+        // 2. ことばずかん（全100種：見つけた言葉を自動的に上部へまとめて表示）
         if (this.state.garageTab === 'words') {
-          if (subtitleEl) subtitleEl.textContent = 'ステップ②で クリアした ことば が ずかん に あつまるよ！ タップで こえが でるよ！';
+          if (subtitleEl) subtitleEl.textContent = 'ステップ②で クリアした ことば が うえに ならぶよ！ タップで こえが でるよ！';
 
-          WordPool.forEach(w => {
+          const sortedWords = [...WordPool].sort((a, b) => {
+            const aCol = this.state.collectedWords.includes(a.katakana) ? 1 : 0;
+            const bCol = this.state.collectedWords.includes(b.katakana) ? 1 : 0;
+            return bCol - aCol;
+          });
+
+          sortedWords.forEach(w => {
             const isCollected = this.state.collectedWords.includes(w.katakana);
             const card = document.createElement('button');
             card.className = `btn-3d rounded-2xl p-2 flex flex-col items-center justify-between border-4 transition-all ${
@@ -6437,12 +6304,14 @@
         const lockedTierCars = CarCatalog.filter(c => c.tier === currentTier && !this.state.unlockedCars.includes(c.id));
 
         let newlyUnlockedCar = null;
-        if (isFifthClear && lockedTierCars.length > 0) {
-          newlyUnlockedCar = lockedTierCars[0];
-          this.state.unlockedCars.push(newlyUnlockedCar.id);
-          this.state.selectedCarId = newlyUnlockedCar.id;
-        } else if (isFifthClear) {
-          this.state.stars += 2;
+        if (isFifthClear) {
+          if (lockedTierCars.length > 0) {
+            newlyUnlockedCar = lockedTierCars[0];
+            this.state.unlockedCars.push(newlyUnlockedCar.id);
+            this.state.selectedCarId = newlyUnlockedCar.id;
+          } else {
+            this.state.stars += 3;
+          }
         }
 
         this.saveState();
@@ -6453,13 +6322,29 @@
         const rewardTitle = document.getElementById('reward-title');
         const nextBtnText = document.getElementById('reward-next-btn-text');
 
-        // 次の目的地案内テキストを作成
+        // 次の目的地案内テキストと5マス進捗ドットを作成
         const steps = this.state.sugorokuSteps || 0;
         const nextSpot = SugorokuSpots.find(s => s.step > steps);
+        const subStepsDone = newlyReachedSpot ? STEPS_PER_SPOT : (nextSpot ? (steps % STEPS_PER_SPOT) : STEPS_PER_SPOT);
+        let rewardMapDotsHTML = '';
+        for (let d = 1; d <= STEPS_PER_SPOT; d++) {
+          const isCleared = d <= subStepsDone;
+          const isJustAdded = d === subStepsDone;
+          rewardMapDotsHTML += `<span class="w-3 h-3 rounded-full border-2 transition-all ${
+            isJustAdded
+              ? 'bg-amber-400 border-rose-500 scale-125 ring-2 ring-amber-300 animate-bounce'
+              : isCleared
+              ? 'bg-amber-400 border-amber-700'
+              : 'bg-slate-200 border-slate-400'
+          }"></span>`;
+        }
         const sugorokuMiniHTML = this.state.sugorokuEnabled ? `
-          <button onclick="Game.openSugorokuModal()" class="mt-2 w-full bg-teal-50 hover:bg-teal-100 border-2 border-teal-400 rounded-2xl px-3 py-1.5 flex items-center justify-between text-xs font-black text-teal-900">
-            <span>🗺️ ${nextSpot ? `つぎ：${nextSpot.icon}${nextSpot.name}（あと ${nextSpot.step - steps}かい）` : '🏰 でぃずにーらんど とうちゃく済！'}</span>
-            <span class="bg-teal-600 text-white px-2 py-0.5 rounded-full text-[10px]">マップをみる</span>
+          <button onclick="Game.openSugorokuModal()" class="mt-2 w-full bg-teal-50 hover:bg-teal-100 border-2 border-teal-400 rounded-2xl px-3 py-1.5 flex items-center justify-between gap-2 text-xs font-black text-teal-900">
+            <span class="truncate">🗺️ ${nextSpot ? `つぎ：${nextSpot.icon}${nextSpot.name}（あと ${nextSpot.step - steps}かい）` : '🏰 でぃずにーらんど とうちゃく済！'}</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <div class="flex items-center gap-1 bg-white px-2 py-0.5 rounded-full border border-teal-300">${rewardMapDotsHTML}</div>
+              <span class="bg-teal-600 text-white px-2 py-0.5 rounded-full text-[10px]">マップ▶</span>
+            </div>
           </button>
         ` : '';
 
