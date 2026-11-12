@@ -335,15 +335,26 @@
           </button>
         </div>
 
-        <!-- 連続クリアスタンプカード（5回で新車ゲット） -->
-        <div class="bg-white/95 rounded-2xl border-2 border-amber-400 p-2 sm:p-3 shadow-md mb-2 shrink-0">
-          <div class="flex items-center justify-between text-xs sm:text-sm mb-1.5">
-            <span id="title-streak-label" class="text-emerald-700 font-black">🌱 かんたん れんぞくスタンプ</span>
-            <span id="title-streak-remain" class="text-rose-600 font-black text-xs">あと 5かい で 新車ゲット！</span>
+        <!-- 連続クリアスタンプカード（5回で新車ゲット）＆ おでかけマップ進捗バー -->
+        <div class="flex flex-col gap-1.5 mb-2 shrink-0">
+          <div class="bg-white/95 rounded-2xl border-2 border-amber-400 p-2 sm:p-2.5 shadow-md">
+            <div class="flex items-center justify-between text-xs sm:text-sm mb-1">
+              <span id="title-streak-label" class="text-emerald-700 font-black">🌱 かんたん れんぞくスタンプ</span>
+              <span id="title-streak-remain" class="text-rose-600 font-black text-xs">あと 5かい で 新車ゲット！</span>
+            </div>
+            <div id="title-streak-stars" class="flex items-center justify-between gap-1.5 sm:gap-2">
+              <!-- JSで5つのスタンプ枠を生成 -->
+            </div>
           </div>
-          <div id="title-streak-stars" class="flex items-center justify-between gap-1.5 sm:gap-2">
-            <!-- JSで5つのスタンプ枠を生成 -->
-          </div>
+
+          <!-- おでかけすごろくミニバー（タップでスタンプ帳を開く） -->
+          <button id="title-sugoroku-bar" onclick="Game.openSugorokuModal()" class="btn-3d w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 text-white rounded-2xl border-b-4 border-teal-800 px-3 py-1.5 shadow flex items-center justify-between text-xs sm:text-sm font-black">
+            <div class="flex items-center gap-1.5 truncate">
+              <span class="text-base sm:text-lg">🗺️</span>
+              <span id="title-map-next-text" class="truncate">つぎ：ほいくえん（あと 5かい）</span>
+            </div>
+            <span class="bg-white/25 px-2 py-0.5 rounded-full text-[10px] sm:text-xs shrink-0">スタンプちょう ▶</span>
+          </button>
         </div>
 
         <!-- 下部アクションボタン群 -->
@@ -867,8 +878,83 @@
             </button>
           </div>
 
+          <!-- おでかけマップ機能のON/OFF切り替え（前バージョンへワンタップで戻せる設定） -->
+          <div class="bg-teal-50 p-3 rounded-2xl border border-teal-200 flex flex-col gap-2">
+            <div class="text-sm font-black text-teal-900">🗺️ おでかけスタンプちょう（すごろく）</div>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="setting-map-on" onclick="Game.setSugorokuEnabled(true)" class="py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-teal-500 text-white border-teal-700 shadow">
+                つかう（標準）
+              </button>
+              <button id="setting-map-off" onclick="Game.setSugorokuEnabled(false)" class="py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300">
+                つかわない（前版）
+              </button>
+            </div>
+          </div>
+
           <button onclick="Game.closeParentSettings()" class="btn-3d w-full bg-sky-500 text-white font-black py-3 rounded-2xl border-b-4 border-sky-700 text-base">
             とじる
+          </button>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           10. おでかけスタンプちょう（全16箇所すごろくマップ）モーダル
+           ========================================== -->
+      <div id="modal-sugoroku-map" class="hidden fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+        <div class="w-full max-w-3xl h-[92dvh] max-h-[680px] bg-gradient-to-b from-sky-100 to-emerald-100 rounded-3xl border-4 sm:border-8 border-teal-500 shadow-2xl p-3 sm:p-4 flex flex-col justify-between text-slate-800 pop-in overflow-hidden">
+          <div class="flex items-center justify-between gap-2 pb-2 border-b-2 border-teal-300 shrink-0">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl sm:text-3xl">🗺️</span>
+              <div>
+                <h3 class="text-base sm:text-xl font-black text-teal-900 leading-tight">
+                  おでかけ スタンプちょう
+                </h3>
+                <p id="sugoroku-header-status" class="text-[10px] sm:text-xs font-black text-rose-600">
+                  5かい クリアごとに つぎの ばしょへ とうちゃく！（全16かしょ・80マス）
+                </p>
+              </div>
+            </div>
+            <button onclick="Game.closeSugorokuModal()" class="btn-3d bg-rose-500 hover:bg-rose-400 text-white font-black px-3.5 py-1.5 rounded-2xl border-b-4 border-rose-700 text-xs sm:text-sm shadow">
+              ✕ とじる
+            </button>
+          </div>
+
+          <!-- 16スポットのすごろくグリッド -->
+          <div id="sugoroku-spots-grid" class="flex-1 grid grid-cols-4 gap-2 sm:gap-2.5 overflow-y-auto p-1.5 my-1 min-h-0">
+            <!-- JSで全16箇所のスポットカードを生成 -->
+          </div>
+
+          <div class="pt-1 shrink-0 flex items-center justify-between gap-2">
+            <div class="text-[11px] sm:text-xs font-black text-teal-800 bg-white/80 px-3 py-1.5 rounded-xl border border-teal-300">
+              💡 ついた ばしょを タップすると おおきな え が みられるよ！
+            </div>
+            <button onclick="Game.closeSugorokuModal()" class="btn-3d bg-teal-500 hover:bg-teal-400 text-white font-black px-5 py-2 rounded-2xl border-b-4 border-teal-700 text-xs sm:text-sm shadow">
+              とじる
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           11. 行き先到着！一枚絵イメージ表示モーダル（新車獲得より先に表示）
+           ========================================== -->
+      <div id="modal-spot-arrival" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5">
+        <div class="w-full max-w-lg bg-white rounded-3xl border-4 sm:border-8 border-amber-400 shadow-2xl p-4 sm:p-5 flex flex-col items-center text-center gap-2.5 pop-in">
+          <div id="spot-arrival-badge" class="bg-gradient-to-r from-rose-500 via-amber-500 to-sky-500 text-white font-black text-xs sm:text-sm px-4 py-1 rounded-full shadow">
+            🎉 おでかけスポット とうちゃく！ 🎉
+          </div>
+          <h3 id="spot-arrival-title" class="text-2xl sm:text-3xl font-black text-slate-800">
+            「 ほいくえん 」に ついたよ！
+          </h3>
+          <!-- 特大一枚絵イラスト（背景風景＋マイカー） -->
+          <div id="spot-arrival-art" class="w-full h-48 sm:h-60 rounded-2xl border-4 border-sky-300 shadow-inner overflow-hidden bg-sky-100 flex items-center justify-center">
+            <!-- JSでスポット専用一枚絵SVGを描画 -->
+          </div>
+          <p id="spot-arrival-desc" class="text-xs sm:text-sm font-black text-teal-700 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-200 w-full">
+            おともだちと げんきに あそぼう！
+          </p>
+          <button id="btn-spot-arrival-next" onclick="Game.closeSpotArrivalModal()" class="btn-3d w-full bg-rose-500 hover:bg-rose-400 text-white font-black text-base sm:text-xl py-3 rounded-2xl border-b-4 border-rose-700 shadow-xl mt-1">
+            つぎへ すすむ！ ▶
           </button>
         </div>
       </div>
@@ -955,11 +1041,197 @@
 
       /* --- カテゴリD：ターボ＆オーラ（5種） --- */
       { id: 'turbo_fire', category: 'turbo', name: 'ファイア・ターボ', kana: 'ふぁいあ たーぼ', cost: 3, desc: 'まっかな ほのおが ふきだす ターボ！' },
-      { id: 'turbo_thunder', category: 'turbo', name: 'イナズマ・ターボ', kana: 'いなずま たーぼ', cost: 3, desc: 'ビリビリ ひかる カミナリの ターボ！' },
-      { id: 'turbo_bubble', category: 'turbo', name: 'シャボン＆スター', kana: 'しゃぼん すたー たーぼ', cost: 4, desc: 'ほしと シャボンだまが とびだすよ！' },
+      { id: 'turbo_thunder', category: 'turbo', name: 'イナズマ・ターボ', kana: 'いなずま たーぼ', cost: 4, desc: 'ビリビリ ひかる カミナリの ターボ！' },
+      { id: 'turbo_bubble', category: 'turbo', name: 'シャボン＆スター', kana: 'しゃぼん すたー たーぼ', cost: 5, desc: 'ほしと シャボンだまが とびだすよ！' },
       { id: 'aura_neon', category: 'turbo', name: 'ネオン・オーラ', kana: 'ねおん おーら', cost: 5, desc: 'くるま ぜんたいが キラキラ ひかる！' },
       { id: 'turbo_rainbow', category: 'turbo', name: 'にじいろターボ・エンジン', kana: 'にじいろ たーぼ えんじん', cost: 8, desc: 'レアな にじいろターボが まいかい でる！' }
     ];
+    // ※全20パーツの合計コスト ＝ タイヤ16 + ウィング19 + やね15 + ターボ25 ＝ 75スター（75回クリアで全パーツ回収完了 ➔ ＋5回の80回目でディズニーランド到着！）
+
+    /* ============================================================================
+     * 1-A2. おでかけすごろくマップ（全16箇所・各5マス間隔＝トータル80マス）＆一枚絵SVG
+     * ============================================================================ */
+    const STEPS_PER_SPOT = 5; // 1つの行き先につき5回クリア（全16箇所で 5×16＝80回）
+    const SugorokuSpots = [
+      { id: 'hoikuen', step: 5, name: 'ほいくえん', icon: '📛', desc: 'おともだちと げんきに あそぼう！' },
+      { id: 'shopping', step: 10, name: 'しょっぴんぐせんたー', icon: '🛍️', desc: 'おおきな おみせで おかいもの！' },
+      { id: 'gamecenter', step: 15, name: 'げーむせんたー', icon: '🕹️', desc: 'クレーンゲームや くるまゲームが いっぱい！' },
+      { id: 'bookoff', step: 20, name: 'ぶっくおふ', icon: '📚', desc: 'えほん や おもちゃ を さがそう！' },
+      { id: 'kouen', step: 25, name: 'こうえん', icon: '🛝', desc: 'すべりだい と ブランコで あそぼう！' },
+      { id: 'soccer', step: 30, name: 'さっかーぐらうんど', icon: '⚽', desc: 'ひろい しばふで シュート！ゴール！' },
+      { id: 'doubutsuen', step: 35, name: 'どうぶつえん', icon: '🦁', desc: 'ライオンや ゾウさんに あいにいこう！' },
+      { id: 'hakone', step: 40, name: 'はこね', icon: '♨️', desc: 'おんせんと ロープウェイが たのしいね！' },
+      { id: 'yama', step: 45, name: 'やま', icon: '⛰️', desc: 'たかい やまの うえまで ドライブ！' },
+      { id: 'suizokukan', step: 50, name: 'すいぞくかん', icon: '🐬', desc: 'イルカショーと おおきな クジラ！' },
+      { id: 'izu', step: 55, name: 'いず', icon: '🌴', desc: 'きれいな うみと やしのき の みち！' },
+      { id: 'omatsuri', step: 60, name: 'おまつり', icon: '🏮', desc: 'わっしょい！ ちょうちんと うちあげはなび！' },
+      { id: 'yuenchi', step: 65, name: 'ゆうえんち', icon: '🎡', desc: 'おおきな かんらんしゃ と ジェットコースター！' },
+      { id: 'kisarazu', step: 70, name: 'きさらづ', icon: '🌉', desc: 'うみの うえの ながーい はしを わたろう！' },
+      { id: 'umi', step: 75, name: 'うみ', icon: '🏖️', desc: 'すなはまだ！ ぜんぶの パーツも あつまったかな？' },
+      { id: 'disneyland', step: 80, name: 'でぃずにーらんど', icon: '🏰', desc: 'ゆめの おしろに ゴール！ おめでとう！！' }
+    ];
+
+    // 各スポット到着時の一枚絵イメージSVG生成（選んだカスタムマイカーが風景の中に登場！）
+    function getSpotSceneSVG(spotId, carId) {
+      const carSVG = getCarSideSVG(carId, true);
+      const scenes = {
+        hoikuen: {
+          sky: '#bae6fd', ground: '#86efac',
+          bg: `<rect x="70" y="34" width="180" height="72" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="4"/>
+               <polygon points="56,38 160,6 264,38" fill="#fb7185" stroke="#e11d48" stroke-width="4" stroke-linejoin="round"/>
+               <circle cx="160" cy="26" r="10" fill="#ffffff" stroke="#e11d48" stroke-width="2.5"/>
+               <text x="160" y="56" text-anchor="middle" font-size="13" font-weight="900" fill="#be185d">ほいくえん</text>
+               <rect x="142" y="70" width="36" height="36" rx="4" fill="#38bdf8" stroke="#0284c7" stroke-width="3"/>
+               <circle cx="40" cy="70" r="22" fill="#4ade80"/><rect x="35" y="88" width="10" height="20" fill="#78350f"/>`
+        },
+        shopping: {
+          sky: '#e0f2fe', ground: '#cbd5e1',
+          bg: `<rect x="40" y="18" width="240" height="88" rx="8" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
+               <rect x="40" y="18" width="240" height="24" rx="6" fill="#ec4899"/>
+               <text x="160" y="35" text-anchor="middle" font-size="13" font-weight="900" fill="#ffffff">SHOPPING MALL</text>
+               <rect x="64" y="52" width="44" height="32" rx="4" fill="#bae6fd" stroke="#0284c7" stroke-width="2.5"/>
+               <rect x="192" y="52" width="44" height="32" rx="4" fill="#bae6fd" stroke="#0284c7" stroke-width="2.5"/>
+               <rect x="132" y="62" width="56" height="44" fill="#38bdf8" stroke="#0369a1" stroke-width="3"/>`
+        },
+        gamecenter: {
+          sky: '#1e1b4b', ground: '#334155',
+          bg: `<rect x="52" y="16" width="216" height="90" rx="10" fill="#312e81" stroke="#facc15" stroke-width="4"/>
+               <rect x="74" y="24" width="172" height="24" rx="6" fill="#f43f5e" stroke="#fde047" stroke-width="2.5"/>
+               <text x="160" y="41" text-anchor="middle" font-size="14" font-weight="900" fill="#fde047">🕹️ GAME CENTER ⭐</text>
+               <rect x="82" y="56" width="38" height="44" rx="4" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
+               <rect x="140" y="56" width="38" height="44" rx="4" fill="#a855f7" stroke="#ffffff" stroke-width="2"/>
+               <rect x="198" y="56" width="38" height="44" rx="4" fill="#4ade80" stroke="#ffffff" stroke-width="2"/>`
+        },
+        bookoff: {
+          sky: '#bae6fd', ground: '#94a3b8',
+          bg: `<rect x="48" y="22" width="224" height="84" rx="6" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="4"/>
+               <rect x="48" y="22" width="224" height="34" rx="4" fill="#facc15" stroke="#ca8a04" stroke-width="3"/>
+               <text x="160" y="45" text-anchor="middle" font-size="18" font-weight="900" fill="#1e3a8a">📚 BOOK・OFF</text>
+               <rect x="80" y="66" width="60" height="40" fill="#bae6fd" stroke="#ffffff" stroke-width="2.5"/>
+               <rect x="176" y="66" width="60" height="40" fill="#bae6fd" stroke="#ffffff" stroke-width="2.5"/>`
+        },
+        kouen: {
+          sky: '#bae6fd', ground: '#86efac',
+          bg: `<circle cx="52" cy="64" r="28" fill="#22c55e"/><rect x="46" y="86" width="12" height="22" fill="#78350f"/>
+               <path d="M180 104 L180 42 L214 42 L256 104" fill="none" stroke="#f43f5e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+               <line x1="180" y1="56" x2="206" y2="56" stroke="#facc15" stroke-width="5"/>
+               <line x1="104" y1="38" x2="152" y2="38" stroke="#ca8a04" stroke-width="6"/>
+               <line x1="108" y1="38" x2="100" y2="104" stroke="#ca8a04" stroke-width="5"/>
+               <line x1="148" y1="38" x2="156" y2="104" stroke="#ca8a04" stroke-width="5"/>
+               <line x1="128" y1="38" x2="128" y2="82" stroke="#475569" stroke-width="3"/>
+               <rect x="116" y="82" width="24" height="6" rx="2" fill="#ef4444"/>`
+        },
+        soccer: {
+          sky: '#7dd3fc', ground: '#22c55e',
+          bg: `<rect x="76" y="34" width="168" height="68" fill="none" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+               <line x1="76" y1="54" x2="244" y2="54" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 6"/>
+               <line x1="76" y1="74" x2="244" y2="74" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 6"/>
+               <circle cx="230" cy="86" r="16" fill="#ffffff" stroke="#0f172a" stroke-width="3"/>
+               <polygon points="230,78 236,83 234,91 226,91 224,83" fill="#0f172a"/>`
+        },
+        doubutsuen: {
+          sky: '#fef08a', ground: '#bef264',
+          bg: `<path d="M40 104 L40 44 Q100 14 160 44 L160 104" fill="none" stroke="#15803d" stroke-width="7"/>
+               <text x="100" y="42" text-anchor="middle" font-size="12" font-weight="900" fill="#14532d">ZOO どうぶつえん</text>
+               <rect x="216" y="44" width="14" height="60" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
+               <circle cx="224" cy="36" r="14" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
+               <circle cx="176" cy="78" r="22" fill="#ea580c"/><circle cx="176" cy="78" r="15" fill="#fde047"/>`
+        },
+        hakone: {
+          sky: '#bae6fd', ground: '#4ade80',
+          bg: `<polygon points="150,104 215,24 280,104" fill="#38bdf8" stroke="#0284c7" stroke-width="3"/>
+               <polygon points="194,50 215,24 236,50 226,54 215,46 204,54" fill="#ffffff"/>
+               <line x1="20" y1="22" x2="180" y2="54" stroke="#334155" stroke-width="3"/>
+               <rect x="86" y="38" width="32" height="22" rx="4" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+               <ellipse cx="64" cy="94" rx="34" ry="12" fill="#7dd3fc" stroke="#78350f" stroke-width="4"/>
+               <text x="64" y="82" text-anchor="middle" font-size="14" font-weight="900" fill="#ef4444">♨️ おんせん</text>`
+        },
+        yama: {
+          sky: '#7dd3fc', ground: '#16a34a',
+          bg: `<polygon points="10,106 95,18 180,106" fill="#22c55e" stroke="#15803d" stroke-width="4"/>
+               <polygon points="110,106 205,10 300,106" fill="#15803d" stroke="#14532d" stroke-width="4"/>
+               <polygon points="181,36 205,10 229,36" fill="#ffffff"/>
+               <circle cx="52" cy="28" r="16" fill="#fde047"/>`
+        },
+        suizokukan: {
+          sky: '#0284c7', ground: '#0369a1',
+          bg: `<rect x="24" y="14" width="272" height="90" rx="16" fill="#38bdf8" stroke="#bae6fd" stroke-width="5"/>
+               <path d="M70 56 C86 34 118 34 134 56 C118 52 96 52 70 56 Z" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+               <ellipse cx="210" cy="48" rx="34" ry="18" fill="#1d4ed8"/>
+               <circle cx="150" cy="30" r="5" fill="#e0f2fe"/><circle cx="164" cy="22" r="7" fill="#e0f2fe"/>`
+        },
+        izu: {
+          sky: '#38bdf8', ground: '#fde047',
+          bg: `<rect x="0" y="72" width="320" height="36" fill="#0284c7"/>
+               <path d="M64 104 Q72 56 60 28" fill="none" stroke="#78350f" stroke-width="8" stroke-linecap="round"/>
+               <path d="M60 28 Q30 22 24 40 M60 28 Q50 8 76 14 M60 28 Q92 20 96 38" fill="none" stroke="#16a34a" stroke-width="7" stroke-linecap="round"/>
+               <circle cx="256" cy="32" r="20" fill="#fde047"/>`
+        },
+        omatsuri: {
+          sky: '#0f172a', ground: '#475569',
+          bg: `<circle cx="84" cy="36" r="24" fill="none" stroke="#fde047" stroke-width="3" stroke-dasharray="4 6"/>
+               <circle cx="84" cy="36" r="12" fill="none" stroke="#f43f5e" stroke-width="3" stroke-dasharray="3 5"/>
+               <circle cx="236" cy="30" r="22" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="4 6"/>
+               <rect x="130" y="52" width="90" height="52" fill="#b45309" stroke="#fde047" stroke-width="3"/>
+               <polygon points="122,52 175,32 228,52" fill="#ef4444" stroke="#ffffff" stroke-width="3"/>
+               <ellipse cx="52" cy="64" rx="10" ry="14" fill="#ef4444" stroke="#fde047" stroke-width="2"/>
+               <ellipse cx="268" cy="64" rx="10" ry="14" fill="#ef4444" stroke="#fde047" stroke-width="2"/>`
+        },
+        yuenchi: {
+          sky: '#bae6fd', ground: '#86efac',
+          bg: `<circle cx="210" cy="54" r="38" fill="none" stroke="#ec4899" stroke-width="5"/>
+               <line x1="210" y1="54" x2="188" y2="104" stroke="#64748b" stroke-width="5"/>
+               <line x1="210" y1="54" x2="232" y2="104" stroke="#64748b" stroke-width="5"/>
+               <circle cx="210" cy="16" r="7" fill="#facc15"/><circle cx="248" cy="54" r="7" fill="#38bdf8"/>
+               <circle cx="172" cy="54" r="7" fill="#4ade80"/><circle cx="210" cy="92" r="7" fill="#f43f5e"/>
+               <path d="M16 94 Q56 24 96 74 T156 44" fill="none" stroke="#f59e0b" stroke-width="5"/>`
+        },
+        kisarazu: {
+          sky: '#38bdf8', ground: '#0284c7',
+          bg: `<line x1="88" y1="18" x2="88" y2="104" stroke="#e2e8f0" stroke-width="10"/>
+               <line x1="232" y1="18" x2="232" y2="104" stroke="#e2e8f0" stroke-width="10"/>
+               <line x1="88" y1="26" x2="20" y2="86" stroke="#cbd5e1" stroke-width="2.5"/>
+               <line x1="88" y1="26" x2="156" y2="86" stroke="#cbd5e1" stroke-width="2.5"/>
+               <line x1="232" y1="26" x2="164" y2="86" stroke="#cbd5e1" stroke-width="2.5"/>
+               <line x1="232" y1="26" x2="300" y2="86" stroke="#cbd5e1" stroke-width="2.5"/>
+               <rect x="0" y="84" width="320" height="12" fill="#64748b"/>`
+        },
+        umi: {
+          sky: '#38bdf8', ground: '#fde68a',
+          bg: `<rect x="0" y="64" width="320" height="32" fill="#0ea5e9"/>
+               <path d="M0 76 Q40 68 80 76 T160 76 T240 76 T320 76" fill="none" stroke="#ffffff" stroke-width="4"/>
+               <line x1="224" y1="104" x2="240" y2="48" stroke="#78350f" stroke-width="5"/>
+               <path d="M196 48 Q240 18 280 54 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="3"/>
+               <circle cx="64" cy="28" r="18" fill="#fde047"/>`
+        },
+        disneyland: {
+          sky: '#1e1b4b', ground: '#4ade80',
+          bg: `<circle cx="64" cy="34" r="22" fill="none" stroke="#fde047" stroke-width="3" stroke-dasharray="4 5"/>
+               <circle cx="256" cy="28" r="24" fill="none" stroke="#f472b6" stroke-width="3" stroke-dasharray="4 5"/>
+               <rect x="108" y="48" width="104" height="58" fill="#e0f2fe" stroke="#38bdf8" stroke-width="3"/>
+               <rect x="138" y="24" width="44" height="82" fill="#bae6fd" stroke="#0284c7" stroke-width="3"/>
+               <polygon points="102,48 120,20 138,48" fill="#2563eb" stroke="#fde047" stroke-width="2.5"/>
+               <polygon points="182,48 200,20 218,48" fill="#2563eb" stroke="#fde047" stroke-width="2.5"/>
+               <polygon points="134,24 160,2 186,24" fill="#1d4ed8" stroke="#fde047" stroke-width="3"/>
+               <path d="M148 106 L148 78 Q160 66 172 78 L172 106 Z" fill="#facc15"/>`
+        }
+      };
+      const sc = scenes[spotId] || scenes.hoikuen;
+      return `
+        <svg viewBox="0 0 320 160" class="w-full h-full">
+          <rect width="320" height="106" fill="${sc.sky}"/>
+          <rect y="102" width="320" height="58" fill="${sc.ground}"/>
+          ${sc.bg}
+          <!-- 手前の道路 -->
+          <rect y="114" width="320" height="40" fill="#334155" stroke="#1e293b" stroke-width="3"/>
+          <line x1="10" y1="134" x2="310" y2="134" stroke="#ffffff" stroke-width="4" stroke-dasharray="18 14"/>
+          <!-- 到着したマイカー（中央左寄りに配置） -->
+          <g transform="translate(26, 72) scale(0.75)">
+            ${carSVG.replace(/<svg[^>]*>|<\/svg>/g, '')}
+          </g>
+        </svg>
+      `;
+    }
 
     // 車種ごとの横向きタイヤ中心座標・屋根高さ・後部ウィング基準位置を取得
     function getCarSideGeometry(carId) {
@@ -3143,6 +3415,300 @@
     ];
 
     /* ============================================================================
+     * 1-D. [BEGIN SUGOROKU MAP MODULE] おでかけすごろく16箇所データ＆一枚絵SVG
+     * ============================================================================ */
+    const SUGOROKU_STEPS_PER_SPOT = 2; // 2マス進むごとに次の目的地へ到着（テンポ重視）
+
+    const SugorokuDestinations = [
+      { id: 'hoikuen', stepOrder: 1, name: 'ほいくえん', icon: '📛', desc: '先生や おともだちと いっぱい あそぼう！' },
+      { id: 'shopping', stepOrder: 2, name: 'しょっぴんぐせんたー', icon: '🛍️', desc: 'おおきな おみせで おかいもの！ カートに のろう！' },
+      { id: 'gamecenter', stepOrder: 3, name: 'げーむせんたー', icon: '🕹️', desc: 'クレーンゲームや のりものが いっぱい！' },
+      { id: 'bookoff', stepOrder: 4, name: 'ぶっくおふ', icon: '📚', desc: 'おもしろい えほん や おもちゃを さがそう！' },
+      { id: 'kouen', stepOrder: 5, name: 'こうえん', icon: '🛝', desc: 'ながい すべりだいや ブランコで あそぼう！' },
+      { id: 'soccer', stepOrder: 6, name: 'さっかーぐらうんど', icon: '⚽', desc: 'ひろい しばふで ゴールにむかって シュート！' },
+      { id: 'zoo', stepOrder: 7, name: 'どうぶつえん', icon: '🦁', desc: 'ライオンさんや キリンさんに あいに いこう！' },
+      { id: 'hakone', stepOrder: 8, name: 'はこね', icon: '♨️', desc: 'かいぞくせんと ロープウェイ！ 富士山も みえるよ！' },
+      { id: 'yama', stepOrder: 9, name: 'やま', icon: '⛰️', desc: 'きれいな くうきと テントで キャンプだ！' },
+      { id: 'aquarium', stepOrder: 10, name: 'すいぞくかん', icon: '🐬', desc: 'おおきな ジンベエザメと イルカショー！' },
+      { id: 'izu', stepOrder: 11, name: 'いず', icon: '🍊', desc: 'あおい うみと ヤシのき！ ドライブ さいこう！' },
+      { id: 'omatsuri', stepOrder: 12, name: 'おまつり', icon: '🏮', desc: 'たいこの おと と きれいな 打ち上げ花火！' },
+      { id: 'yuenchi', stepOrder: 13, name: 'ゆうえんち', icon: '🎡', desc: 'おおきな かんらんしゃ と ジェットコースター！' },
+      { id: 'kisarazu', stepOrder: 14, name: 'きさらづ', icon: '🌉', desc: 'うみの うえの ながーい はしを わたって とうちゃく！' },
+      { id: 'umi', stepOrder: 15, name: 'うみ', icon: '🏖️', desc: 'キラキラの ビーチで なみあそび！' },
+      { id: 'disneyland', stepOrder: 16, name: 'でぃずにーらんど', icon: '🏰', desc: 'ゆめと まほうの おしろへ ようこそ！ ゴールおめでとう！' }
+    ];
+
+    // 16箇所それぞれの「一枚絵イメージ（背景＋建物の描き込み＋マイカー）」SVGを生成
+    function getSpotPostcardSVG(spotId, carId) {
+      const carSvg = getCarSideSVG(carId || 'patrol', true);
+      const carLayer = `
+        <g transform="translate(26, 128) scale(0.58)">
+          <g transform="translate(180, 0) scale(-1, 1)">
+            ${carSvg.replace(/<svg[^>]*>|<\/svg>/g, '')}
+          </g>
+        </g>
+      `;
+
+      const scenes = {
+        hoikuen: `
+          <rect width="360" height="220" fill="#bae6fd"/>
+          <circle cx="310" cy="40" r="22" fill="#fde047"/>
+          <rect x="0" y="150" width="360" height="70" fill="#bbf7d0"/>
+          <rect x="0" y="176" width="360" height="36" fill="#64748b"/>
+          <line x1="0" y1="194" x2="360" y2="194" stroke="#ffffff" stroke-width="3" stroke-dasharray="16 12"/>
+          <!-- 保育園の園舎 -->
+          <polygon points="120,70 200,32 280,70" fill="#f43f5e" stroke="#881337" stroke-width="4" stroke-linejoin="round"/>
+          <rect x="132" y="70" width="136" height="82" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="4"/>
+          <circle cx="200" cy="56" r="11" fill="#ffffff" stroke="#0f172a" stroke-width="2.5"/>
+          <line x1="200" y1="56" x2="200" y2="49" stroke="#0f172a" stroke-width="2"/>
+          <line x1="200" y1="56" x2="206" y2="56" stroke="#e11d48" stroke-width="2"/>
+          <rect x="148" y="86" width="28" height="26" rx="4" fill="#38bdf8" stroke="#0369a1" stroke-width="3"/>
+          <rect x="224" y="86" width="28" height="26" rx="4" fill="#38bdf8" stroke="#0369a1" stroke-width="3"/>
+          <rect x="184" y="108" width="32" height="44" rx="4" fill="#fb923c" stroke="#9a3412" stroke-width="3"/>
+          <!-- すべり台とチューリップ -->
+          <path d="M292 150 L292 106 L310 106 L344 150" fill="none" stroke="#facc15" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="56" cy="144" r="8" fill="#f43f5e"/><circle cx="76" cy="144" r="8" fill="#facc15"/>
+        `,
+        shopping: `
+          <rect width="360" height="220" fill="#e0f2fe"/>
+          <rect x="0" y="156" width="360" height="64" fill="#475569"/>
+          <line x1="0" y1="188" x2="360" y2="188" stroke="#ffffff" stroke-width="3" stroke-dasharray="16 12"/>
+          <!-- 大型ショッピングモール -->
+          <rect x="74" y="42" width="256" height="114" rx="10" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
+          <rect x="74" y="42" width="256" height="30" rx="8" fill="#ec4899"/>
+          <text x="202" y="63" text-anchor="middle" font-size="17" font-weight="900" fill="#ffffff">SHOPPING CENTER</text>
+          <rect x="92" y="82" width="60" height="40" rx="6" fill="#bae6fd" stroke="#0284c7" stroke-width="3"/>
+          <rect x="172" y="82" width="60" height="74" rx="6" fill="#38bdf8" stroke="#0369a1" stroke-width="3"/>
+          <rect x="252" y="82" width="60" height="40" rx="6" fill="#bae6fd" stroke="#0284c7" stroke-width="3"/>
+          <!-- カラフルなバルーン -->
+          <circle cx="44" cy="64" r="13" fill="#f43f5e"/><line x1="44" y1="77" x2="52" y2="110" stroke="#64748b" stroke-width="2"/>
+          <circle cx="62" cy="50" r="12" fill="#facc15"/><line x1="62" y1="62" x2="52" y2="110" stroke="#64748b" stroke-width="2"/>
+        `,
+        gamecenter: `
+          <rect width="360" height="220" fill="#1e1b4b"/>
+          <circle cx="50" cy="40" r="3" fill="#fde047"/><circle cx="320" cy="50" r="4" fill="#f472b6"/>
+          <rect x="0" y="160" width="360" height="60" fill="#334155"/>
+          <!-- ゲームセンターのネオンビル＆巨大UFOキャッチャー -->
+          <rect x="86" y="24" width="236" height="136" rx="12" fill="#312e81" stroke="#38bdf8" stroke-width="4"/>
+          <rect x="110" y="34" width="188" height="28" rx="8" fill="#f43f5e" stroke="#fde047" stroke-width="3"/>
+          <text x="204" y="54" text-anchor="middle" font-size="18" font-weight="900" fill="#fde047">★ GAME CENTER ★</text>
+          <!-- クレーンゲーム窓 -->
+          <rect x="114" y="72" width="82" height="74" rx="8" fill="#e0f2fe" stroke="#facc15" stroke-width="3"/>
+          <line x1="155" y1="72" x2="155" y2="94" stroke="#475569" stroke-width="4"/>
+          <path d="M143 104 Q155 90 167 104" fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="155" cy="126" r="14" fill="#fb923c" stroke="#7c2d12" stroke-width="2.5"/>
+          <!-- 太鼓＆アーケード筐体 -->
+          <rect x="214" y="72" width="80" height="74" rx="8" fill="#fef08a" stroke="#ca8a04" stroke-width="3"/>
+          <circle cx="254" cy="110" r="22" fill="#ef4444" stroke="#ffffff" stroke-width="4"/>
+        `,
+        bookoff: `
+          <rect width="360" height="220" fill="#bae6fd"/>
+          <rect x="0" y="158" width="360" height="62" fill="#475569"/>
+          <line x1="0" y1="188" x2="360" y2="188" stroke="#ffffff" stroke-width="3" stroke-dasharray="16 12"/>
+          <!-- ブックオフ風店舗（黄色と青の看板） -->
+          <rect x="84" y="36" width="244" height="122" rx="8" fill="#ffffff" stroke="#1e3a8a" stroke-width="4"/>
+          <rect x="84" y="36" width="244" height="44" rx="6" fill="#facc15" stroke="#1e3a8a" stroke-width="4"/>
+          <rect x="96" y="44" width="128" height="28" rx="4" fill="#1d4ed8"/>
+          <text x="160" y="64" text-anchor="middle" font-size="18" font-weight="900" fill="#facc15">BOOK・OFF</text>
+          <text x="274" y="64" text-anchor="middle" font-size="14" font-weight="900" fill="#1e3a8a">本・おもちゃ</text>
+          <!-- 本とミニカーのディスプレイ窓 -->
+          <rect x="108" y="92" width="86" height="52" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+          <rect x="120" y="106" width="14" height="30" fill="#ef4444"/><rect x="138" y="102" width="14" height="34" fill="#22c55e"/><rect x="156" y="108" width="14" height="28" fill="#f59e0b"/>
+          <rect x="214" y="92" width="90" height="52" rx="4" fill="#fef3c7" stroke="#d97706" stroke-width="3"/>
+          <circle cx="258" cy="118" r="14" fill="#f43f5e"/>
+        `,
+        kouen: `
+          <rect width="360" height="220" fill="#7dd3fc"/>
+          <circle cx="60" cy="42" r="22" fill="#fde047"/>
+          <path d="M0 140 Q180 110 360 140 L360 220 L0 220 Z" fill="#4ade80"/>
+          <rect x="0" y="168" width="360" height="42" fill="#fde68a"/>
+          <!-- 大きな木と噴水・ブランコ -->
+          <rect x="286" y="90" width="18" height="60" fill="#78350f"/>
+          <circle cx="295" cy="74" r="34" fill="#16a34a"/><circle cx="275" cy="86" r="24" fill="#22c55e"/><circle cx="315" cy="86" r="24" fill="#22c55e"/>
+          <!-- ブランコ -->
+          <path d="M150 148 L166 82 L224 82 L240 148" fill="none" stroke="#ef4444" stroke-width="5" stroke-linejoin="round"/>
+          <line x1="182" y1="82" x2="182" y2="128" stroke="#334155" stroke-width="2.5"/>
+          <line x1="208" y1="82" x2="208" y2="128" stroke="#334155" stroke-width="2.5"/>
+          <rect x="174" y="128" width="16" height="5" rx="2" fill="#facc15"/>
+          <rect x="200" y="128" width="16" height="5" rx="2" fill="#facc15"/>
+        `,
+        soccer: `
+          <rect width="360" height="220" fill="#38bdf8"/>
+          <rect x="0" y="110" width="360" height="110" fill="#22c55e"/>
+          <rect x="0" y="126" width="360" height="18" fill="#16a34a"/>
+          <rect x="0" y="162" width="360" height="18" fill="#16a34a"/>
+          <!-- サッカーゴールと大きなボール -->
+          <rect x="136" y="54" width="168" height="72" fill="none" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+          <line x1="156" y1="54" x2="156" y2="126" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="186" y1="54" x2="186" y2="126" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="216" y1="54" x2="216" y2="126" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="246" y1="54" x2="246" y2="126" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="276" y1="54" x2="276" y2="126" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="136" y1="78" x2="304" y2="78" stroke="#e2e8f0" stroke-width="2"/>
+          <line x1="136" y1="102" x2="304" y2="102" stroke="#e2e8f0" stroke-width="2"/>
+          <circle cx="248" cy="148" r="24" fill="#ffffff" stroke="#0f172a" stroke-width="4"/>
+          <polygon points="248,136 258,144 254,156 242,156 238,144" fill="#0f172a"/>
+        `,
+        zoo: `
+          <rect width="360" height="220" fill="#fef08a"/>
+          <path d="M0 144 Q180 120 360 144 L360 220 L0 220 Z" fill="#86efac"/>
+          <rect x="0" y="168" width="360" height="44" fill="#d97706"/>
+          <!-- ZOOゲートとキリン・ライオン -->
+          <path d="M116 150 L116 58 Q200 22 284 58 L284 150" fill="none" stroke="#15803d" stroke-width="10" stroke-linecap="round"/>
+          <rect x="152" y="34" width="96" height="30" rx="10" fill="#facc15" stroke="#78350f" stroke-width="3.5"/>
+          <text x="200" y="55" text-anchor="middle" font-size="20" font-weight="900" fill="#78350f">ZOO</text>
+          <!-- キリン -->
+          <rect x="298" y="88" width="16" height="62" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
+          <circle cx="306" cy="78" r="16" fill="#facc15" stroke="#854d0e" stroke-width="3"/>
+          <circle cx="302" cy="74" r="3" fill="#0f172a"/>
+          <!-- ライオン -->
+          <circle cx="204" cy="120" r="26" fill="#ea580c" stroke="#7c2d12" stroke-width="3" stroke-dasharray="10 4"/>
+          <circle cx="204" cy="120" r="18" fill="#facc15"/>
+          <circle cx="198" cy="116" r="3" fill="#0f172a"/><circle cx="210" cy="116" r="3" fill="#0f172a"/>
+        `,
+        hakone: `
+          <rect width="360" height="220" fill="#7dd3fc"/>
+          <!-- 富士山 -->
+          <polygon points="90,140 175,38 225,38 310,140" fill="#3b82f6" stroke="#1e3a8a" stroke-width="3"/>
+          <polygon points="151,66 175,38 225,38 249,66 232,72 215,62 200,74 185,62 168,72" fill="#ffffff"/>
+          <!-- 芦ノ湖と赤い鳥居・ロープウェイ -->
+          <rect x="0" y="136" width="360" height="40" fill="#0284c7"/>
+          <rect x="0" y="170" width="360" height="50" fill="#64748b"/>
+          <line x1="20" y1="24" x2="340" y2="68" stroke="#334155" stroke-width="2.5"/>
+          <rect x="260" y="54" width="34" height="24" rx="5" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+          <!-- 箱根の鳥居 -->
+          <rect x="292" y="102" width="8" height="44" fill="#ef4444"/>
+          <rect x="324" y="102" width="8" height="44" fill="#ef4444"/>
+          <rect x="282" y="96" width="60" height="8" rx="3" fill="#ef4444"/>
+          <rect x="288" y="110" width="48" height="5" fill="#ef4444"/>
+        `,
+        yama: `
+          <rect width="360" height="220" fill="#bae6fd"/>
+          <circle cx="308" cy="40" r="22" fill="#fde047"/>
+          <!-- 連なる緑の山々 -->
+          <polygon points="-20,160 85,48 190,160" fill="#16a34a" stroke="#14532d" stroke-width="3"/>
+          <polygon points="110,160 225,34 340,160" fill="#22c55e" stroke="#14532d" stroke-width="3"/>
+          <polygon points="196,68 225,34 254,68 238,74 225,64 212,74" fill="#ffffff"/>
+          <rect x="0" y="154" width="360" height="66" fill="#86efac"/>
+          <rect x="0" y="172" width="360" height="38" fill="#57534e"/>
+          <!-- キャンプテント -->
+          <polygon points="244,158 284,104 324,158" fill="#f97316" stroke="#7c2d12" stroke-width="3.5" stroke-linejoin="round"/>
+          <polygon points="270,158 284,124 298,158" fill="#fde047"/>
+        `,
+        aquarium: `
+          <rect width="360" height="220" fill="#0c4a6e"/>
+          <circle cx="80" cy="46" r="60" fill="#0284c7" opacity="0.35"/>
+          <circle cx="260" cy="80" r="85" fill="#0369a1" opacity="0.4"/>
+          <!-- 水中トンネルアーチ -->
+          <path d="M40 180 C40 60 320 60 320 180" fill="none" stroke="#38bdf8" stroke-width="6" opacity="0.6"/>
+          <rect x="0" y="168" width="360" height="52" fill="#1e293b"/>
+          <!-- ジンベエザメ＆イルカ＆お魚 -->
+          <path d="M130 66 C165 44 235 44 275 68 L302 50 L296 86 L275 74 C235 94 165 94 130 66 Z" fill="#0284c7" stroke="#bae6fd" stroke-width="3"/>
+          <circle cx="170" cy="64" r="3" fill="#ffffff"/><circle cx="190" cy="60" r="3" fill="#ffffff"/><circle cx="210" cy="66" r="3" fill="#ffffff"/><circle cx="230" cy="62" r="3" fill="#ffffff"/>
+          <circle cx="84" cy="96" r="12" fill="#f472b6" opacity="0.85"/>
+          <ellipse cx="310" cy="118" rx="16" ry="10" fill="#facc15"/>
+        `,
+        izu: `
+          <rect width="360" height="220" fill="#38bdf8"/>
+          <circle cx="296" cy="46" r="26" fill="#fde047"/>
+          <!-- 伊豆の青い海と白い灯台・ヤシの木・みかん -->
+          <rect x="0" y="128" width="360" height="44" fill="#0284c7"/>
+          <path d="M180 128 L230 96 L360 96 L360 132 Z" fill="#22c55e"/>
+          <rect x="268" y="48" width="22" height="52" rx="3" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+          <polygon points="264,48 279,32 294,48" fill="#ef4444" stroke="#1e293b" stroke-width="2.5"/>
+          <rect x="0" y="166" width="360" height="54" fill="#64748b"/>
+          <line x1="0" y1="192" x2="360" y2="192" stroke="#ffffff" stroke-width="3" stroke-dasharray="16 12"/>
+          <!-- ヤシの木 -->
+          <path d="M324 166 Q318 120 330 92" fill="none" stroke="#78350f" stroke-width="7" stroke-linecap="round"/>
+          <path d="M330 92 Q304 84 296 98 M330 92 Q352 84 356 100 M330 92 Q314 70 302 76" fill="none" stroke="#16a34a" stroke-width="6" stroke-linecap="round"/>
+        `,
+        omatsuri: `
+          <rect width="360" height="220" fill="#0f172a"/>
+          <!-- 夜空の大輪打ち上げ花火 -->
+          <circle cx="110" cy="64" r="38" fill="none" stroke="#f43f5e" stroke-width="4" stroke-dasharray="4 8"/>
+          <circle cx="110" cy="64" r="22" fill="none" stroke="#fde047" stroke-width="4" stroke-dasharray="4 6"/>
+          <circle cx="268" cy="54" r="34" fill="none" stroke="#38bdf8" stroke-width="4" stroke-dasharray="4 8"/>
+          <circle cx="268" cy="54" r="18" fill="none" stroke="#a855f7" stroke-width="4" stroke-dasharray="3 6"/>
+          <rect x="0" y="164" width="360" height="56" fill="#334155"/>
+          <!-- お祭り屋台と提灯 -->
+          <rect x="164" y="96" width="144" height="68" fill="#fef3c7" stroke="#9a3412" stroke-width="3.5"/>
+          <polygon points="154,98 236,70 318,98" fill="#ef4444" stroke="#ffffff" stroke-width="3"/>
+          <rect x="196" y="104" width="80" height="24" rx="4" fill="#ffffff" stroke="#ef4444" stroke-width="2.5"/>
+          <text x="236" y="121" text-anchor="middle" font-size="14" font-weight="900" fill="#dc2626">おまつり</text>
+          <circle cx="48" cy="30" r="11" fill="#ef4444" stroke="#fde047" stroke-width="2"/><circle cx="88" cy="30" r="11" fill="#ef4444" stroke="#fde047" stroke-width="2"/>
+        `,
+        yuenchi: `
+          <rect width="360" height="220" fill="#bae6fd"/>
+          <rect x="0" y="164" width="360" height="56" fill="#475569"/>
+          <!-- ジェットコースターのレール -->
+          <path d="M0 136 Q70 50 140 120 T280 90 T360 130" fill="none" stroke="#f43f5e" stroke-width="5"/>
+          <!-- 大観覧車 -->
+          <circle cx="236" cy="86" r="56" fill="none" stroke="#0284c7" stroke-width="5"/>
+          <line x1="236" y1="86" x2="206" y2="164" stroke="#334155" stroke-width="5"/>
+          <line x1="236" y1="86" x2="266" y2="164" stroke="#334155" stroke-width="5"/>
+          <circle cx="236" cy="30" r="9" fill="#f43f5e"/><circle cx="292" cy="86" r="9" fill="#facc15"/>
+          <circle cx="236" cy="142" r="9" fill="#4ade80"/><circle cx="180" cy="86" r="9" fill="#a855f7"/>
+          <circle cx="276" cy="46" r="8" fill="#fb923c"/><circle cx="196" cy="46" r="8" fill="#38bdf8"/>
+        `,
+        kisarazu: `
+          <rect width="360" height="220" fill="#7dd3fc"/>
+          <circle cx="70" cy="42" r="22" fill="#fde047"/>
+          <!-- 東京湾とアクアラインの大きな白い斜張橋 -->
+          <rect x="0" y="132" width="360" height="40" fill="#0284c7"/>
+          <line x1="150" y1="36" x2="150" y2="140" stroke="#ffffff" stroke-width="7"/>
+          <line x1="270" y1="36" x2="270" y2="140" stroke="#ffffff" stroke-width="7"/>
+          <line x1="150" y1="46" x2="90" y2="118" stroke="#e2e8f0" stroke-width="2.5"/>
+          <line x1="150" y1="46" x2="210" y2="118" stroke="#e2e8f0" stroke-width="2.5"/>
+          <line x1="270" y1="46" x2="210" y2="118" stroke="#e2e8f0" stroke-width="2.5"/>
+          <line x1="270" y1="46" x2="335" y2="118" stroke="#e2e8f0" stroke-width="2.5"/>
+          <rect x="70" y="116" width="290" height="10" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+          <rect x="0" y="166" width="360" height="54" fill="#475569"/>
+          <line x1="0" y1="192" x2="360" y2="192" stroke="#ffffff" stroke-width="3" stroke-dasharray="16 12"/>
+        `,
+        umi: `
+          <rect width="360" height="220" fill="#38bdf8"/>
+          <circle cx="64" cy="42" r="24" fill="#fde047"/>
+          <circle cx="150" cy="44" r="18" fill="#ffffff"/><circle cx="172" cy="42" r="22" fill="#ffffff"/><circle cx="194" cy="46" r="16" fill="#ffffff"/>
+          <!-- エメラルドの海と砂浜・ビーチパラソル -->
+          <rect x="0" y="112" width="360" height="44" fill="#06b6d4"/>
+          <path d="M0 144 Q90 134 180 144 T360 144 L360 220 L0 220 Z" fill="#fef08a"/>
+          <line x1="264" y1="86" x2="248" y2="162" stroke="#78350f" stroke-width="5"/>
+          <path d="M210 92 C230 56 296 56 312 96 Z" fill="#f43f5e" stroke="#ffffff" stroke-width="3"/>
+          <circle cx="296" cy="156" r="14" fill="#22c55e" stroke="#14532d" stroke-width="3"/>
+        `,
+        disneyland: `
+          <rect width="360" height="220" fill="#1e1b4b"/>
+          <!-- 魔法の夜空と花火 -->
+          <circle cx="72" cy="52" r="28" fill="none" stroke="#fde047" stroke-width="3.5" stroke-dasharray="4 6"/>
+          <circle cx="304" cy="48" r="32" fill="none" stroke="#f472b6" stroke-width="3.5" stroke-dasharray="4 6"/>
+          <polygon points="130,28 133,36 141,36 135,41 137,49 130,44 123,49 125,41 119,36 127,36" fill="#fde047"/>
+          <rect x="0" y="164" width="360" height="56" fill="#334155"/>
+          <!-- シンデレラ城風の夢のお城 -->
+          <rect x="164" y="88" width="92" height="76" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>
+          <rect x="144" y="72" width="24" height="92" fill="#e2e8f0" stroke="#94a3b8" stroke-width="3"/>
+          <rect x="252" y="72" width="24" height="92" fill="#e2e8f0" stroke="#94a3b8" stroke-width="3"/>
+          <rect x="190" y="46" width="40" height="118" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
+          <polygon points="140,72 156,38 172,72" fill="#2563eb" stroke="#facc15" stroke-width="2.5"/>
+          <polygon points="248,72 264,38 280,72" fill="#2563eb" stroke="#facc15" stroke-width="2.5"/>
+          <polygon points="184,48 210,10 236,48" fill="#1d4ed8" stroke="#facc15" stroke-width="3"/>
+          <circle cx="210" cy="72" r="10" fill="#fde047" stroke="#ca8a04" stroke-width="2.5"/>
+          <path d="M196 164 L196 132 C196 120 224 120 224 132 L224 164 Z" fill="#38bdf8" stroke="#facc15" stroke-width="3"/>
+        `
+      };
+
+      const bgContent = scenes[spotId] || scenes.hoikuen;
+      return `
+        <svg viewBox="0 0 360 220" class="w-full h-full">
+          ${bgContent}
+          ${carLayer}
+        </svg>
+      `;
+    }
+    /* ============================================================================
+     * [END SUGOROKU MAP MODULE: データ＆一枚絵SVG]
+     * ============================================================================ */
+
+    /* ============================================================================
      * 2. スマホ・Geminiアプリ内プレビュー（WebView）完全対応 ハイブリッド音声エンジン
      *    - 同期ジェスチャーロック解除（setTimeout廃止）
      *    - speechSynthesis が無反応なWebView環境では自動的に <audio> ストリームTTSへフォールバック
@@ -3685,6 +4251,10 @@
         partCategory: 'wheel',
         collectedWords: [],
         revengePool: { step1: [], step2: [], step3: [] },
+        sugorokuEnabled: true,
+        sugorokuSteps: 0,
+        unlockedSpots: [],
+        pendingRewardSpeech: null,
         garageTab: 'easy',
         kanaChartTab: 'basic',
         lives: 3,
@@ -3826,6 +4396,15 @@
                 step3: Array.isArray(parsed.revengePool.step3) ? parsed.revengePool.step3 : []
               };
             }
+            if (typeof parsed.sugorokuEnabled === 'boolean') {
+              this.state.sugorokuEnabled = parsed.sugorokuEnabled;
+            }
+            if (typeof parsed.sugorokuSteps === 'number') {
+              this.state.sugorokuSteps = parsed.sugorokuSteps;
+            }
+            if (Array.isArray(parsed.unlockedSpots)) {
+              this.state.unlockedSpots = parsed.unlockedSpots;
+            }
             if (parsed.difficulty === 'easy' || parsed.difficulty === 'hard') {
               this.state.difficulty = parsed.difficulty;
             }
@@ -3849,6 +4428,9 @@
             equippedParts: this.state.equippedParts,
             collectedWords: this.state.collectedWords,
             revengePool: this.state.revengePool,
+            sugorokuEnabled: this.state.sugorokuEnabled,
+            sugorokuSteps: this.state.sugorokuSteps,
+            unlockedSpots: this.state.unlockedSpots,
             difficulty: this.state.difficulty
           }));
         } catch (e) {
@@ -4067,7 +4649,135 @@
           `;
         }
         starsContainer.innerHTML = starsHTML;
+        this.updateSugorokuBarUI();
         this.updateHeaderUI();
+      },
+
+      updateSugorokuBarUI() {
+        const barEl = document.getElementById('title-sugoroku-bar');
+        if (!barEl) return;
+        if (!this.state.sugorokuEnabled) {
+          barEl.classList.add('hidden');
+          return;
+        }
+        barEl.classList.remove('hidden');
+
+        const steps = this.state.sugorokuSteps || 0;
+        const nextSpot = SugorokuSpots.find(s => s.step > steps);
+        const textEl = document.getElementById('title-map-next-text');
+        if (textEl) {
+          if (nextSpot) {
+            const rem = nextSpot.step - steps;
+            textEl.textContent = `つぎ：${nextSpot.icon}${nextSpot.name}（あと ${rem}かい）`;
+          } else {
+            textEl.textContent = `🏰 ぜんぶの ばしょ に とうちゃく！（${steps}かい）`;
+          }
+        }
+      },
+
+      setSugorokuEnabled(enabled) {
+        Sound.init();
+        this.state.sugorokuEnabled = enabled;
+        this.saveState();
+        this.updateParentSettingsUI();
+        this.renderTitleScreen();
+      },
+
+      openSugorokuModal() {
+        Sound.init();
+        this.renderSugorokuModal();
+        document.getElementById('modal-sugoroku-map').classList.remove('hidden');
+      },
+
+      closeSugorokuModal() {
+        document.getElementById('modal-sugoroku-map').classList.add('hidden');
+      },
+
+      renderSugorokuModal() {
+        const grid = document.getElementById('sugoroku-spots-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const steps = this.state.sugorokuSteps || 0;
+        const statusEl = document.getElementById('sugoroku-header-status');
+        const nextSpot = SugorokuSpots.find(s => s.step > steps);
+        if (statusEl) {
+          statusEl.textContent = nextSpot
+            ? `いま ${steps}マス！ あと ${nextSpot.step - steps}かい クリアで「${nextSpot.name}」に つくよ！`
+            : `🎉 ぜんぶで ${steps}かい クリア！ でぃずにーらんど まで コンプリート！`;
+        }
+
+        SugorokuSpots.forEach((spot, idx) => {
+          const isReached = steps >= spot.step || this.state.unlockedSpots.includes(spot.id);
+          const isNext = nextSpot && nextSpot.id === spot.id;
+
+          const card = document.createElement('button');
+          card.className = `btn-3d rounded-2xl p-2 flex flex-col items-center justify-between border-4 transition-all ${
+            isReached
+              ? 'bg-white border-teal-500 text-slate-800 shadow-md hover:bg-teal-50'
+              : isNext
+              ? 'bg-amber-50 border-amber-400 text-slate-700 animate-pulse shadow'
+              : 'bg-slate-200/80 border-slate-300 text-slate-400 opacity-75'
+          }`;
+
+          card.innerHTML = `
+            <div class="w-full flex items-center justify-between text-[10px] font-black px-1">
+              <span>${idx + 1}. (${spot.step}かい)</span>
+              <span>${isReached ? '💮済' : isNext ? '🚗つぎ' : '🔒'}</span>
+            </div>
+            <div class="text-2xl sm:text-3xl my-1">${isReached ? spot.icon : '❓'}</div>
+            <div class="text-xs sm:text-sm font-black truncate w-full text-center">${spot.name}</div>
+          `;
+
+          card.onclick = () => {
+            if (isReached) {
+              this.showSpotArrivalModal(spot, false);
+            } else {
+              Sound.playGentleTryAgain();
+              const rem = Math.max(1, spot.step - steps);
+              Sound.speak(`${spot.name} まで、あと ${rem}かい クリア しよう！`);
+            }
+          };
+          grid.appendChild(card);
+        });
+      },
+
+      showSpotArrivalModal(spot, isFromClear = false) {
+        const modal = document.getElementById('modal-spot-arrival');
+        if (!modal) return;
+        document.getElementById('spot-arrival-title').textContent = `「 ${spot.name} 」に ついたよ！`;
+        document.getElementById('spot-arrival-desc').textContent = spot.desc;
+        document.getElementById('spot-arrival-art').innerHTML = getSpotSceneSVG(spot.id, this.state.selectedCarId);
+
+        const nextBtn = document.getElementById('btn-spot-arrival-next');
+        if (nextBtn) {
+          nextBtn.textContent = (isFromClear && this.state.pendingRewardSpeech && this.state.pendingRewardSpeech.hasNewCar)
+            ? '🎁 ごほうび の くるま を みる！ ▶'
+            : 'つぎへ すすむ！ ▶';
+        }
+
+        modal.classList.remove('hidden');
+        Sound.playFanfare();
+        Sound.speak(`やったー！ ${spot.name} に とうちゃく したよ！ ${spot.desc}`);
+      },
+
+      closeSpotArrivalModal() {
+        const modal = document.getElementById('modal-spot-arrival');
+        if (modal) modal.classList.add('hidden');
+
+        // 行き先表示のあとに新車獲得（または通常クリア）のファンファーレ＆音声を再生する
+        if (this.state.pendingRewardSpeech) {
+          const pending = this.state.pendingRewardSpeech;
+          this.state.pendingRewardSpeech = null;
+          Confetti.fire();
+          Sound.playFanfare();
+          if (pending.carSoundType) {
+            Sound.playCarSound(pending.carSoundType);
+          }
+          setTimeout(() => {
+            Sound.speak(pending.text);
+          }, 300);
+        }
       },
 
       goTitle() {
@@ -4135,6 +4845,18 @@
           vAuto.className = this.state.voiceMode === 'auto' ? activeCls : inactiveCls;
           vCloud.className = this.state.voiceMode === 'cloud' ? activeCls : inactiveCls;
           vNative.className = this.state.voiceMode === 'native' ? activeCls : inactiveCls;
+        }
+
+        const mapOn = document.getElementById('setting-map-on');
+        const mapOff = document.getElementById('setting-map-off');
+        if (mapOn && mapOff) {
+          if (this.state.sugorokuEnabled) {
+            mapOn.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-teal-500 text-white border-teal-700 shadow';
+            mapOff.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
+          } else {
+            mapOff.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-slate-600 text-white border-slate-800 shadow';
+            mapOn.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
+          }
         }
       },
 
@@ -5559,12 +6281,28 @@
       },
 
       /* ----------------------------------------------------------------
-       * ゴール＆ご褒美（5回連続クリア判定＆新車アンロック）
+       * ゴール＆ご褒美（5回連続クリア判定＆新車アンロック＋おでかけマップ進行）
        * ---------------------------------------------------------------- */
       completeMission() {
         this.state.stars += 1;
         const newStreak = this.getCurrentStreak() + 1;
         this.setCurrentStreak(newStreak);
+
+        // おでかけすごろくマップの進行判定（1回クリアにつき1マス進行、5回ごとに新しい行き先へ到着）
+        let newlyReachedSpot = null;
+        if (this.state.sugorokuEnabled) {
+          const prevSteps = this.state.sugorokuSteps || 0;
+          const nextSteps = prevSteps + 1;
+          this.state.sugorokuSteps = nextSteps;
+
+          const reached = SugorokuSpots.find(s => s.step > prevSteps && s.step <= nextSteps);
+          if (reached) {
+            newlyReachedSpot = reached;
+            if (!this.state.unlockedSpots.includes(reached.id)) {
+              this.state.unlockedSpots.push(reached.id);
+            }
+          }
+        }
 
         const isFifthClear = (newStreak % 5 === 0);
         const currentTier = this.state.difficulty;
@@ -5583,12 +6321,19 @@
         this.updateHeaderUI();
         this.showScreen('screen-reward', 0);
 
-        Confetti.fire();
-        Sound.playFanfare();
-
         const rewardCard = document.getElementById('reward-card');
         const rewardTitle = document.getElementById('reward-title');
         const nextBtnText = document.getElementById('reward-next-btn-text');
+
+        // 次の目的地案内テキストを作成
+        const steps = this.state.sugorokuSteps || 0;
+        const nextSpot = SugorokuSpots.find(s => s.step > steps);
+        const sugorokuMiniHTML = this.state.sugorokuEnabled ? `
+          <button onclick="Game.openSugorokuModal()" class="mt-2 w-full bg-teal-50 hover:bg-teal-100 border-2 border-teal-400 rounded-2xl px-3 py-1.5 flex items-center justify-between text-xs font-black text-teal-900">
+            <span>🗺️ ${nextSpot ? `つぎ：${nextSpot.icon}${nextSpot.name}（あと ${nextSpot.step - steps}かい）` : '🏰 でぃずにーらんど とうちゃく済！'}</span>
+            <span class="bg-teal-600 text-white px-2 py-0.5 rounded-full text-[10px]">マップをみる</span>
+          </button>
+        ` : '';
 
         if (newlyUnlockedCar) {
           const isDeluxe = newlyUnlockedCar.tier === 'hard';
@@ -5608,12 +6353,27 @@
             <p class="text-xs sm:text-sm font-bold text-slate-500 mt-1">
               マイガレージに なかまいり したよ！
             </p>
+            ${sugorokuMiniHTML}
           `;
 
-          setTimeout(() => {
-            Sound.playCarSound(newlyUnlockedCar.soundType);
-            Sound.speak(`やったー！ 5かい れんぞく クリア！ ${newlyUnlockedCar.kana} を ゲットしたよ！`);
-          }, 450);
+          const carSpeech = `やったー！ 5かい れんぞく クリア！ ${newlyUnlockedCar.kana} を ゲットしたよ！`;
+
+          // 新しい行き先と新車ゲットが同タイミングの場合は、まず「行き先到着モーダル」を先に表示し、閉じたあとに新車演出を流す
+          if (newlyReachedSpot) {
+            this.state.pendingRewardSpeech = {
+              hasNewCar: true,
+              carSoundType: newlyUnlockedCar.soundType,
+              text: carSpeech
+            };
+            this.showSpotArrivalModal(newlyReachedSpot, true);
+          } else {
+            Confetti.fire();
+            Sound.playFanfare();
+            setTimeout(() => {
+              Sound.playCarSound(newlyUnlockedCar.soundType);
+              Sound.speak(carSpeech);
+            }, 450);
+          }
         } else {
           const car = this.getSelectedCar();
           const filledCount = isFifthClear ? 5 : (newStreak % 5);
@@ -5650,21 +6410,27 @@
                 ? `あと ${remain}かい れんぞくクリアで 新車ゲット！`
                 : 'ぜんぶの くるま を コンプリート！ ボーナス⭐＋3！'}
             </p>
+            ${sugorokuMiniHTML}
           `;
 
-          setTimeout(() => {
-            Sound.speak(remain > 0
-              ? `ゴール！ あと ${remain}かい クリアで、あたらしい くるま が もらえるよ！`
-              : 'ゴール！ ぜんぶの くるま を ゲットしたね！ すごい！');
-          }, 450);
+          const clearSpeech = remain > 0
+            ? `ゴール！ あと ${remain}かい クリアで、あたらしい くるま が もらえるよ！`
+            : 'ゴール！ ぜんぶの くるま を ゲットしたね！ すごい！';
+
+          if (newlyReachedSpot) {
+            this.state.pendingRewardSpeech = {
+              hasNewCar: false,
+              carSoundType: null,
+              text: clearSpeech
+            };
+            this.showSpotArrivalModal(newlyReachedSpot, true);
+          } else {
+            Confetti.fire();
+            Sound.playFanfare();
+            setTimeout(() => {
+              Sound.speak(clearSpeech);
+            }, 450);
+          }
         }
       }
     };
-    window.Game = Game;
-
-    window.addEventListener('DOMContentLoaded', () => {
-      Game.init();
-    });
-  </script>
-</body>
-</html>
