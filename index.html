@@ -235,56 +235,58 @@
       <span>ながおし（1.2びょう）で むずかしさを かえられるよ</span>
     </div>
 
-    <!-- 上部共通ナビゲーションバー -->
-    <header class="w-full bg-white/95 backdrop-blur border-b-4 border-sky-300 px-2.5 sm:px-3 py-2 flex items-center justify-between z-30 shrink-0">
-      <div class="flex items-center gap-1.5 sm:gap-2">
-        <button id="btn-home" onclick="Game.goTitle()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-2.5 sm:px-3 py-2 rounded-2xl border-b-4 border-sky-700 flex items-center gap-1 text-xs sm:text-base shadow">
-          <span class="text-lg sm:text-xl">🏠</span>
-          <span>ホーム</span>
-        </button>
-        <!-- スター所持数 -->
-        <div class="bg-amber-100 border-2 border-amber-400 px-2 sm:px-3 py-1.5 rounded-2xl flex items-center gap-1 shadow-inner">
-          <span class="text-lg sm:text-2xl">⭐</span>
-          <span id="star-count" class="text-base sm:text-xl font-black text-amber-700">0</span>
+    <!-- 上部共通ナビゲーションバー（スマホ等の狭い画面でも折り返さず、画面幅に合わせて自動縮小表示） -->
+    <header id="top-nav-header" class="w-full bg-white/95 backdrop-blur border-b-4 border-sky-300 px-1.5 sm:px-3 py-1.5 sm:py-2 z-30 shrink-0 overflow-hidden">
+      <div id="top-nav-inner" class="w-full flex items-center justify-between gap-1 sm:gap-2 whitespace-nowrap origin-left">
+        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+          <button id="btn-home" onclick="Game.goTitle()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-black px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl border-b-4 border-sky-700 flex items-center gap-0.5 sm:gap-1 text-[11px] sm:text-base shadow whitespace-nowrap shrink-0">
+            <span class="text-sm sm:text-xl leading-none">🏠</span>
+            <span>ホーム</span>
+          </button>
+          <!-- スター所持数 -->
+          <div class="bg-amber-100 border-2 border-amber-400 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl flex items-center gap-0.5 sm:gap-1 shadow-inner whitespace-nowrap shrink-0">
+            <span class="text-sm sm:text-2xl leading-none">⭐</span>
+            <span id="star-count" class="text-xs sm:text-xl font-black text-amber-700 leading-none">0</span>
+          </div>
+          <!-- ワンタップ全画面切り替えボタン（ブラウザ直接起動時用） -->
+          <button id="btn-fullscreen-header" onclick="Game.toggleFullScreen()" class="btn-3d bg-emerald-500 hover:bg-emerald-400 text-white font-black px-1.5 sm:px-2.5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl border-b-4 border-emerald-700 flex items-center gap-0.5 sm:gap-1 text-[11px] sm:text-sm shadow whitespace-nowrap shrink-0">
+            <span>⛶</span><span class="hidden md:inline">ぜんがめん</span>
+          </button>
         </div>
-        <!-- ワンタップ全画面切り替えボタン（ブラウザ直接起動時用） -->
-        <button id="btn-fullscreen-header" onclick="Game.toggleFullScreen()" class="btn-3d bg-emerald-500 hover:bg-emerald-400 text-white font-black px-2.5 py-2 rounded-2xl border-b-4 border-emerald-700 flex items-center gap-1 text-xs sm:text-sm shadow">
-          <span>⛶</span><span class="hidden md:inline">ぜんがめん</span>
-        </button>
-      </div>
 
-      <!-- ステップ進行インジケーター（プレイ中のみ表示） -->
-      <div id="step-indicator" class="hidden sm:flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full border-2 border-slate-300">
-        <span id="ind-1" class="px-2 py-0.5 rounded-full text-xs font-black bg-sky-500 text-white">①とけい</span>
-        <span class="text-slate-400 font-bold">▶</span>
-        <span id="ind-2" class="px-2 py-0.5 rounded-full text-xs font-black text-slate-400">②ことば</span>
-        <span class="text-slate-400 font-bold">▶</span>
-        <span id="ind-3" class="px-2 py-0.5 rounded-full text-xs font-black text-slate-400">③すうじ</span>
-      </div>
+        <!-- ステップ進行インジケーター（プレイ中のみ表示・改行せず1行で縮小フィット） -->
+        <div id="step-indicator" class="hidden items-center gap-0.5 sm:gap-1.5 bg-slate-100 px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full border sm:border-2 border-slate-300 whitespace-nowrap shrink-0">
+          <span id="ind-1" class="px-1.5 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black bg-sky-500 text-white whitespace-nowrap">①とけい</span>
+          <span class="text-slate-400 font-bold text-[9px] sm:text-xs">▶</span>
+          <span id="ind-2" class="px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-black text-slate-400 whitespace-nowrap">②ことば</span>
+          <span class="text-slate-400 font-bold text-[9px] sm:text-xs">▶</span>
+          <span id="ind-3" class="px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-black text-slate-400 whitespace-nowrap">③すうじ</span>
+        </div>
 
-      <!-- 難易度切り替えスイッチ（誤タップ防止：1.2秒長押し式） -->
-      <div class="relative flex items-center bg-slate-200 p-1 rounded-2xl border-2 border-slate-300">
-        <button id="mode-easy"
-                onpointerdown="Game.startDifficultyHold('easy', event)"
-                onpointerup="Game.cancelDifficultyHold()"
-                onpointerleave="Game.cancelDifficultyHold()"
-                onpointercancel="Game.cancelDifficultyHold()"
-                class="relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow">
-          <span id="hold-bar-easy" class="absolute inset-y-0 left-0 bg-white/45 w-0 pointer-events-none"></span>
-          <span class="relative z-10">🌱かんたん</span>
-        </button>
-        <button id="mode-hard"
-                onpointerdown="Game.startDifficultyHold('hard', event)"
-                onpointerup="Game.cancelDifficultyHold()"
-                onpointerleave="Game.cancelDifficultyHold()"
-                onpointercancel="Game.cancelDifficultyHold()"
-                class="relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600">
-          <span id="hold-bar-hard" class="absolute inset-y-0 left-0 bg-amber-400/50 w-0 pointer-events-none"></span>
-          <span class="relative z-10">🔥しっかり</span>
-        </button>
-        <!-- 短押し時のガイドトースト -->
-        <div id="hold-guide-toast" class="hidden absolute top-full right-0 mt-1.5 bg-slate-900/95 text-amber-300 text-[11px] font-black px-3 py-1.5 rounded-xl shadow-xl whitespace-nowrap z-50 border border-amber-400 pointer-events-none">
-          🔒 ながおし（1.2びょう）で きりかえ
+        <!-- 難易度切り替えスイッチ（誤タップ防止：1.2秒長押し式） -->
+        <div class="relative flex items-center bg-slate-200 p-0.5 sm:p-1 rounded-xl sm:rounded-2xl border-2 border-slate-300 whitespace-nowrap shrink-0">
+          <button id="mode-easy"
+                  onpointerdown="Game.startDifficultyHold('easy', event)"
+                  onpointerup="Game.cancelDifficultyHold()"
+                  onpointerleave="Game.cancelDifficultyHold()"
+                  onpointercancel="Game.cancelDifficultyHold()"
+                  class="relative overflow-hidden px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-sm transition-all bg-emerald-500 text-white shadow whitespace-nowrap">
+            <span id="hold-bar-easy" class="absolute inset-y-0 left-0 bg-white/45 w-0 pointer-events-none"></span>
+            <span class="relative z-10">🌱かんたん</span>
+          </button>
+          <button id="mode-hard"
+                  onpointerdown="Game.startDifficultyHold('hard', event)"
+                  onpointerup="Game.cancelDifficultyHold()"
+                  onpointerleave="Game.cancelDifficultyHold()"
+                  onpointercancel="Game.cancelDifficultyHold()"
+                  class="relative overflow-hidden px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-sm transition-all text-slate-600 whitespace-nowrap">
+            <span id="hold-bar-hard" class="absolute inset-y-0 left-0 bg-amber-400/50 w-0 pointer-events-none"></span>
+            <span class="relative z-10">🔥しっかり</span>
+          </button>
+          <!-- 短押し時のガイドトースト -->
+          <div id="hold-guide-toast" class="hidden absolute top-full right-0 mt-1.5 bg-slate-900/95 text-amber-300 text-[11px] font-black px-3 py-1.5 rounded-xl shadow-xl whitespace-nowrap z-50 border border-amber-400 pointer-events-none">
+            🔒 ながおし（1.2びょう）で きりかえ
+          </div>
         </div>
       </div>
     </header>
@@ -885,19 +887,6 @@
             </button>
           </div>
 
-          <!-- おでかけマップ機能のON/OFF切り替え（前バージョンへワンタップで戻せる設定） -->
-          <div class="bg-teal-50 p-3 rounded-2xl border border-teal-200 flex flex-col gap-2">
-            <div class="text-sm font-black text-teal-900">🗺️ おでかけスタンプちょう（すごろく）</div>
-            <div class="grid grid-cols-2 gap-2">
-              <button id="setting-map-on" onclick="Game.setSugorokuEnabled(true)" class="py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-teal-500 text-white border-teal-700 shadow">
-                つかう（標準）
-              </button>
-              <button id="setting-map-off" onclick="Game.setSugorokuEnabled(false)" class="py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300">
-                つかわない（前版）
-              </button>
-            </div>
-          </div>
-
           <!-- テストプレイ確認用：全24車種＆全16行き先の実物デザイン一覧プレビュー（マスクなし） -->
           <div class="bg-indigo-50 p-3 rounded-2xl border border-indigo-200 flex flex-col gap-2">
             <div class="text-sm font-black text-indigo-900">🔍 テストプレイ確認（マスクなし一覧）</div>
@@ -911,6 +900,51 @@
               <button onclick="Game.openPreviewGallery('spots')" class="btn-3d bg-teal-600 hover:bg-teal-500 text-white font-black text-xs py-2 px-2 rounded-xl border-b-4 border-teal-800 shadow">
                 🖼️ 全16行き先の一覧
               </button>
+            </div>
+          </div>
+
+          <!-- すべての進捗データを初期化するボタン（誤操作防止の2クッション確認付き） -->
+          <div class="bg-rose-50 p-3 rounded-2xl border border-rose-200 flex flex-col gap-2">
+            <div class="text-sm font-black text-rose-900">🗑️ すべての データを しょきか</div>
+            <p class="text-[11px] text-slate-600 leading-tight">
+              ⭐スター・あつめた くるま・カスタムパーツ・ことばずかん・おでかけマップを すべて さいしょの じょうたいに もどします。
+            </p>
+
+            <!-- 通常時ボタン -->
+            <div id="reset-progress-step0">
+              <button onclick="Game.setResetConfirmStep(1)" class="btn-3d w-full bg-rose-500 hover:bg-rose-400 text-white font-black text-xs py-2.5 px-3 rounded-xl border-b-4 border-rose-700 shadow">
+                🗑️ すべての しんちょく を しょきか する
+              </button>
+            </div>
+
+            <!-- 1クッション目：第1確認 -->
+            <div id="reset-progress-step1" class="hidden flex-col gap-2 bg-white p-2.5 rounded-xl border-2 border-rose-400">
+              <p class="text-xs font-black text-rose-600 text-center">
+                ⚠️【かくにん 1/2】ほんとうに データを しょきか しますか？
+              </p>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="Game.setResetConfirmStep(0)" class="btn-3d bg-slate-200 hover:bg-slate-300 text-slate-700 font-black text-xs py-2 rounded-xl border-b-2 border-slate-400">
+                  やめる
+                </button>
+                <button onclick="Game.setResetConfirmStep(2)" class="btn-3d bg-amber-500 hover:bg-amber-400 text-white font-black text-xs py-2 rounded-xl border-b-2 border-amber-700">
+                  ⚠️ すすむ（さいごの かくにんへ）
+                </button>
+              </div>
+            </div>
+
+            <!-- 2クッション目：最終確認 -->
+            <div id="reset-progress-step2" class="hidden flex-col gap-2 bg-rose-100 p-2.5 rounded-xl border-2 border-rose-600">
+              <p class="text-xs font-black text-rose-800 text-center leading-snug">
+                🚨【さいごの かくにん 2/2】<br>消したデータは もとには もどりません。ほんとうに ぜんぶ けして いいですか？
+              </p>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="Game.setResetConfirmStep(0)" class="btn-3d bg-slate-200 hover:bg-slate-300 text-slate-700 font-black text-xs py-2 rounded-xl border-b-2 border-slate-400">
+                  やめる
+                </button>
+                <button onclick="Game.executeResetAllProgress()" class="btn-3d bg-rose-600 hover:bg-rose-500 text-white font-black text-xs py-2 rounded-xl border-b-4 border-rose-900 shadow">
+                  🔥 はい、すべて しょきか します
+                </button>
+              </div>
             </div>
           </div>
 
@@ -4252,6 +4286,33 @@
         this.setupPWAAssets();
         this.updateHeaderUI();
         this.renderTitleScreen();
+        window.addEventListener('resize', () => this.fitHeaderToScreen());
+        setTimeout(() => this.fitHeaderToScreen(), 60);
+      },
+
+      // スマホ等の狭い画面で上部バーが絶対にはみ出さないよう、画面幅に合わせて自動縮小フィットさせる
+      fitHeaderToScreen() {
+        const header = document.getElementById('top-nav-header');
+        const inner = document.getElementById('top-nav-inner');
+        if (!header || !inner) return;
+
+        inner.style.transform = 'none';
+        inner.style.width = '100%';
+        header.style.height = 'auto';
+
+        const style = window.getComputedStyle(header);
+        const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+        const padY = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+        const availW = header.clientWidth - padX;
+        const neededW = inner.scrollWidth;
+
+        if (neededW > availW && availW > 0) {
+          const scale = Math.max(0.62, availW / neededW);
+          inner.style.width = `${100 / scale}%`;
+          inner.style.transform = `scale(${scale})`;
+          inner.style.transformOrigin = 'left center';
+          header.style.height = `${Math.ceil(inner.offsetHeight * scale + padY)}px`;
+        }
       },
 
       setupPWAAssets() {
@@ -4372,9 +4433,7 @@
                 step3: Array.isArray(parsed.revengePool.step3) ? parsed.revengePool.step3 : []
               };
             }
-            if (typeof parsed.sugorokuEnabled === 'boolean') {
-              this.state.sugorokuEnabled = parsed.sugorokuEnabled;
-            }
+            this.state.sugorokuEnabled = true;
             if (typeof parsed.sugorokuSteps === 'number') {
               this.state.sugorokuSteps = parsed.sugorokuSteps;
             }
@@ -4404,7 +4463,7 @@
             equippedParts: this.state.equippedParts,
             collectedWords: this.state.collectedWords,
             revengePool: this.state.revengePool,
-            sugorokuEnabled: this.state.sugorokuEnabled,
+            sugorokuEnabled: true,
             sugorokuSteps: this.state.sugorokuSteps,
             unlockedSpots: this.state.unlockedSpots,
             difficulty: this.state.difficulty
@@ -4412,6 +4471,56 @@
         } catch (e) {
           console.warn('Save data write skipped:', e);
         }
+      },
+
+      // 進捗初期化の2クッション表示切り替え（0:通常 / 1:第1確認 / 2:最終確認）
+      setResetConfirmStep(step) {
+        Sound.init();
+        const s0 = document.getElementById('reset-progress-step0');
+        const s1 = document.getElementById('reset-progress-step1');
+        const s2 = document.getElementById('reset-progress-step2');
+        if (s0) s0.classList.toggle('hidden', step !== 0);
+        if (s1) {
+          s1.classList.toggle('hidden', step !== 1);
+          s1.classList.toggle('flex', step === 1);
+        }
+        if (s2) {
+          s2.classList.toggle('hidden', step !== 2);
+          s2.classList.toggle('flex', step === 2);
+        }
+        if (step === 1 || step === 2) {
+          Sound.playGentleTryAgain();
+        }
+      },
+
+      // すべての進捗状態を初期化する実行関数
+      executeResetAllProgress() {
+        Sound.init();
+        this.state.stars = 0;
+        this.state.streakEasy = 0;
+        this.state.streakHard = 0;
+        this.state.selectedCarId = 'patrol';
+        this.state.unlockedCars = ['patrol'];
+        this.state.unlockedParts = [];
+        this.state.equippedParts = { wheel: null, wing: null, roof: null, turbo: null };
+        this.state.collectedWords = [];
+        this.state.revengePool = { step1: [], step2: [], step3: [] };
+        this.state.sugorokuSteps = 0;
+        this.state.unlockedSpots = [];
+        this.state.pendingRewardSpeech = null;
+        this.state.pendingPartPurchase = null;
+        this.state.recentWords = [];
+        this.state.recentNums = [];
+
+        this.saveState();
+        this.setResetConfirmStep(0);
+        this.updateHeaderUI();
+        this.renderTitleScreen();
+        this.closeParentSettings();
+        this.goTitle();
+
+        Sound.playCorrect();
+        Sound.speak('すべての データを しょきか しました。さいしょから あそべるよ！');
       },
 
       addParentBonusStars() {
@@ -4524,14 +4633,15 @@
         const hardBtn = document.getElementById('mode-hard');
         if (easyBtn && hardBtn) {
           if (this.state.difficulty === 'easy') {
-            easyBtn.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow';
-            hardBtn.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
+            easyBtn.className = 'relative overflow-hidden px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-sm transition-all bg-emerald-500 text-white shadow whitespace-nowrap';
+            hardBtn.className = 'relative overflow-hidden px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-sm transition-all text-slate-600 whitespace-nowrap';
           } else {
-            hardBtn.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all bg-rose-500 text-white shadow';
-            easyBtn.className = 'relative overflow-hidden px-2.5 sm:px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all text-slate-600';
+            hardBtn.className = 'relative overflow-hidden px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-sm transition-all bg-rose-500 text-white shadow whitespace-nowrap';
+            easyBtn.className = 'relative overflow-hidden px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-sm transition-all text-slate-600 whitespace-nowrap';
           }
         }
         this.updateLifeUI();
+        requestAnimationFrame(() => this.fitHeaderToScreen());
       },
 
       updateLifeUI() {
@@ -4572,17 +4682,18 @@
           [1, 2, 3].forEach(n => {
             const el = document.getElementById(`ind-${n}`);
             if (n === stepNum) {
-              el.className = 'px-2.5 py-0.5 rounded-full text-xs font-black bg-rose-500 text-white shadow';
+              el.className = 'px-1.5 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-black bg-rose-500 text-white shadow whitespace-nowrap';
             } else if (n < stepNum) {
-              el.className = 'px-2 py-0.5 rounded-full text-xs font-black bg-emerald-500 text-white';
+              el.className = 'px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-black bg-emerald-500 text-white whitespace-nowrap';
             } else {
-              el.className = 'px-2 py-0.5 rounded-full text-xs font-black text-slate-400';
+              el.className = 'px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-black text-slate-400 whitespace-nowrap';
             }
           });
         } else {
           indicator.classList.add('hidden');
           indicator.classList.remove('flex');
         }
+        requestAnimationFrame(() => this.fitHeaderToScreen());
       },
 
       renderTitleScreen() {
@@ -5051,11 +5162,13 @@
 
       openParentSettings() {
         Sound.init();
+        this.setResetConfirmStep(0);
         this.updateParentSettingsUI();
         document.getElementById('modal-parent-settings').classList.remove('hidden');
       },
 
       closeParentSettings() {
+        this.setResetConfirmStep(0);
         document.getElementById('modal-parent-settings').classList.add('hidden');
       },
 
@@ -5169,18 +5282,6 @@
           vAuto.className = this.state.voiceMode === 'auto' ? activeCls : inactiveCls;
           vCloud.className = this.state.voiceMode === 'cloud' ? activeCls : inactiveCls;
           vNative.className = this.state.voiceMode === 'native' ? activeCls : inactiveCls;
-        }
-
-        const mapOn = document.getElementById('setting-map-on');
-        const mapOff = document.getElementById('setting-map-off');
-        if (mapOn && mapOff) {
-          if (this.state.sugorokuEnabled) {
-            mapOn.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-teal-500 text-white border-teal-700 shadow';
-            mapOff.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
-          } else {
-            mapOff.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-slate-600 text-white border-slate-800 shadow';
-            mapOn.className = 'py-2 px-3 rounded-xl font-black text-xs sm:text-sm border-2 bg-white text-slate-600 border-slate-300';
-          }
         }
       },
 
