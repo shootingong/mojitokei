@@ -372,7 +372,7 @@
       </section>
 
       <!-- ==========================================
-           2. マイガレージ（全24車種＋カスタムパーツ20種＋ことばずかん39種）画面
+           2. マイガレージ（全24車種＋カスタムパーツ20種＋ことばずかん100種）画面
            ========================================== -->
       <section id="screen-garage" class="hidden flex-1 flex flex-col justify-between p-2.5 sm:p-4 bg-slate-800 text-white overflow-hidden">
         <div class="flex items-center justify-between gap-2 shrink-0">
@@ -405,7 +405,7 @@
           </button>
           <button id="garage-tab-words" onclick="Game.switchGarageTab('words')" class="btn-3d py-1.5 px-1.5 sm:px-2 rounded-xl font-black text-[10px] sm:text-xs border-b-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 bg-slate-700 text-slate-300 border-slate-900">
             <span>📕ことばずかん</span>
-            <span id="garage-words-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">0/39</span>
+            <span id="garage-words-count" class="bg-black/25 px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px]">0/100</span>
           </button>
         </div>
 
@@ -530,24 +530,18 @@
             <div class="w-2 h-4 bg-slate-500"></div>
           </div>
 
-          <!-- 道路をしっかり遮る紅白スタートゲート（遮断機） -->
+          <!-- 道路をしっかり遮る紅白スタートゲート（縦のSTOPバーのみ） -->
           <div class="absolute bottom-1 left-[54%] z-20 pointer-events-none">
-            <svg width="150" height="84" viewBox="0 0 150 84" class="overflow-visible">
+            <svg width="60" height="84" viewBox="0 0 60 84" class="overflow-visible">
               <!-- 遮断機の支柱（道路の奥側） -->
-              <rect x="6" y="4" width="16" height="32" rx="4" fill="#475569" stroke="#1e293b" stroke-width="2.5"/>
-              <!-- 道路を上から下まで塞ぐ遮断バー（正解時に上へ跳ね上がる） -->
+              <rect x="6" y="4" width="16" height="28" rx="4" fill="#475569" stroke="#1e293b" stroke-width="2.5"/>
+              <!-- 道路の手前側まで縦に降りて道を遮るゲートバー＆STOP標識（正解時に上へ跳ね上がる） -->
               <g id="step1-gate-arm" class="gate-barrier-arm">
-                <!-- 横断バー本体＋道路を縦に塞ぐゲート柵 -->
-                <rect x="10" y="10" width="118" height="10" rx="5" fill="#ef4444" stroke="#1e293b" stroke-width="2.5"/>
-                <rect x="28" y="10" width="16" height="10" fill="#ffffff"/>
-                <rect x="60" y="10" width="16" height="10" fill="#ffffff"/>
-                <rect x="92" y="10" width="16" height="10" fill="#ffffff"/>
-                <!-- 道路の手前側まで降りて道を遮る縦フェンス＆STOP標識 -->
-                <rect x="18" y="18" width="8" height="58" rx="3" fill="#ef4444" stroke="#1e293b" stroke-width="2"/>
-                <rect x="18" y="32" width="8" height="12" fill="#ffffff"/>
-                <rect x="18" y="54" width="8" height="12" fill="#ffffff"/>
-                <circle cx="22" cy="44" r="12" fill="#ef4444" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="22" y="47" text-anchor="middle" font-size="7" font-weight="900" fill="#ffffff">STOP</text>
+                <rect x="9" y="12" width="10" height="66" rx="4" fill="#ef4444" stroke="#1e293b" stroke-width="2.5"/>
+                <rect x="10" y="24" width="8" height="12" fill="#ffffff"/>
+                <rect x="10" y="52" width="8" height="12" fill="#ffffff"/>
+                <circle cx="14" cy="44" r="13" fill="#ef4444" stroke="#ffffff" stroke-width="2.5"/>
+                <text x="14" y="47" text-anchor="middle" font-size="7.5" font-weight="900" fill="#ffffff">STOP</text>
               </g>
               <circle cx="14" cy="14" r="5" fill="#facc15" stroke="#1e293b" stroke-width="2"/>
             </svg>
@@ -2377,15 +2371,440 @@
             <rect x="64" y="28" width="24" height="54" rx="3" fill="#60a5fa" stroke="#1e3a8a" stroke-width="3"/>
             <rect x="64" y="38" width="24" height="32" fill="#dbeafe" stroke="#1e3a8a" stroke-width="2"/>
           </g>
+        </svg>`,
+
+        /* --- 🍊 追加：くだもの・やさい・たべもの（22種） --- */
+        orange: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="60" cy="54" r="34" fill="#fb923c" stroke="#c2410c" stroke-width="4"/>
+          <path d="M60 20 C64 12 76 12 78 20 C72 24 64 24 60 20 Z" fill="#22c55e" stroke="#15803d" stroke-width="3"/>
+          <circle cx="46" cy="44" r="2.5" fill="#fed7aa"/>
+          <circle cx="72" cy="48" r="2.5" fill="#fed7aa"/>
+          <circle cx="54" cy="68" r="2.5" fill="#fed7aa"/>
+          <circle cx="68" cy="64" r="2.5" fill="#fed7aa"/>
+        </svg>`,
+        pineapple: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M44 28 L36 10 L54 22 L60 6 L66 22 L84 10 L76 28 Z" fill="#22c55e" stroke="#15803d" stroke-width="3" stroke-linejoin="round"/>
+          <ellipse cx="60" cy="58" rx="28" ry="32" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+          <path d="M40 40 L80 76 M36 56 L68 86 M52 30 L84 60 M80 40 L40 76 M84 56 L52 86 M68 30 L36 60" stroke="#ca8a04" stroke-width="2.5"/>
+        </svg>`,
+        kiwi: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="60" cy="52" r="36" fill="#a16207" stroke="#713f12" stroke-width="4"/>
+          <circle cx="60" cy="52" r="29" fill="#84cc16"/>
+          <circle cx="60" cy="52" r="12" fill="#ecfccb"/>
+          <circle cx="60" cy="34" r="2" fill="#0f172a"/><circle cx="74" cy="40" r="2" fill="#0f172a"/>
+          <circle cx="78" cy="52" r="2" fill="#0f172a"/><circle cx="72" cy="66" r="2" fill="#0f172a"/>
+          <circle cx="60" cy="70" r="2" fill="#0f172a"/><circle cx="46" cy="66" r="2" fill="#0f172a"/>
+          <circle cx="42" cy="52" r="2" fill="#0f172a"/><circle cx="46" cy="40" r="2" fill="#0f172a"/>
+        </svg>`,
+        grape: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M56 10 L64 22 M46 18 C52 12 68 12 74 18" fill="none" stroke="#15803d" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="44" cy="34" r="12" fill="#a855f7" stroke="#581c87" stroke-width="3"/>
+          <circle cx="60" cy="34" r="12" fill="#9333ea" stroke="#581c87" stroke-width="3"/>
+          <circle cx="76" cy="34" r="12" fill="#a855f7" stroke="#581c87" stroke-width="3"/>
+          <circle cx="50" cy="52" r="12" fill="#9333ea" stroke="#581c87" stroke-width="3"/>
+          <circle cx="68" cy="52" r="12" fill="#a855f7" stroke="#581c87" stroke-width="3"/>
+          <circle cx="60" cy="70" r="12" fill="#9333ea" stroke="#581c87" stroke-width="3"/>
+        </svg>`,
+        peach: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M60 22 C38 14 22 34 26 58 C30 78 52 88 60 88 C68 88 90 78 94 58 C98 34 82 14 60 22 Z" fill="#f472b6" stroke="#be185d" stroke-width="4"/>
+          <path d="M60 22 C66 36 66 56 60 76" fill="none" stroke="#be185d" stroke-width="3" stroke-linecap="round"/>
+          <path d="M62 18 C72 8 86 12 82 22 C74 26 66 22 62 18 Z" fill="#4ade80" stroke="#15803d" stroke-width="3"/>
+        </svg>`,
+        cherry: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M40 62 Q54 24 64 14 Q70 32 78 62" fill="none" stroke="#15803d" stroke-width="4" stroke-linecap="round"/>
+          <path d="M64 14 C76 10 86 16 80 24 C72 26 66 20 64 14 Z" fill="#4ade80" stroke="#15803d" stroke-width="2.5"/>
+          <circle cx="38" cy="68" r="16" fill="#ef4444" stroke="#991b1b" stroke-width="3.5"/>
+          <circle cx="80" cy="68" r="16" fill="#ef4444" stroke="#991b1b" stroke-width="3.5"/>
+          <circle cx="33" cy="63" r="4" fill="#fecaca"/>
+          <circle cx="75" cy="63" r="4" fill="#fecaca"/>
+        </svg>`,
+        carrot: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M68 26 L78 8 M74 30 L92 16 M64 22 L68 6" stroke="#22c55e" stroke-width="5" stroke-linecap="round"/>
+          <polygon points="56,22 82,38 34,88" fill="#f97316" stroke="#9a3412" stroke-width="4" stroke-linejoin="round"/>
+          <line x1="54" y1="42" x2="64" y2="48" stroke="#9a3412" stroke-width="3" stroke-linecap="round"/>
+          <line x1="46" y1="58" x2="56" y2="64" stroke="#9a3412" stroke-width="3" stroke-linecap="round"/>
+        </svg>`,
+        pepper: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M60 12 L60 24 M48 22 L72 22" stroke="#14532d" stroke-width="5" stroke-linecap="round"/>
+          <path d="M36 26 C24 26 24 78 42 84 C52 88 68 88 78 84 C96 78 96 26 84 26 C76 22 44 22 36 26 Z" fill="#22c55e" stroke="#14532d" stroke-width="4"/>
+          <path d="M48 28 C44 48 44 68 48 82 M72 28 C76 48 76 68 72 82" fill="none" stroke="#15803d" stroke-width="3"/>
+        </svg>`,
+        corn: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="60" cy="48" rx="22" ry="36" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+          <line x1="46" y1="24" x2="74" y2="24" stroke="#ca8a04" stroke-width="2.5"/>
+          <line x1="42" y1="38" x2="78" y2="38" stroke="#ca8a04" stroke-width="2.5"/>
+          <line x1="42" y1="52" x2="78" y2="52" stroke="#ca8a04" stroke-width="2.5"/>
+          <line x1="46" y1="66" x2="74" y2="66" stroke="#ca8a04" stroke-width="2.5"/>
+          <line x1="60" y1="16" x2="60" y2="76" stroke="#ca8a04" stroke-width="2.5"/>
+          <path d="M38 52 C24 64 34 86 58 88 C44 74 42 62 38 52 Z" fill="#22c55e" stroke="#15803d" stroke-width="3"/>
+          <path d="M82 52 C96 64 86 86 62 88 C76 74 78 62 82 52 Z" fill="#22c55e" stroke="#15803d" stroke-width="3"/>
+        </svg>`,
+        bread: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M30 42 C22 42 20 20 40 18 L80 18 C100 20 98 42 90 42 L88 82 L32 82 Z" fill="#d97706" stroke="#78350f" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M36 42 C30 42 30 26 44 24 L76 24 C90 26 90 42 84 42 L82 76 L38 76 Z" fill="#fef3c7"/>
+          <rect x="48" y="42" width="24" height="18" rx="3" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+        </svg>`,
+        pizza: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M24 24 C48 12 72 12 96 24 L60 88 Z" fill="#d97706" stroke="#78350f" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M30 32 C50 22 70 22 90 32 L60 84 Z" fill="#facc15"/>
+          <circle cx="52" cy="44" r="7" fill="#ef4444"/><circle cx="70" cy="46" r="7" fill="#ef4444"/><circle cx="60" cy="64" r="7" fill="#ef4444"/>
+          <circle cx="46" cy="58" r="3" fill="#22c55e"/><circle cx="64" cy="36" r="3" fill="#22c55e"/>
+        </svg>`,
+        curry: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="60" cy="54" rx="46" ry="30" fill="#ffffff" stroke="#64748b" stroke-width="4"/>
+          <path d="M22 54 C22 36 42 30 60 30 L60 78 C42 78 22 72 22 54 Z" fill="#f8fafc"/>
+          <path d="M56 30 C78 30 98 38 98 54 C98 70 78 78 56 78 Z" fill="#b45309"/>
+          <rect x="68" y="42" width="10" height="8" rx="2" fill="#f97316"/>
+          <rect x="74" y="56" width="10" height="8" rx="2" fill="#fde047"/>
+          <circle cx="64" cy="52" r="4" fill="#22c55e"/>
+        </svg>`,
+        ramen: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="60" cy="42" rx="42" ry="18" fill="#fde68a" stroke="#dc2626" stroke-width="4"/>
+          <path d="M18 42 C20 74 38 86 60 86 C82 86 100 74 102 42 Z" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          <circle cx="44" cy="40" r="10" fill="#ffffff" stroke="#f472b6" stroke-width="2.5"/>
+          <ellipse cx="74" cy="40" rx="11" ry="8" fill="#ffffff"/><circle cx="74" cy="40" r="5" fill="#f59e0b"/>
+          <rect x="54" y="24" width="16" height="14" fill="#14532d"/>
+        </svg>`,
+        hamburg: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="60" cy="56" rx="46" ry="28" fill="#f1f5f9" stroke="#64748b" stroke-width="4"/>
+          <ellipse cx="56" cy="56" rx="30" ry="20" fill="#78350f" stroke="#451a03" stroke-width="3.5"/>
+          <ellipse cx="56" cy="54" rx="18" ry="10" fill="#b91c1c"/>
+          <circle cx="90" cy="46" r="7" fill="#ef4444"/><circle cx="88" cy="62" r="7" fill="#22c55e"/>
+        </svg>`,
+        omurice: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="60" cy="58" rx="46" ry="26" fill="#ffffff" stroke="#64748b" stroke-width="4"/>
+          <ellipse cx="60" cy="54" rx="36" ry="20" fill="#facc15" stroke="#ca8a04" stroke-width="3.5"/>
+          <path d="M36 52 Q48 42 60 54 T84 52" fill="none" stroke="#ef4444" stroke-width="6" stroke-linecap="round"/>
+        </svg>`,
+        fries: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <rect x="36" y="14" width="10" height="44" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+          <rect x="48" y="8" width="10" height="48" rx="2" fill="#fde047" stroke="#ca8a04" stroke-width="2.5"/>
+          <rect x="60" y="12" width="10" height="46" rx="2" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+          <rect x="72" y="16" width="10" height="42" rx="2" fill="#fde047" stroke="#ca8a04" stroke-width="2.5"/>
+          <polygon points="28,42 92,42 82,88 38,88" fill="#ef4444" stroke="#991b1b" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="60" cy="66" r="10" fill="#facc15"/>
+        </svg>`,
+        sandwich: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="20,66 60,20 100,66" fill="#fef3c7" stroke="#d97706" stroke-width="4" stroke-linejoin="round"/>
+          <polygon points="20,78 60,32 100,78" fill="#fef3c7" stroke="#d97706" stroke-width="4" stroke-linejoin="round"/>
+          <line x1="24" y1="70" x2="96" y2="70" stroke="#22c55e" stroke-width="5" stroke-linecap="round"/>
+          <line x1="28" y1="74" x2="92" y2="74" stroke="#ef4444" stroke-width="5" stroke-linecap="round"/>
+        </svg>`,
+        choco: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <rect x="24" y="16" width="72" height="68" rx="6" fill="#78350f" stroke="#451a03" stroke-width="4"/>
+          <rect x="30" y="22" width="26" height="18" rx="2" fill="#92400e"/>
+          <rect x="64" y="22" width="26" height="18" rx="2" fill="#92400e"/>
+          <rect x="30" y="46" width="26" height="18" rx="2" fill="#92400e"/>
+          <rect x="64" y="46" width="26" height="18" rx="2" fill="#92400e"/>
+          <path d="M22 56 L98 48 L98 86 L22 86 Z" fill="#ef4444" stroke="#991b1b" stroke-width="3"/>
+          <path d="M22 56 L98 48 L98 56 L22 64 Z" fill="#fde047"/>
+        </svg>`,
+        cookie: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="60" cy="52" r="36" fill="#f59e0b" stroke="#92400e" stroke-width="4"/>
+          <circle cx="44" cy="38" r="5" fill="#451a03"/><circle cx="72" cy="36" r="4.5" fill="#451a03"/>
+          <circle cx="60" cy="52" r="5" fill="#451a03"/><circle cx="42" cy="64" r="4.5" fill="#451a03"/>
+          <circle cx="74" cy="62" r="5" fill="#451a03"/><circle cx="58" cy="72" r="4" fill="#451a03"/>
+        </svg>`,
+        candy: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="14,34 38,50 14,66" fill="#f472b6" stroke="#be185d" stroke-width="3.5" stroke-linejoin="round"/>
+          <polygon points="106,34 82,50 106,66" fill="#f472b6" stroke="#be185d" stroke-width="3.5" stroke-linejoin="round"/>
+          <circle cx="60" cy="50" r="26" fill="#f43f5e" stroke="#be185d" stroke-width="4"/>
+          <path d="M44 36 Q60 50 44 64 M60 26 Q74 50 60 74" fill="none" stroke="#fef08a" stroke-width="5" stroke-linecap="round"/>
+        </svg>`,
+        juice: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M60 32 L68 10 L84 10" fill="none" stroke="#ef4444" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <polygon points="34,28 86,28 78,88 42,88" fill="#e0f2fe" stroke="#0284c7" stroke-width="3.5" stroke-linejoin="round"/>
+          <polygon points="37,42 83,42 76,85 44,85" fill="#fb923c"/>
+          <circle cx="34" cy="28" r="10" fill="#fde047" stroke="#ca8a04" stroke-width="2.5"/>
+        </svg>`,
+        milk: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="36,30 60,12 84,30" fill="#38bdf8" stroke="#0369a1" stroke-width="3.5" stroke-linejoin="round"/>
+          <rect x="36" y="30" width="48" height="58" rx="4" fill="#ffffff" stroke="#0369a1" stroke-width="3.5"/>
+          <rect x="36" y="48" width="48" height="22" fill="#38bdf8"/>
+          <circle cx="60" cy="59" r="7" fill="#ffffff"/>
+        </svg>`,
+
+        /* --- 🐘 追加：どうぶつ・うみのいきもの・むし（20種） --- */
+        elephant: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="26" cy="50" rx="18" ry="26" fill="#94a3b8" stroke="#334155" stroke-width="3.5"/>
+          <ellipse cx="94" cy="50" rx="18" ry="26" fill="#94a3b8" stroke="#334155" stroke-width="3.5"/>
+          <circle cx="60" cy="48" r="28" fill="#cbd5e1" stroke="#334155" stroke-width="4"/>
+          <circle cx="48" cy="42" r="4" fill="#0f172a"/><circle cx="72" cy="42" r="4" fill="#0f172a"/>
+          <path d="M54 52 L54 78 C54 86 68 86 68 76" fill="none" stroke="#94a3b8" stroke-width="12" stroke-linecap="round"/>
+          <path d="M54 52 L54 78 C54 86 68 86 68 76" fill="none" stroke="#334155" stroke-width="3.5" stroke-linecap="round"/>
+        </svg>`,
+        gorilla: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="60" cy="50" r="34" fill="#334155" stroke="#0f172a" stroke-width="4"/>
+          <ellipse cx="60" cy="58" rx="24" ry="18" fill="#64748b" stroke="#0f172a" stroke-width="3"/>
+          <ellipse cx="60" cy="38" rx="20" ry="10" fill="#64748b" stroke="#0f172a" stroke-width="3"/>
+          <circle cx="50" cy="38" r="3.5" fill="#0f172a"/><circle cx="70" cy="38" r="3.5" fill="#0f172a"/>
+          <circle cx="55" cy="54" r="3" fill="#0f172a"/><circle cx="65" cy="54" r="3" fill="#0f172a"/>
+          <line x1="48" y1="66" x2="72" y2="66" stroke="#0f172a" stroke-width="3.5" stroke-linecap="round"/>
+        </svg>`,
+        tiger: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="34" cy="24" r="10" fill="#facc15" stroke="#854d0e" stroke-width="3.5"/>
+          <circle cx="86" cy="24" r="10" fill="#facc15" stroke="#854d0e" stroke-width="3.5"/>
+          <circle cx="60" cy="54" r="32" fill="#facc15" stroke="#854d0e" stroke-width="4"/>
+          <path d="M60 22 L60 34 M28 50 L40 50 M92 50 L80 50 M30 60 L40 58 M90 60 L80 58" stroke="#0f172a" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="48" cy="46" r="4" fill="#0f172a"/><circle cx="72" cy="46" r="4" fill="#0f172a"/>
+          <ellipse cx="60" cy="62" rx="14" ry="10" fill="#ffffff"/>
+          <polygon points="55,56 65,56 60,62" fill="#f43f5e"/>
+        </svg>`,
+        bear: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="34" cy="24" r="12" fill="#92400e" stroke="#451a03" stroke-width="3.5"/>
+          <circle cx="86" cy="24" r="12" fill="#92400e" stroke="#451a03" stroke-width="3.5"/>
+          <circle cx="60" cy="54" r="32" fill="#b45309" stroke="#451a03" stroke-width="4"/>
+          <circle cx="48" cy="46" r="4" fill="#0f172a"/><circle cx="72" cy="46" r="4" fill="#0f172a"/>
+          <ellipse cx="60" cy="60" rx="14" ry="11" fill="#fde68a"/>
+          <ellipse cx="60" cy="56" rx="6" ry="4" fill="#451a03"/>
+        </svg>`,
+        rabbit: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="46" cy="26" rx="8" ry="22" fill="#ffffff" stroke="#db2777" stroke-width="3.5"/>
+          <ellipse cx="46" cy="26" rx="4" ry="14" fill="#fbcfe8"/>
+          <ellipse cx="74" cy="26" rx="8" ry="22" fill="#ffffff" stroke="#db2777" stroke-width="3.5"/>
+          <ellipse cx="74" cy="26" rx="4" ry="14" fill="#fbcfe8"/>
+          <circle cx="60" cy="62" r="26" fill="#ffffff" stroke="#db2777" stroke-width="4"/>
+          <circle cx="50" cy="56" r="4" fill="#e11d48"/><circle cx="70" cy="56" r="4" fill="#e11d48"/>
+          <ellipse cx="60" cy="64" rx="4" ry="3" fill="#f472b6"/>
+        </svg>`,
+        cat: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="30,44 26,16 50,30" fill="#fb923c" stroke="#9a3412" stroke-width="3.5" stroke-linejoin="round"/>
+          <polygon points="90,44 94,16 70,30" fill="#fb923c" stroke="#9a3412" stroke-width="3.5" stroke-linejoin="round"/>
+          <ellipse cx="60" cy="56" rx="32" ry="28" fill="#fdba74" stroke="#9a3412" stroke-width="4"/>
+          <circle cx="48" cy="50" r="4" fill="#0f172a"/><circle cx="72" cy="50" r="4" fill="#0f172a"/>
+          <polygon points="56,58 64,58 60,63" fill="#f43f5e"/>
+          <line x1="20" y1="54" x2="36" y2="56" stroke="#9a3412" stroke-width="2.5"/><line x1="20" y1="62" x2="36" y2="62" stroke="#9a3412" stroke-width="2.5"/>
+          <line x1="100" y1="54" x2="84" y2="56" stroke="#9a3412" stroke-width="2.5"/><line x1="100" y1="62" x2="84" y2="62" stroke="#9a3412" stroke-width="2.5"/>
+        </svg>`,
+        dog: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="28" cy="48" rx="10" ry="20" transform="rotate(15 28 48)" fill="#92400e" stroke="#451a03" stroke-width="3.5"/>
+          <ellipse cx="92" cy="48" rx="10" ry="20" transform="rotate(-15 92 48)" fill="#92400e" stroke="#451a03" stroke-width="3.5"/>
+          <circle cx="60" cy="54" r="30" fill="#fcd34d" stroke="#78350f" stroke-width="4"/>
+          <circle cx="48" cy="46" r="4" fill="#0f172a"/><circle cx="72" cy="46" r="4" fill="#0f172a"/>
+          <ellipse cx="60" cy="56" rx="7" ry="5" fill="#0f172a"/>
+          <path d="M56 66 Q60 76 64 66" fill="#f43f5e" stroke="#991b1b" stroke-width="2"/>
+        </svg>`,
+        pig: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="32,32 26,14 48,24" fill="#f472b6" stroke="#be185d" stroke-width="3.5" stroke-linejoin="round"/>
+          <polygon points="88,32 94,14 72,24" fill="#f472b6" stroke="#be185d" stroke-width="3.5" stroke-linejoin="round"/>
+          <circle cx="60" cy="54" r="32" fill="#fbcfe8" stroke="#be185d" stroke-width="4"/>
+          <circle cx="46" cy="44" r="4" fill="#0f172a"/><circle cx="74" cy="44" r="4" fill="#0f172a"/>
+          <ellipse cx="60" cy="58" rx="14" ry="10" fill="#f472b6" stroke="#be185d" stroke-width="3"/>
+          <circle cx="55" cy="58" r="3" fill="#be185d"/><circle cx="65" cy="58" r="3" fill="#be185d"/>
+        </svg>`,
+        sheep: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="60" cy="52" r="34" fill="#ffffff" stroke="#64748b" stroke-width="4" stroke-dasharray="14 4"/>
+          <ellipse cx="28" cy="44" rx="10" ry="6" fill="#fde68a" stroke="#78350f" stroke-width="3"/>
+          <ellipse cx="92" cy="44" rx="10" ry="6" fill="#fde68a" stroke="#78350f" stroke-width="3"/>
+          <ellipse cx="60" cy="56" rx="22" ry="18" fill="#fde68a" stroke="#78350f" stroke-width="3.5"/>
+          <circle cx="50" cy="52" r="3.5" fill="#0f172a"/><circle cx="70" cy="52" r="3.5" fill="#0f172a"/>
+        </svg>`,
+        horse: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="44,24 40,8 52,20" fill="#92400e" stroke="#451a03" stroke-width="3"/>
+          <polygon points="76,24 80,8 68,20" fill="#92400e" stroke="#451a03" stroke-width="3"/>
+          <ellipse cx="60" cy="52" rx="22" ry="34" fill="#b45309" stroke="#451a03" stroke-width="4"/>
+          <ellipse cx="60" cy="70" rx="18" ry="14" fill="#fde68a" stroke="#451a03" stroke-width="3"/>
+          <polygon points="56,22 64,22 60,48" fill="#ffffff"/>
+          <circle cx="48" cy="42" r="3.5" fill="#0f172a"/><circle cx="72" cy="42" r="3.5" fill="#0f172a"/>
+          <circle cx="53" cy="68" r="3" fill="#451a03"/><circle cx="67" cy="68" r="3" fill="#451a03"/>
+        </svg>`,
+        monkey: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="24" cy="52" r="12" fill="#fde68a" stroke="#78350f" stroke-width="3.5"/>
+          <circle cx="96" cy="52" r="12" fill="#fde68a" stroke="#78350f" stroke-width="3.5"/>
+          <circle cx="60" cy="52" r="30" fill="#92400e" stroke="#451a03" stroke-width="4"/>
+          <circle cx="50" cy="46" r="12" fill="#fde68a"/><circle cx="70" cy="46" r="12" fill="#fde68a"/>
+          <ellipse cx="60" cy="62" rx="18" ry="12" fill="#fde68a"/>
+          <circle cx="50" cy="46" r="3.5" fill="#0f172a"/><circle cx="70" cy="46" r="3.5" fill="#0f172a"/>
+          <path d="M52 64 Q60 70 68 64" fill="none" stroke="#451a03" stroke-width="3" stroke-linecap="round"/>
+        </svg>`,
+        hippo: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="38" cy="22" r="8" fill="#a855f7" stroke="#581c87" stroke-width="3"/>
+          <circle cx="82" cy="22" r="8" fill="#a855f7" stroke="#581c87" stroke-width="3"/>
+          <circle cx="60" cy="44" r="24" fill="#c084fc" stroke="#581c87" stroke-width="3.5"/>
+          <ellipse cx="60" cy="64" rx="34" ry="22" fill="#d8b4fe" stroke="#581c87" stroke-width="4"/>
+          <circle cx="48" cy="36" r="3.5" fill="#0f172a"/><circle cx="72" cy="36" r="3.5" fill="#0f172a"/>
+          <circle cx="46" cy="58" r="4" fill="#581c87"/><circle cx="74" cy="58" r="4" fill="#581c87"/>
+        </svg>`,
+        crocodile: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M16 56 L42 36 L98 42 L104 64 L16 64 Z" fill="#22c55e" stroke="#14532d" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="42" cy="34" r="7" fill="#fde047" stroke="#14532d" stroke-width="3"/>
+          <circle cx="42" cy="34" r="3" fill="#0f172a"/>
+          <polygon points="56,64 60,56 64,64 70,64 74,56 78,64 84,64 88,56 92,64" fill="#ffffff" stroke="#14532d" stroke-width="2"/>
+        </svg>`,
+        turtle: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="94" cy="54" r="12" fill="#4ade80" stroke="#15803d" stroke-width="3.5"/>
+          <circle cx="98" cy="50" r="2.5" fill="#0f172a"/>
+          <ellipse cx="36" cy="76" rx="10" ry="6" fill="#4ade80" stroke="#15803d" stroke-width="3"/>
+          <ellipse cx="74" cy="76" rx="10" ry="6" fill="#4ade80" stroke="#15803d" stroke-width="3"/>
+          <path d="M22 68 C22 32 86 32 86 68 Z" fill="#16a34a" stroke="#14532d" stroke-width="4"/>
+          <line x1="22" y1="68" x2="86" y2="68" stroke="#fde047" stroke-width="5"/>
+        </svg>`,
+        shark: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="52,32 64,10 72,34" fill="#38bdf8" stroke="#0369a1" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M14 54 C30 28 74 28 96 52 L110 38 L106 68 L96 58 C74 76 30 76 14 54 Z" fill="#38bdf8" stroke="#0369a1" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M20 58 C40 66 68 66 86 58" fill="#ffffff"/>
+          <circle cx="34" cy="46" r="3.5" fill="#0f172a"/>
+        </svg>`,
+        octopus: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M26 68 Q16 84 28 86 Q40 86 44 72 Q50 88 60 88 Q70 88 76 72 Q80 86 92 86 Q104 84 94 68" fill="#ef4444" stroke="#991b1b" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="60" cy="44" r="28" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          <circle cx="48" cy="42" r="4" fill="#0f172a"/><circle cx="72" cy="42" r="4" fill="#0f172a"/>
+          <circle cx="60" cy="54" r="6" fill="#991b1b" stroke="#fecaca" stroke-width="3"/>
+        </svg>`,
+        crab: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M34 46 L22 26 M86 46 L98 26" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="22" cy="22" r="10" fill="#ef4444" stroke="#991b1b" stroke-width="3"/>
+          <circle cx="98" cy="22" r="10" fill="#ef4444" stroke="#991b1b" stroke-width="3"/>
+          <path d="M18 56 L34 56 M16 68 L34 64 M102 56 L86 56 M104 68 L86 64" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="60" cy="58" rx="28" ry="20" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          <circle cx="48" cy="36" r="4" fill="#0f172a"/><circle cx="72" cy="36" r="4" fill="#0f172a"/>
+        </svg>`,
+        dinosaur: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="44,20 52,10 56,24 66,14 68,30 78,24 76,38" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+          <path d="M24 36 C24 20 52 18 58 32 L68 52 L98 76 L64 80 L42 80 L42 54 L24 54 Z" fill="#22c55e" stroke="#14532d" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="38" cy="32" r="3.5" fill="#0f172a"/>
+          <polygon points="26,48 30,42 34,48 38,42 42,48" fill="#ffffff"/>
+        </svg>`,
+        beetle: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M60 36 L60 10 M60 12 L48 6 M60 12 L72 6" fill="none" stroke="#451a03" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M26 44 L42 50 M24 64 L40 64 M94 44 L78 50 M96 64 L80 64" stroke="#451a03" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="60" cy="60" rx="24" ry="28" fill="#78350f" stroke="#451a03" stroke-width="4"/>
+          <line x1="60" y1="44" x2="60" y2="88" stroke="#451a03" stroke-width="3"/>
+          <line x1="36" y1="48" x2="84" y2="48" stroke="#451a03" stroke-width="3"/>
+        </svg>`,
+        stag: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M46 36 C34 20 38 8 52 12 M74 36 C86 20 82 8 68 12" fill="none" stroke="#1e293b" stroke-width="6" stroke-linecap="round"/>
+          <path d="M26 48 L42 52 M26 68 L42 66 M94 48 L78 52 M94 68 L78 66" stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="60" cy="62" rx="22" ry="26" fill="#334155" stroke="#0f172a" stroke-width="4"/>
+          <line x1="60" y1="48" x2="60" y2="88" stroke="#0f172a" stroke-width="3"/>
+        </svg>`,
+
+        /* --- 🚅 追加：のりもの・おもちゃ・みのまわりのもの（19種） --- */
+        train: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="52,18 60,8 68,18" fill="none" stroke="#475569" stroke-width="3"/>
+          <rect x="20" y="18" width="80" height="56" rx="10" fill="#22c55e" stroke="#14532d" stroke-width="4"/>
+          <rect x="20" y="48" width="80" height="10" fill="#facc15"/>
+          <rect x="28" y="26" width="20" height="18" rx="3" fill="#bae6fd" stroke="#14532d" stroke-width="2.5"/>
+          <rect x="54" y="26" width="16" height="32" rx="2" fill="#e2e8f0" stroke="#14532d" stroke-width="2.5"/>
+          <rect x="76" y="26" width="16" height="18" rx="3" fill="#bae6fd" stroke="#14532d" stroke-width="2.5"/>
+          <circle cx="38" cy="80" r="8" fill="#334155"/><circle cx="82" cy="80" r="8" fill="#334155"/>
+        </svg>`,
+        shinkansen: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M12 66 C18 36 46 24 106 24 L106 72 L12 72 Z" fill="#ffffff" stroke="#1e3a8a" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M16 58 L106 58" stroke="#2563eb" stroke-width="6"/>
+          <path d="M36 42 L58 32 L58 46 L36 46 Z" fill="#38bdf8" stroke="#1e3a8a" stroke-width="2.5"/>
+          <rect x="68" y="34" width="12" height="10" rx="2" fill="#38bdf8"/><rect x="86" y="34" width="12" height="10" rx="2" fill="#38bdf8"/>
+        </svg>`,
+        airplane: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M88 46 L104 26 L98 46 Z" fill="#ef4444" stroke="#991b1b" stroke-width="3" stroke-linejoin="round"/>
+          <ellipse cx="58" cy="52" rx="42" ry="14" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
+          <polygon points="46,54 74,54 58,84 42,84" fill="#38bdf8" stroke="#0284c7" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M22 48 L36 42 L36 52 Z" fill="#bae6fd"/>
+          <circle cx="52" cy="48" r="3" fill="#38bdf8"/><circle cx="64" cy="48" r="3" fill="#38bdf8"/><circle cx="76" cy="48" r="3" fill="#38bdf8"/>
+        </svg>`,
+        helicopter: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <line x1="16" y1="18" x2="92" y2="18" stroke="#334155" stroke-width="5" stroke-linecap="round"/>
+          <line x1="54" y1="18" x2="54" y2="30" stroke="#334155" stroke-width="5"/>
+          <path d="M74 50 L106 44 L106 56 L74 58 Z" fill="#ef4444" stroke="#991b1b" stroke-width="3.5"/>
+          <ellipse cx="52" cy="52" rx="28" ry="22" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          <path d="M26 52 C26 38 40 34 52 34 L52 54 Z" fill="#bae6fd" stroke="#991b1b" stroke-width="3"/>
+          <path d="M30 82 L76 82 M42 72 L42 82 M64 72 L64 82" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+        </svg>`,
+        ship: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <rect x="48" y="16" width="14" height="20" fill="#ef4444" stroke="#1e293b" stroke-width="3"/>
+          <rect x="34" y="34" width="52" height="20" rx="4" fill="#ffffff" stroke="#1e293b" stroke-width="3.5"/>
+          <polygon points="16,54 104,54 88,80 32,80" fill="#2563eb" stroke="#1e3a8a" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M12 82 Q30 74 48 82 T84 82 T112 82" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round"/>
+        </svg>`,
+        bike: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="32" cy="68" r="16" fill="#1e293b" stroke="#64748b" stroke-width="4"/>
+          <circle cx="88" cy="68" r="16" fill="#1e293b" stroke="#64748b" stroke-width="4"/>
+          <path d="M32 68 L48 36 L62 36 M44 48 L80 48 L88 68 L54 68 Z" fill="#ef4444" stroke="#991b1b" stroke-width="4" stroke-linejoin="round"/>
+          <ellipse cx="70" cy="44" rx="14" ry="5" fill="#0f172a"/>
+        </svg>`,
+        taxi: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="52,22 68,22 72,30 48,30" fill="#ef4444" stroke="#1e293b" stroke-width="2.5"/>
+          <path d="M30 50 L42 30 L78 30 L90 50 Z" fill="#facc15" stroke="#854d0e" stroke-width="3.5"/>
+          <rect x="16" y="50" width="88" height="24" rx="8" fill="#facc15" stroke="#854d0e" stroke-width="3.5"/>
+          <line x1="20" y1="62" x2="100" y2="62" stroke="#0f172a" stroke-width="4" stroke-dasharray="8 6"/>
+          <circle cx="36" cy="76" r="12" fill="#0f172a"/><circle cx="84" cy="76" r="12" fill="#0f172a"/>
+        </svg>`,
+        truck: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <rect x="48" y="22" width="58" height="44" rx="4" fill="#38bdf8" stroke="#0369a1" stroke-width="3.5"/>
+          <path d="M16 44 L24 28 L46 28 L46 66 L104 66 L104 74 L16 74 Z" fill="#2563eb" stroke="#1e3a8a" stroke-width="3.5"/>
+          <rect x="22" y="34" width="18" height="14" rx="2" fill="#bae6fd"/>
+          <circle cx="34" cy="76" r="12" fill="#0f172a"/><circle cx="86" cy="76" r="12" fill="#0f172a"/>
+        </svg>`,
+        crown_item: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="20,76 26,28 48,50 60,20 72,50 94,28 100,76" fill="#fde047" stroke="#ca8a04" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="60" cy="58" r="7" fill="#ef4444"/><circle cx="38" cy="62" r="5" fill="#38bdf8"/><circle cx="82" cy="62" r="5" fill="#38bdf8"/>
+        </svg>`,
+        clock_item: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="34" cy="20" r="10" fill="#facc15" stroke="#b45309" stroke-width="3"/>
+          <circle cx="86" cy="20" r="10" fill="#facc15" stroke="#b45309" stroke-width="3"/>
+          <circle cx="60" cy="54" r="32" fill="#ffffff" stroke="#ef4444" stroke-width="6"/>
+          <line x1="60" y1="54" x2="60" y2="32" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="54" x2="76" y2="54" stroke="#e11d48" stroke-width="5" stroke-linecap="round"/>
+        </svg>`,
+        umbrella: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M60 14 L60 78 C60 88 46 88 46 78" fill="none" stroke="#78350f" stroke-width="5" stroke-linecap="round"/>
+          <path d="M18 54 C18 22 102 22 102 54 Q88 46 74 54 Q60 46 46 54 Q32 46 18 54 Z" fill="#f43f5e" stroke="#9f1239" stroke-width="4" stroke-linejoin="round"/>
+        </svg>`,
+        shoes: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M26 32 L54 32 L64 52 L96 56 C104 58 104 76 96 76 L24 76 C18 76 18 56 26 32 Z" fill="#ef4444" stroke="#991b1b" stroke-width="4" stroke-linejoin="round"/>
+          <rect x="20" y="70" width="82" height="10" rx="4" fill="#ffffff" stroke="#64748b" stroke-width="3"/>
+          <line x1="52" y1="42" x2="64" y2="38" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+          <line x1="58" y1="50" x2="70" y2="46" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+        </svg>`,
+        hat: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <ellipse cx="60" cy="68" rx="48" ry="12" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+          <path d="M32 64 C32 26 88 26 88 64 Z" fill="#fde047" stroke="#ca8a04" stroke-width="4"/>
+          <path d="M33 56 L87 56" stroke="#ef4444" stroke-width="8"/>
+        </svg>`,
+        bag: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M46 30 C46 14 74 14 74 30" fill="none" stroke="#78350f" stroke-width="5"/>
+          <rect x="26" y="28" width="68" height="56" rx="10" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          <path d="M26 28 L94 28 L90 58 C90 64 30 64 30 58 Z" fill="#f87171" stroke="#991b1b" stroke-width="3.5"/>
+          <circle cx="60" cy="54" r="6" fill="#fde047" stroke="#b45309" stroke-width="2.5"/>
+        </svg>`,
+        glasses: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <path d="M16 48 L30 34 M104 48 L90 34 M52 52 L68 52" stroke="#1e293b" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="36" cy="54" r="18" fill="#bae6fd" stroke="#1e293b" stroke-width="5"/>
+          <circle cx="84" cy="54" r="18" fill="#bae6fd" stroke="#1e293b" stroke-width="5"/>
+        </svg>`,
+        scissors: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <polygon points="56,48 96,18 86,52" fill="#cbd5e1" stroke="#334155" stroke-width="3.5" stroke-linejoin="round"/>
+          <polygon points="56,52 96,82 86,48" fill="#94a3b8" stroke="#334155" stroke-width="3.5" stroke-linejoin="round"/>
+          <circle cx="34" cy="34" r="14" fill="none" stroke="#ef4444" stroke-width="7"/>
+          <circle cx="34" cy="66" r="14" fill="none" stroke="#38bdf8" stroke-width="7"/>
+          <circle cx="60" cy="50" r="4" fill="#fde047" stroke="#334155" stroke-width="2"/>
+        </svg>`,
+        block: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <rect x="30" y="20" width="20" height="10" rx="2" fill="#ef4444" stroke="#991b1b" stroke-width="3"/>
+          <rect x="70" y="20" width="20" height="10" rx="2" fill="#ef4444" stroke="#991b1b" stroke-width="3"/>
+          <rect x="20" y="28" width="80" height="28" rx="4" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          <rect x="20" y="56" width="80" height="26" rx="4" fill="#facc15" stroke="#ca8a04" stroke-width="4"/>
+        </svg>`,
+        drum: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <rect x="24" y="34" width="72" height="48" rx="6" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+          <ellipse cx="60" cy="34" rx="36" ry="10" fill="#fef3c7" stroke="#ca8a04" stroke-width="4"/>
+          <polyline points="24,42 42,76 60,42 78,76 96,42" fill="none" stroke="#fde047" stroke-width="4" stroke-linejoin="round"/>
+          <line x1="34" y1="12" x2="54" y2="32" stroke="#92400e" stroke-width="5" stroke-linecap="round"/>
+          <line x1="86" y1="12" x2="66" y2="32" stroke="#92400e" stroke-width="5" stroke-linecap="round"/>
+        </svg>`,
+        bell: `<svg viewBox="0 0 120 100" class="w-full h-full">
+          <circle cx="60" cy="78" r="10" fill="#ca8a04" stroke="#78350f" stroke-width="3"/>
+          <path d="M60 16 C38 16 32 42 24 72 L96 72 C88 42 82 16 60 16 Z" fill="#fde047" stroke="#ca8a04" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M46 18 C36 8 24 16 34 26 M74 18 C84 8 96 16 86 26" fill="none" stroke="#ef4444" stroke-width="6" stroke-linecap="round"/>
         </svg>`
       };
 
       return itemSVGs[wordObj.itemId] || getCarSideSVG('patrol');
     }
 
-    // 5歳児が身近に知っている車以外の言葉リスト（全27語）
+    // 5歳児が身近に知っている車以外の言葉リスト（全88語：車の名前12語と合わせて全100種！）
     const EverydayWords = [
-      // 🍎 くだもの・たべもの
+      // 🍎 くだもの・やさい・たべもの（32語）
       { itemId: 'apple', katakana: 'リンゴ', hiragana: 'りんご', iconType: 'item' },
       { itemId: 'banana', katakana: 'バナナ', hiragana: 'ばなな', iconType: 'item' },
       { itemId: 'melon', katakana: 'メロン', hiragana: 'めろん', iconType: 'item' },
@@ -2396,7 +2815,30 @@
       { itemId: 'icecream', katakana: 'アイス', hiragana: 'あいす', iconType: 'item' },
       { itemId: 'pudding', katakana: 'プリン', hiragana: 'ぷりん', iconType: 'item' },
       { itemId: 'donut', katakana: 'ドーナツ', hiragana: 'どーなつ', iconType: 'item' },
-      // 🦁 どうぶつ・いきもの
+      { itemId: 'orange', katakana: 'オレンジ', hiragana: 'おれんじ', iconType: 'item' },
+      { itemId: 'pineapple', katakana: 'パイナップル', hiragana: 'ぱいなっぷる', iconType: 'item' },
+      { itemId: 'kiwi', katakana: 'キウイ', hiragana: 'きうい', iconType: 'item' },
+      { itemId: 'grape', katakana: 'ブドウ', hiragana: 'ぶどう', iconType: 'item' },
+      { itemId: 'peach', katakana: 'モモ', hiragana: 'もも', iconType: 'item' },
+      { itemId: 'cherry', katakana: 'サクランボ', hiragana: 'さくらんぼ', iconType: 'item' },
+      { itemId: 'carrot', katakana: 'ニンジン', hiragana: 'にんじん', iconType: 'item' },
+      { itemId: 'pepper', katakana: 'ピーマン', hiragana: 'ぴーまん', iconType: 'item' },
+      { itemId: 'corn', katakana: 'コーン', hiragana: 'こーん', iconType: 'item' },
+      { itemId: 'bread', katakana: 'パン', hiragana: 'ぱん', iconType: 'item' },
+      { itemId: 'pizza', katakana: 'ピザ', hiragana: 'ぴざ', iconType: 'item' },
+      { itemId: 'curry', katakana: 'カレー', hiragana: 'かれー', iconType: 'item' },
+      { itemId: 'ramen', katakana: 'ラーメン', hiragana: 'らーめん', iconType: 'item' },
+      { itemId: 'hamburg', katakana: 'ハンバーグ', hiragana: 'はんばーぐ', iconType: 'item' },
+      { itemId: 'omurice', katakana: 'オムライス', hiragana: 'おむらいす', iconType: 'item' },
+      { itemId: 'fries', katakana: 'ポテト', hiragana: 'ぽてと', iconType: 'item' },
+      { itemId: 'sandwich', katakana: 'サンドイッチ', hiragana: 'さんどいっち', iconType: 'item' },
+      { itemId: 'choco', katakana: 'チョコ', hiragana: 'ちょこ', iconType: 'item' },
+      { itemId: 'cookie', katakana: 'クッキー', hiragana: 'くっきー', iconType: 'item' },
+      { itemId: 'candy', katakana: 'アメ', hiragana: 'あめ', iconType: 'item' },
+      { itemId: 'juice', katakana: 'ジュース', hiragana: 'じゅーす', iconType: 'item' },
+      { itemId: 'milk', katakana: 'ミルク', hiragana: 'みるく', iconType: 'item' },
+
+      // 🦁 どうぶつ・うみのいきもの・むし（27語）
       { itemId: 'lion', katakana: 'ライオン', hiragana: 'らいおん', iconType: 'item' },
       { itemId: 'panda', katakana: 'パンダ', hiragana: 'ぱんだ', iconType: 'item' },
       { itemId: 'koala', katakana: 'コアラ', hiragana: 'こあら', iconType: 'item' },
@@ -2404,7 +2846,28 @@
       { itemId: 'penguin', katakana: 'ペンギン', hiragana: 'ぺんぎん', iconType: 'item' },
       { itemId: 'dolphin', katakana: 'イルカ', hiragana: 'いるか', iconType: 'item' },
       { itemId: 'whale', katakana: 'クジラ', hiragana: 'くじら', iconType: 'item' },
-      // 📺 みのまわりのもの・おもちゃ
+      { itemId: 'elephant', katakana: 'ゾウ', hiragana: 'ぞう', iconType: 'item' },
+      { itemId: 'gorilla', katakana: 'ゴリラ', hiragana: 'ごりら', iconType: 'item' },
+      { itemId: 'tiger', katakana: 'トラ', hiragana: 'とら', iconType: 'item' },
+      { itemId: 'bear', katakana: 'クマ', hiragana: 'くま', iconType: 'item' },
+      { itemId: 'rabbit', katakana: 'ウサギ', hiragana: 'うさぎ', iconType: 'item' },
+      { itemId: 'cat', katakana: 'ネコ', hiragana: 'ねこ', iconType: 'item' },
+      { itemId: 'dog', katakana: 'イヌ', hiragana: 'いぬ', iconType: 'item' },
+      { itemId: 'pig', katakana: 'ブタ', hiragana: 'ぶた', iconType: 'item' },
+      { itemId: 'sheep', katakana: 'ヒツジ', hiragana: 'ひつじ', iconType: 'item' },
+      { itemId: 'horse', katakana: 'ウマ', hiragana: 'うま', iconType: 'item' },
+      { itemId: 'monkey', katakana: 'サル', hiragana: 'さる', iconType: 'item' },
+      { itemId: 'hippo', katakana: 'カバ', hiragana: 'かば', iconType: 'item' },
+      { itemId: 'crocodile', katakana: 'ワニ', hiragana: 'わに', iconType: 'item' },
+      { itemId: 'turtle', katakana: 'カメ', hiragana: 'かめ', iconType: 'item' },
+      { itemId: 'shark', katakana: 'サメ', hiragana: 'さめ', iconType: 'item' },
+      { itemId: 'octopus', katakana: 'タコ', hiragana: 'たこ', iconType: 'item' },
+      { itemId: 'crab', katakana: 'カニ', hiragana: 'かに', iconType: 'item' },
+      { itemId: 'dinosaur', katakana: 'キョウリュウ', hiragana: 'きょうりゅう', iconType: 'item' },
+      { itemId: 'beetle', katakana: 'カブトムシ', hiragana: 'かぶとむし', iconType: 'item' },
+      { itemId: 'stag', katakana: 'クワガタ', hiragana: 'くわがた', iconType: 'item' },
+
+      // 🚅 のりもの・みのまわりのもの・おもちゃ（29語）
       { itemId: 'tv', katakana: 'テレビ', hiragana: 'てれび', iconType: 'item' },
       { itemId: 'camera', katakana: 'カメラ', hiragana: 'かめら', iconType: 'item' },
       { itemId: 'piano', katakana: 'ピアノ', hiragana: 'ぴあの', iconType: 'item' },
@@ -2414,10 +2877,29 @@
       { itemId: 'toilet', katakana: 'トイレ', hiragana: 'といれ', iconType: 'item' },
       { itemId: 'cup', katakana: 'コップ', hiragana: 'こっぷ', iconType: 'item' },
       { itemId: 'spoon', katakana: 'スプーン', hiragana: 'すぷーん', iconType: 'item' },
-      { itemId: 'crayon', katakana: 'クレヨン', hiragana: 'くれよん', iconType: 'item' }
+      { itemId: 'crayon', katakana: 'クレヨン', hiragana: 'くれよん', iconType: 'item' },
+      { itemId: 'train', katakana: 'デンシャ', hiragana: 'でんしゃ', iconType: 'item' },
+      { itemId: 'shinkansen', katakana: 'シンカンセン', hiragana: 'しんかんせん', iconType: 'item' },
+      { itemId: 'airplane', katakana: 'ヒコウキ', hiragana: 'ひこうき', iconType: 'item' },
+      { itemId: 'helicopter', katakana: 'ヘリコプター', hiragana: 'へりこぷたー', iconType: 'item' },
+      { itemId: 'ship', katakana: 'フネ', hiragana: 'ふね', iconType: 'item' },
+      { itemId: 'bike', katakana: 'バイク', hiragana: 'ばいく', iconType: 'item' },
+      { itemId: 'taxi', katakana: 'タクシー', hiragana: 'たくしー', iconType: 'item' },
+      { itemId: 'truck', katakana: 'トラック', hiragana: 'とらっく', iconType: 'item' },
+      { itemId: 'crown_item', katakana: 'オウカン', hiragana: 'おうかん', iconType: 'item' },
+      { itemId: 'clock_item', katakana: 'トケイ', hiragana: 'とけい', iconType: 'item' },
+      { itemId: 'umbrella', katakana: 'カサ', hiragana: 'かさ', iconType: 'item' },
+      { itemId: 'shoes', katakana: 'クツ', hiragana: 'くつ', iconType: 'item' },
+      { itemId: 'hat', katakana: 'ボウシ', hiragana: 'ぼうし', iconType: 'item' },
+      { itemId: 'bag', katakana: 'カバン', hiragana: 'かばん', iconType: 'item' },
+      { itemId: 'glasses', katakana: 'メガネ', hiragana: 'めがね', iconType: 'item' },
+      { itemId: 'scissors', katakana: 'ハサミ', hiragana: 'はさみ', iconType: 'item' },
+      { itemId: 'block', katakana: 'ブロック', hiragana: 'ぶろっく', iconType: 'item' },
+      { itemId: 'drum', katakana: 'タイコ', hiragana: 'たいこ', iconType: 'item' },
+      { itemId: 'bell', katakana: 'ベル', hiragana: 'べる', iconType: 'item' }
     ];
 
-    // STEP②の言葉問題：車の名前（12種）＋身近な言葉（27種）＝全39種を出題
+    // STEP②の言葉問題：車の名前（12種）＋身近な言葉（88種）＝全100種を出題
     const WordPool = [
       ...CarCatalog.filter(c => c.tier === 'easy').map(car => ({
         carId: car.id,
@@ -2492,13 +2974,22 @@
       'レ': ['ル', 'ム', 'メ', 'ロ'],
       'ロ': ['コ', 'ヨ', 'マ', 'ル'],
       'ワ': ['ウ', 'フ', 'ラ', 'ク'],
+      'ヲ': ['ワ', 'フ', 'ラ', 'ウ'],
       'ン': ['ソ', 'シ', 'ツ', 'ノ'],
       'ガ': ['カ', 'ダ', 'タ', 'グ'],
       'ギ': ['キ', 'ザ', 'チ', 'ゲ'],
       'グ': ['ク', 'ケ', 'タ', 'ダ'],
+      'ゲ': ['ケ', 'グ', 'ガ', 'デ'],
       'ゴ': ['コ', 'ロ', 'ヨ', 'ボ'],
+      'ザ': ['サ', 'ギ', 'ダ', 'ゼ'],
       'ジ': ['シ', 'ツ', 'ズ', 'ビ'],
+      'ズ': ['ス', 'ジ', 'ヌ', 'ブ'],
+      'ゼ': ['セ', 'ザ', 'ゾ', 'デ'],
+      'ゾ': ['ソ', 'ン', 'ジ', 'ゴ'],
       'ダ': ['タ', 'ナ', 'ガ', 'ラ'],
+      'ヂ': ['チ', 'ジ', 'ダ', 'テ'],
+      'ヅ': ['ツ', 'ズ', 'ジ', 'ブ'],
+      'デ': ['テ', 'ダ', 'ド', 'ゼ'],
       'ド': ['ト', 'ナ', 'テ', 'ボ'],
       'バ': ['パ', 'ハ', 'マ', 'カ'],
       'ビ': ['ピ', 'ヒ', 'シ', 'ジ'],
@@ -2517,31 +3008,111 @@
       'ー': ['ン', 'ノ', 'ル', 'リ']
     };
 
-    // STEP③：2桁（かんたん）・3桁（しっかり）の位取りトレーニング問題
+    // STEP③：2桁（かんたん50問）・3桁（しっかり50問）の位取りトレーニング問題（合計100問）
     const NumberQuestionsEasy = [
+      { num: 10, kana: 'じゅう', distractors: [1, 11, 20] },
+      { num: 11, kana: 'じゅういち', distractors: [10, 12, 21] },
       { num: 12, kana: 'じゅうに', distractors: [21, 20, 15] },
+      { num: 13, kana: 'じゅうさん', distractors: [31, 30, 14] },
+      { num: 14, kana: 'じゅうよん', distractors: [41, 40, 17] },
       { num: 15, kana: 'じゅうご', distractors: [51, 50, 12] },
+      { num: 16, kana: 'じゅうろく', distractors: [61, 60, 19] },
+      { num: 17, kana: 'じゅうなな', distractors: [71, 70, 14] },
+      { num: 18, kana: 'じゅうはち', distractors: [81, 80, 16] },
+      { num: 19, kana: 'じゅうきゅう', distractors: [91, 90, 16] },
+      { num: 20, kana: 'にじゅう', distractors: [2, 12, 22] },
+      { num: 21, kana: 'にじゅういち', distractors: [12, 20, 22] },
       { num: 23, kana: 'にじゅうさん', distractors: [32, 20, 30] },
+      { num: 24, kana: 'にじゅうよん', distractors: [42, 20, 27] },
       { num: 25, kana: 'にじゅうご', distractors: [52, 20, 28] },
+      { num: 26, kana: 'にじゅうろく', distractors: [62, 29, 20] },
+      { num: 27, kana: 'にじゅうなな', distractors: [72, 24, 20] },
+      { num: 28, kana: 'にじゅうはち', distractors: [82, 25, 20] },
+      { num: 29, kana: 'にじゅうきゅう', distractors: [92, 26, 20] },
       { num: 30, kana: 'さんじゅう', distractors: [3, 13, 33] },
+      { num: 31, kana: 'さんじゅういち', distractors: [13, 30, 32] },
+      { num: 32, kana: 'さんじゅうに', distractors: [23, 30, 35] },
       { num: 34, kana: 'さんじゅうよん', distractors: [43, 30, 40] },
+      { num: 35, kana: 'さんじゅうご', distractors: [53, 30, 38] },
+      { num: 36, kana: 'さんじゅうろく', distractors: [63, 30, 39] },
+      { num: 37, kana: 'さんじゅうなな', distractors: [73, 34, 30] },
+      { num: 38, kana: 'さんじゅうはち', distractors: [83, 35, 30] },
+      { num: 40, kana: 'よんじゅう', distractors: [4, 14, 44] },
+      { num: 41, kana: 'よんじゅういち', distractors: [14, 40, 42] },
+      { num: 42, kana: 'よんじゅうに', distractors: [24, 40, 45] },
+      { num: 45, kana: 'よんじゅうご', distractors: [54, 40, 48] },
       { num: 46, kana: 'よんじゅうろく', distractors: [64, 40, 60] },
+      { num: 48, kana: 'よんじゅうはち', distractors: [84, 40, 46] },
+      { num: 50, kana: 'ごじゅう', distractors: [5, 15, 55] },
+      { num: 51, kana: 'ごじゅういち', distractors: [15, 50, 52] },
+      { num: 53, kana: 'ごじゅうさん', distractors: [35, 50, 56] },
+      { num: 56, kana: 'ごじゅうろく', distractors: [65, 50, 59] },
       { num: 58, kana: 'ごじゅうはち', distractors: [85, 50, 80] },
+      { num: 60, kana: 'ろくじゅう', distractors: [6, 16, 66] },
+      { num: 62, kana: 'ろくじゅうに', distractors: [26, 60, 65] },
+      { num: 64, kana: 'ろくじゅうよん', distractors: [46, 60, 67] },
+      { num: 67, kana: 'ろくじゅうなな', distractors: [76, 64, 60] },
       { num: 70, kana: 'ななじゅう', distractors: [17, 77, 71] },
-      { num: 89, kana: 'はちじゅうきゅう', distractors: [98, 80, 90] }
+      { num: 73, kana: 'ななじゅうさん', distractors: [37, 70, 75] },
+      { num: 75, kana: 'ななじゅうご', distractors: [57, 70, 78] },
+      { num: 80, kana: 'はちじゅう', distractors: [8, 18, 88] },
+      { num: 82, kana: 'はちじゅうに', distractors: [28, 80, 85] },
+      { num: 86, kana: 'はちじゅうろく', distractors: [68, 80, 89] },
+      { num: 89, kana: 'はちじゅうきゅう', distractors: [98, 80, 90] },
+      { num: 95, kana: 'きゅうじゅうご', distractors: [59, 90, 98] }
     ];
 
     const NumberQuestionsHard = [
       { num: 100, kana: 'ひゃく', distractors: [10, 101, 110] },
+      { num: 101, kana: 'ひゃくいち', distractors: [11, 110, 100] },
+      { num: 102, kana: 'ひゃくに', distractors: [12, 120, 201] },
       { num: 105, kana: 'ひゃくご', distractors: [15, 150, 501] },
+      { num: 108, kana: 'ひゃくはち', distractors: [18, 180, 801] },
+      { num: 110, kana: 'ひゃくじゅう', distractors: [101, 11, 111] },
+      { num: 115, kana: 'ひゃくじゅうご', distractors: [151, 105, 150] },
       { num: 120, kana: 'ひゃくにじゅう', distractors: [12, 102, 210] },
+      { num: 125, kana: 'ひゃくにじゅうご', distractors: [152, 215, 105] },
       { num: 130, kana: 'ひゃくさんじゅう', distractors: [103, 310, 30] },
+      { num: 140, kana: 'ひゃくよんじゅう', distractors: [104, 410, 14] },
       { num: 150, kana: 'ひゃくごじゅう', distractors: [105, 510, 50] },
+      { num: 160, kana: 'ひゃくろくじゅう', distractors: [106, 610, 16] },
+      { num: 175, kana: 'ひゃくななじゅうご', distractors: [157, 715, 107] },
+      { num: 180, kana: 'ひゃくはちじゅう', distractors: [108, 810, 18] },
+      { num: 190, kana: 'ひゃくきゅうじゅう', distractors: [109, 910, 19] },
       { num: 200, kana: 'にひゃく', distractors: [20, 202, 120] },
+      { num: 203, kana: 'にひゃくさん', distractors: [23, 230, 302] },
+      { num: 205, kana: 'にひゃくご', distractors: [25, 250, 502] },
       { num: 208, kana: 'にひゃくはち', distractors: [28, 280, 802] },
+      { num: 210, kana: 'にひゃくじゅう', distractors: [201, 120, 21] },
+      { num: 230, kana: 'にひゃくさんじゅう', distractors: [203, 320, 23] },
       { num: 240, kana: 'にひゃくよんじゅう', distractors: [204, 420, 42] },
+      { num: 250, kana: 'にひゃくごじゅう', distractors: [205, 520, 25] },
+      { num: 270, kana: 'にひゃくななじゅう', distractors: [207, 720, 27] },
       { num: 300, kana: 'さんびゃく', distractors: [30, 303, 130] },
-      { num: 365, kana: 'さんびゃくろくじゅうご', distractors: [356, 635, 305] }
+      { num: 304, kana: 'さんびゃくよん', distractors: [34, 340, 403] },
+      { num: 306, kana: 'さんびゃくろく', distractors: [36, 360, 603] },
+      { num: 310, kana: 'さんびゃくじゅう', distractors: [301, 130, 31] },
+      { num: 320, kana: 'さんびゃくにじゅう', distractors: [302, 230, 32] },
+      { num: 350, kana: 'さんびゃくごじゅう', distractors: [305, 530, 35] },
+      { num: 365, kana: 'さんびゃくろくじゅうご', distractors: [356, 635, 305] },
+      { num: 400, kana: 'よんひゃく', distractors: [40, 404, 140] },
+      { num: 405, kana: 'よんひゃくご', distractors: [45, 450, 504] },
+      { num: 420, kana: 'よんひゃくにじゅう', distractors: [402, 240, 42] },
+      { num: 450, kana: 'よんひゃくごじゅう', distractors: [405, 540, 45] },
+      { num: 500, kana: 'ごひゃく', distractors: [50, 505, 150] },
+      { num: 502, kana: 'ごひゃくに', distractors: [52, 520, 205] },
+      { num: 510, kana: 'ごひゃくじゅう', distractors: [501, 150, 51] },
+      { num: 550, kana: 'ごひゃくごじゅう', distractors: [505, 55, 515] },
+      { num: 600, kana: 'ろっぴゃく', distractors: [60, 606, 160] },
+      { num: 608, kana: 'ろっぴゃくはち', distractors: [68, 680, 806] },
+      { num: 630, kana: 'ろっぴゃくさんじゅう', distractors: [603, 360, 63] },
+      { num: 700, kana: 'ななひゃく', distractors: [70, 707, 170] },
+      { num: 705, kana: 'ななひゃくご', distractors: [75, 750, 507] },
+      { num: 750, kana: 'ななひゃくごじゅう', distractors: [705, 570, 75] },
+      { num: 800, kana: 'はっぴゃく', distractors: [80, 808, 180] },
+      { num: 840, kana: 'はっぴゃくよんじゅう', distractors: [804, 480, 84] },
+      { num: 900, kana: 'きゅうひゃく', distractors: [90, 909, 190] },
+      { num: 999, kana: 'きゅうひゃくきゅうじゅうきゅう', distractors: [909, 990, 99] }
     ];
 
     /* ============================================================================
@@ -3123,6 +3694,8 @@
         lastStep1Key: null,
         lastStep2Word: null,
         lastStep3Num: null,
+        recentWords: [],
+        recentNums: [],
         step1: null,
         step2: null,
         step3: null
@@ -4355,12 +4928,14 @@
           wordObj = revFound;
           isRevenge = true;
         } else {
-          for (let retry = 0; retry < 10; retry++) {
-            if (wordObj.katakana !== this.state.lastStep2Word) break;
+          for (let retry = 0; retry < 25; retry++) {
+            if (!this.state.recentWords.includes(wordObj.katakana) && wordObj.katakana !== this.state.lastStep2Word) break;
             wordObj = WordPool[Math.floor(Math.random() * WordPool.length)];
           }
         }
         this.state.lastStep2Word = wordObj.katakana;
+        this.state.recentWords.push(wordObj.katakana);
+        if (this.state.recentWords.length > 15) this.state.recentWords.shift();
 
         const kataChars = Array.from(wordObj.katakana);
         const hiraChars = Array.from(wordObj.hiragana);
@@ -4778,12 +5353,14 @@
           q = revFound;
           isRevenge = true;
         } else {
-          for (let retry = 0; retry < 10; retry++) {
-            if (q.num !== this.state.lastStep3Num) break;
+          for (let retry = 0; retry < 25; retry++) {
+            if (!this.state.recentNums.includes(q.num) && q.num !== this.state.lastStep3Num) break;
             q = pool[Math.floor(Math.random() * pool.length)];
           }
         }
         this.state.lastStep3Num = q.num;
+        this.state.recentNums.push(q.num);
+        if (this.state.recentNums.length > 15) this.state.recentNums.shift();
 
         const dists = [...q.distractors].sort(() => Math.random() - 0.5).slice(0, 2);
         const choices = [
