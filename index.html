@@ -557,7 +557,7 @@
             </div>
 
             <!-- 遮断機ゲート（道路上端の支柱から道路下端へSTOPバーが降りる） -->
-            <div class="relative w-8 h-16 sm:h-18">
+            <div class="relative w-8 h-16">
               <svg viewBox="0 0 28 68" class="w-8 h-full overflow-visible">
                 <!-- 道路の奥側に立つ黄色い支柱台座 -->
                 <rect x="6" y="0" width="16" height="22" rx="4" fill="#facc15" stroke="#0f172a" stroke-width="2.5"/>
@@ -578,17 +578,19 @@
             </div>
           </div>
 
-          <!-- マイカー（右向きに反転して配置） -->
+          <!-- マイカー（右向きに反転して配置：car-idleのtransformアニメーションと競合しないよう外側ラッパーでscaleX(-1)を適用） -->
           <div id="step1-car-actor"
                style="left: 12%; transform: translateX(0px) rotate(0deg); transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.65s cubic-bezier(0.4, 0, 0.2, 1);"
-               class="absolute bottom-3 sm:bottom-3.5 z-20 w-28 h-16 sm:w-36 sm:h-20 flex items-center justify-center">
+               class="absolute bottom-1.5 sm:bottom-2 z-20 w-28 h-16 sm:w-36 sm:h-20 flex items-center justify-center">
             <!-- 急ブレーキ吹き出し -->
             <div id="step1-brake-badge" class="hidden absolute -top-6 left-1/2 -translate-x-1/2 bg-rose-500 text-white font-black text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full border-2 border-white shadow whitespace-nowrap">
               💦 まだ あか！
             </div>
             <!-- 夕方・夜のヘッドライト光線 -->
             <div id="step1-headlight-beam" class="hidden absolute left-[88%] top-1/2 -translate-y-1/2 w-24 h-12 bg-gradient-to-r from-yellow-200/80 to-transparent pointer-events-none" style="clip-path: polygon(0 35%, 100% 0, 100% 100%, 0 65%);"></div>
-            <div id="step1-car-preview" class="w-full h-full transform -scale-x-100 car-idle"></div>
+            <div class="w-full h-full flex items-center justify-center" style="transform: scaleX(-1);">
+              <div id="step1-car-preview" class="w-full h-full car-idle"></div>
+            </div>
           </div>
         </div>
 
@@ -4268,6 +4270,7 @@
         lives: 3,
         maxLives: 3,
         isBusy: false,
+        runId: 0,
         holdTimer: null,
         settingsHoldTimer: null,
         passcodeInput: '',
@@ -4297,7 +4300,8 @@
         if (!header || !inner) return;
 
         inner.style.transform = 'none';
-        inner.style.width = '100%';
+        inner.style.width = 'max-content';
+        inner.style.minWidth = '100%';
         header.style.height = 'auto';
 
         const style = window.getComputedStyle(header);
@@ -4307,11 +4311,15 @@
         const neededW = inner.scrollWidth;
 
         if (neededW > availW && availW > 0) {
-          const scale = Math.max(0.62, availW / neededW);
+          const scale = Math.max(0.55, availW / neededW);
           inner.style.width = `${100 / scale}%`;
+          inner.style.minWidth = '0';
           inner.style.transform = `scale(${scale})`;
           inner.style.transformOrigin = 'left center';
           header.style.height = `${Math.ceil(inner.offsetHeight * scale + padY)}px`;
+        } else {
+          inner.style.width = '100%';
+          inner.style.minWidth = '0';
         }
       },
 
@@ -4838,7 +4846,7 @@
           </div>
           ${steps === 0 ? `
             <div class="bg-amber-300 border-2 border-rose-500 text-slate-900 font-black text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full shadow flex items-center gap-1 animate-bounce">
-              <div class="w-7 h-4 transform -scale-x-100 inline-block">${getCarSideSVG(this.state.selectedCarId, true)}</div>
+              <div class="w-7 h-4 inline-block" style="transform: scaleX(-1);">${getCarSideSVG(this.state.selectedCarId, true)}</div>
               <span>しゅっぱつ！</span>
             </div>
           ` : '<span class="text-xs font-black text-teal-800">━ 🚗 ドライブの みち ━▶</span>'}
@@ -4899,7 +4907,7 @@
             // 現在向かっているスポットなら、上にマイカーアイコンを表示
             const carMarkerHTML = (isCurrentTarget && steps > 0) ? `
               <div class="absolute -top-6 left-1/2 -translate-x-1/2 z-30 bg-amber-300 border-2 border-rose-500 rounded-full px-1.5 py-0.5 shadow-lg flex items-center gap-0.5 whitespace-nowrap animate-bounce pointer-events-none">
-                <div class="w-6 h-3.5 sm:w-7 sm:h-4 ${rowObj.reverse ? '' : 'transform -scale-x-100'}">${getCarSideSVG(this.state.selectedCarId, true)}</div>
+                <div class="w-6 h-3.5 sm:w-7 sm:h-4" style="${rowObj.reverse ? '' : 'transform: scaleX(-1);'}">${getCarSideSVG(this.state.selectedCarId, true)}</div>
                 <span class="text-[8px] sm:text-[9px] font-black text-rose-700">いまここ!</span>
               </div>
             ` : '';
@@ -5021,6 +5029,7 @@
 
       goTitle() {
         Sound.init();
+        this.state.runId++;
         this.state.isBusy = false;
         this.renderTitleScreen();
         this.showScreen('screen-title', 0);
@@ -5389,6 +5398,7 @@
 
       openGarage() {
         Sound.init();
+        this.state.runId++;
         this.state.isBusy = false;
         if (!['easy', 'hard', 'parts', 'words'].includes(this.state.garageTab)) {
           this.state.garageTab = this.state.difficulty;
@@ -5825,6 +5835,7 @@
 
       startMission() {
         Sound.init();
+        this.state.runId++;
         this.state.lives = this.state.maxLives;
         this.updateLifeUI();
         const car = this.getSelectedCar();
@@ -6014,6 +6025,7 @@
 
       answerStep1(idx) {
         if (this.state.isBusy) return;
+        const currentRunId = this.state.runId;
         const choice = this.state.step1.choices[idx];
         const btn = document.getElementById(`clock-btn-${idx}`);
 
@@ -6035,6 +6047,7 @@
           const carActor = document.getElementById('step1-car-actor');
           if (carActor) {
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               carActor.style.left = '108%';
               carActor.style.transform = 'translateX(0px) rotate(-3deg)';
             }, 150);
@@ -6053,7 +6066,10 @@
               `せいかい！「 ${this.state.step1.timeText} 」しゅっぱつ しんこう！`;
           }
 
-          setTimeout(() => this.setupStep2(), 1150);
+          setTimeout(() => {
+            if (this.state.runId !== currentRunId) return;
+            this.setupStep2();
+          }, 1150);
         } else {
           this.state.isBusy = true;
           this.state.lives = Math.max(0, this.state.lives - 1);
@@ -6080,6 +6096,7 @@
             btn.classList.add('opacity-35', 'scale-95', 'pointer-events-none');
             this.showRecoveryToast(1);
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               if (carActor) {
                 carActor.style.left = '12%';
                 carActor.style.transform = 'translateX(0px) rotate(0deg)';
@@ -6093,6 +6110,7 @@
               ? `「 ${timeText} 」は、あかい みじかい はり が「 ${targetHour} 」、あおい ながい はり が「 12 」だよ！`
               : `「 ${timeText} 」は、あかい みじかい はり が「 ${targetHour} 」、あおい ながい はり が「 6 」だよ！`;
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               this.showMistakeModal(hintHTML, `ざんねん！ ${hintHTML}`);
             }, 700);
           }
@@ -6107,7 +6125,15 @@
         this.showScreen('screen-step2', 2);
 
         const car = this.getSelectedCar();
-        document.getElementById('player-car-svg').innerHTML = getCarTopSVG(car.id);
+        const playerCarSvgEl = document.getElementById('player-car-svg');
+        if (playerCarSvgEl) {
+          playerCarSvgEl.classList.remove('opacity-0', 'rainbow-aura');
+          playerCarSvgEl.innerHTML = getCarTopSVG(car.id);
+        }
+        const turboFx = document.getElementById('step2-turbo-fx');
+        if (turboFx) turboFx.classList.add('hidden');
+        const rainbowBanner = document.getElementById('step2-rainbow-banner');
+        if (rainbowBanner) rainbowBanner.classList.add('hidden');
 
         const carWrapper = document.getElementById('player-car-wrapper');
         carWrapper.style.transition = 'none';
@@ -6274,6 +6300,7 @@
 
       answerStep2(laneIdx) {
         if (this.state.isBusy) return;
+        const currentRunId = this.state.runId;
         const choice = this.state.step2.laneChoices[laneIdx];
         const btn = document.getElementById(`lane-btn-${laneIdx}`);
 
@@ -6358,10 +6385,12 @@
 
           // 道路の下端から上端（105%）まで一気に駆け抜ける
           setTimeout(() => {
+            if (this.state.runId !== currentRunId) return;
             carWrapper.style.bottom = '105%';
           }, 150);
 
           setTimeout(() => {
+            if (this.state.runId !== currentRunId) return;
             carWrapper.style.opacity = '0';
             if (turboFx) turboFx.classList.add('hidden');
             if (rainbowBanner) rainbowBanner.classList.add('hidden');
@@ -6369,6 +6398,7 @@
           }, 760);
 
           setTimeout(() => {
+            if (this.state.runId !== currentRunId) return;
             this.state.step2.stepCursor++;
             if (this.state.step2.stepCursor >= this.state.step2.targetIndices.length) {
               this.finishStep2Word();
@@ -6410,10 +6440,12 @@
           }
 
           setTimeout(() => {
+            if (this.state.runId !== currentRunId) return;
             carWrapper.style.bottom = crashBottomPx;
           }, 140);
 
           setTimeout(() => {
+            if (this.state.runId !== currentRunId) return;
             Sound.playExplosion();
             const expEl = document.getElementById('step2-explosion');
             if (expEl) {
@@ -6430,6 +6462,7 @@
 
           if (this.state.lives > 0) {
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               btn.disabled = true;
               btn.classList.add('opacity-35', 'scale-90', 'pointer-events-none');
               const expEl = document.getElementById('step2-explosion');
@@ -6454,6 +6487,7 @@
             const targetKata = kataChars[activeIdx];
 
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               document.getElementById('player-car-svg').classList.remove('opacity-0');
               this.showMistakeModal(
                 `ひらがなの「 ${targetHira} 」は、カタカナの「 ${targetKata} 」だよ！`,
@@ -6465,6 +6499,7 @@
       },
 
       finishStep2Word() {
+        const currentRunId = this.state.runId;
         const { wordObj, kataChars, hiraChars, isRevenge } = this.state.step2;
         const slotsEl = document.getElementById('step2-word-slots');
         slotsEl.innerHTML = '';
@@ -6505,6 +6540,7 @@
         Sound.playCarSound(car.soundType);
         Sound.playFanfare();
         setTimeout(() => {
+          if (this.state.runId !== currentRunId) return;
           Sound.speak(`${wordObj.hiragana}！`);
         }, 220);
         const step2FeedbackEl = document.getElementById('step2-feedback');
@@ -6515,6 +6551,7 @@
         }
 
         setTimeout(() => {
+          if (this.state.runId !== currentRunId) return;
           if (iconEl) iconEl.classList.remove('scale-110', 'bg-amber-100', 'border-amber-400');
           this.setupStep3();
         }, 1650);
@@ -6538,7 +6575,7 @@
         if (movingCarEl) {
           movingCarEl.style.transition = 'none';
           movingCarEl.style.left = '50%';
-          movingCarEl.style.transform = 'translate(-50%, 0px) rotate(0deg)';
+          movingCarEl.style.transform = 'translate(-50%, 0px) scale(1) rotate(0deg)';
           void movingCarEl.offsetWidth;
           movingCarEl.style.transition = 'left 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)';
         }
@@ -6642,6 +6679,7 @@
 
       answerStep3(idx) {
         if (this.state.isBusy) return;
+        const currentRunId = this.state.runId;
         const choice = this.state.step3.choices[idx];
         const btn = document.getElementById(`park-btn-${idx}`);
 
@@ -6664,12 +6702,14 @@
             movingCarEl.style.transform = `translate(-50%, 0px) rotate(${steerDeg}deg)`;
 
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               const deltaY = this.calcStep3ParkDeltaY(idx, movingCarEl, false);
               movingCarEl.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg)`;
             }, 340);
           }
 
           setTimeout(() => {
+            if (this.state.runId !== currentRunId) return;
             Sound.playFanfare();
             const statusEl = document.getElementById(`park-status-${idx}`);
             if (statusEl) {
@@ -6693,7 +6733,10 @@
             }
           }, 820);
 
-          setTimeout(() => this.completeMission(), 1550);
+          setTimeout(() => {
+            if (this.state.runId !== currentRunId) return;
+            this.completeMission();
+          }, 1550);
         } else {
           this.state.isBusy = true;
           this.state.lives = Math.max(0, this.state.lives - 1);
@@ -6713,6 +6756,7 @@
             movingCarEl.style.transform = `translate(-50%, 0px) rotate(${steerDeg}deg)`;
 
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               const deltaY = this.calcStep3ParkDeltaY(idx, movingCarEl, true);
               movingCarEl.style.transform = `translate(-50%, ${deltaY}px) rotate(0deg)`;
 
@@ -6721,6 +6765,7 @@
             }, 340);
 
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               Sound.playPitfall();
               const deltaY = this.calcStep3ParkDeltaY(idx, movingCarEl, true);
               movingCarEl.style.transition = 'transform 0.65s cubic-bezier(0.55, 0.08, 0.68, 0.53)';
@@ -6730,6 +6775,7 @@
 
           if (this.state.lives > 0) {
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               btn.disabled = true;
               btn.classList.add('opacity-30', 'scale-95', 'pointer-events-none');
               const holeEl = document.getElementById(`pitfall-hole-${idx}`);
@@ -6750,6 +6796,7 @@
             const { q } = this.state.step3;
             const digits = String(q.num).split('').join(' と ');
             setTimeout(() => {
+              if (this.state.runId !== currentRunId) return;
               this.showMistakeModal(
                 `「 ${q.kana} 」は、すうじ で「 ${q.num} 」（${digits}）とかくよ！`,
                 `ざんねん！ おとしあなに おちちゃった！ ${q.kana} は、${q.num} だよ！`
